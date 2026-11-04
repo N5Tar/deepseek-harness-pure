@@ -4,7 +4,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import { Shell, type ShellInjected } from './Shell.tsx'
-import { en, zh } from './locales.ts'
+import { de, en, es, fr, ja, pt, ru, zh } from './locales.ts'
 import { presentTheme } from './theme.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -23,7 +23,7 @@ export const inject = ['slots', 'locale', 'theme']
 
 /** Register the root and its content position for this plugin lifetime. @param ctx - Client plugin scope. */
 export function apply(ctx: Context): void {
-  ctx.effect(() => ctx.locale.register('shell', { en, zh }), 'shell: copy')
+  ctx.effect(() => ctx.locale.register('shell', { en, zh, ja, es, fr, de, ru, pt }), 'shell: copy')
   const settings: ShellInjected = {
     hooks: {
       theme: {
