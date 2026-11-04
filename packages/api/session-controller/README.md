@@ -106,6 +106,8 @@ A successful `selectModel` response acknowledges the recorded Session selection 
 
 The generated configuration catalog is the exhaustive source for accepted fields and their JSDoc.
 
+Session Controller requires `connection` and `attachments` before activation. Before publishing its service, it checks that `connection.maxRequestBodyBytes` is at least `ceil(attachments.imageLimits.maxMessageImageBytes * 4 / 3) + 1 MiB`, allowing base64 image payloads plus RPC envelope headroom. Insufficient capacity fails Session Controller activation, not Connection activation; replacing either dependency rechecks the policy. Connection independently enforces its buffered-body cap with HTTP 413, while streaming upload routes bypass that cap. Encoded image prompts remain supported alongside upload receipts.
+
 -----
 
 Blockquotes travel as ordinary prompt text without quote metadata. Local submission echoes and durable messages use the same text rendering rules; queue edits replace content while retaining prompt correlation.

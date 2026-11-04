@@ -6,7 +6,6 @@ import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
 import type { AddressInfo } from 'node:net'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
 import type { CredentialProvider } from '@deepseek-ai/dsh-credentials'
 import type { IndexInjection, WebServer, WebRoute, WebUpgradeRoute } from '@deepseek-ai/dsh-host-webserver'
 import {
@@ -316,21 +315,26 @@ describe('connection node half', () => {
     }
   })
 
-  it('reserves enough default carrier capacity for the 200 MiB image batch', () => {
-    expect(DEFAULT_MAX_REQUEST_BODY_BYTES).toBe(300 * 1024 * 1024)
-    expect(DEFAULT_MAX_REQUEST_BODY_BYTES).toBeGreaterThan(Math.ceil(200 * 1024 * 1024 * 4 / 3) + 1024 * 1024)
+  it('publishes the existing default buffered request capacity', async () => {
+    const deployment = await mounted()
+    try {
+      expect(DEFAULT_MAX_REQUEST_BODY_BYTES).toBe(300 * 1024 * 1024)
+      expect(deployment.connection.maxRequestBodyBytes).toBe(DEFAULT_MAX_REQUEST_BODY_BYTES)
+    } finally { await deployment.dispose() }
   })
 
-  it('fails loud when the carrier cap cannot hold the configured image batch', async () => {
-    const ctx = new Context()
-    const routes: WebRoute[] = []
-    ctx.provide('webServer', fakeHttpServer(routes, []) as WebServer)
-    ctx.provide('attachments', {
-      imageLimits: { maxMessageImageBytes: 20 * 1024 * 1024 },
-    } as AttachmentStore)
-    await expect(apply(ctx, { maxRequestBodyBytes: 1024 }))
-      .rejects.toThrow(/must be at least .* aggregate image limit/)
-    expect(routes).toHaveLength(0)
+  it('starts with a small generic cap and rejects oversized buffered requests', async () => {
+    const { ctx, connection, routes, dispose } = await mounted({ maxRequestBodyBytes: 1024 })
+    try {
+      expect(connection.maxRequestBodyBytes).toBe(1024)
+      expect(routes).toHaveLength(2)
+      expect(ctx.get('attachments')).toBeUndefined()
+      const { response, state } = fakeResponse()
+      await routes[0]!.handler(fakeRawPost({
+        host: 'localhost', cookie: browserCookie(connection, 'localhost'),
+      }, '/api/probe', 'x'.repeat(1025)), response)
+      expect(state.status).toBe(413)
+    } finally { await dispose() }
   })
 
   it('fails the load on a trustedHosts entry that is not a bare authority', async () => {

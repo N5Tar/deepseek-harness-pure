@@ -1,6 +1,6 @@
 # AI 产品剥离：模块分支执行计划（临时）
 
-日期：2026-11-04。状态：第 01 项 pure/settings 已按用户授权合入本地主干；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
+日期：2026-11-04。状态：第 01 项 pure/settings 已合入并推送；第 02 项 pure/connection 已实施，待审查；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
 
 ## 目标与范围
 
@@ -9,6 +9,8 @@
 保留 Electron 窗口、菜单、preload、IPC、Host 生命周期和故障恢复；保留 Cordis 插件装配、配置、加载卸载和必要的开发 HMR；保留本地服务、鉴权、RPC、资源与模块加载；保留 Slots、Renderer、基础控件、主题、语言和设置，以及这些能力实际使用的工具库、测试和工程设施。
 
 删除 AI 执行、聊天、模型、Session、Agent 工具、协作与任务、账号、产品遥测等产品功能。终端、SSH、LSP、Office、插件市场和实验能力不因未来可能有用而默认保留。插件扩展能力保留，但插件市场、官方目录和在线安装管理不是同一项能力；如需保留在线安装，须确认其包管理运行依赖。
+
+用户已确认路线 A：保留 Electron + 独立 Host + Client 插件平台及通用通信能力，清除 AI 产品和反向业务依赖；不改造为最小 Electron IPC 架构。
 
 本轮不改 npm scope，不重设计 UI，不触碰已安装 DSH、旧用户数据或凭证。正式应用名、图标、签名和发布渠道另行确认。
 
@@ -29,7 +31,7 @@
 | 编号 | 分支 | 工作范围 | 验收条件 | 状态 |
 |---|---|---|---|---|
 | 01 | `pure/settings` | 清理 settings、settings-controller 的 Session / Agent preset 残余依赖和编译引用；设置 UI 改用所属设置类型及必要的 shell 远程声明；替换业务化 fixture | 设置链路不依赖全量业务 API；读写、冲突处理、主题与语言持久化正常 | 已合入 |
-| 02 | `pure/connection` | 移除 Connection 的 Session、LLM 消息等业务类型出口和业务声明；保留通用传输与 Peer 生命周期 | RPC、鉴权、取消、断开与资源清理测试通过；剩余消费者引用已调整 | 待开始 |
+| 02 | `pure/connection` | 移除 Connection 的 Session、LLM 消息等业务类型出口和业务声明；保留通用传输与 Peer 生命周期 | RPC、鉴权、取消、断开与资源清理测试通过；剩余消费者引用已调整 | 待审查 |
 | 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 待开始 |
 | 04 | `pure/web-shell` | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 待开始 |
 | 05 | `pure/desktop-host` | 桌面 Host 脱离全量产品 CLI；直接使用通用启动能力；移除 Agent、任务、账号等 Host 业务集成 | 无密钥、无账号和旧用户目录可启动；Host 启停、就绪和失败报告正常 | 待开始 |
@@ -99,7 +101,7 @@ UI 远程类型与测试依赖可能交叉，每个分支开始前核实。遇�
 
 ## 下一步
 
-第 01 项在 `pure/settings` 完成，基点为 `bb2dbed99f0992fbe1c8570a36cfb91660f69ec8`，实现提交为 `662ad5a3d1`，已按用户授权快进合入本地 master。下一项为 `pure/connection`，尚未创建该分支或开始实施。
+第 01 项在 `pure/settings` 完成，基点为 `bb2dbed99f0992fbe1c8570a36cfb91660f69ec8`，实现提交为 `662ad5a3d1`，已按用户授权快进合入本地 master。当前已从 `babab2764becfd190041446c961934ba5e8970f1` 创建 `pure/connection`，第 02 项已完成实现与验证，待审查。第二模块尚未提交、推送或合并；后续项为 pure/ui-test-runtime，未开始。
 
 ## 第 01 项执行记录
 
@@ -114,3 +116,15 @@ UI 远程类型与测试依赖可能交叉，每个分支开始前核实。遇�
 扩展 Client 测试运行覆盖 109 个文件：1442 个测试通过，4 个样式检查失败。失败均指向本轮未修改的 ui-shell 样式：独立拖拽区域、1px 中性边框、焦点环颜色、滚动区域颜色重绑定。相关 CSS 与四个检查文件相对基点无改动；本轮不顺手修改 UI，不将该套测试报告为全绿。这些失败已在交接时告知用户；用户随后授权提交、推送并合入主干。它们继续保留在后续 Web/桌面 Shell 模块的处理范围内。
 
 保留事项：settings 的旧 settings.yaml 迁移及业务条目映射尚未移除；共享 Client 测试环境仍含 Session 依赖，按第 03 项处理。未进行新的 Electron 实机冷启动或跨平台发行验证。
+
+## 第 02 项执行记录
+
+按路线 A 清理 Connection 的业务类型出口：SessionId、SessionEvent、MessageId、ContentBlock、StreamChunk 不再由通信层转导出。API Remotes 与 Liveshare 的现有消费者已改为从类型所属包获取。Connection 的 manifest 与两个编译入口均移除 Session、LLM 和 attachment 依赖；凭据、scope、Peer 与通用 RPC 保留。
+
+Connection 通过只读 maxRequestBodyBytes 公开共享 HTTP 路由的缓冲容量，默认仍为 300 MiB。图片 base64 容量公式及 1 MiB 信封余量归 SessionController 所有，在其构造和服务发布前校验。错误归属有意改变：不匹配时 Session API 不能激活，但通用 Connection 可独立启动；不再承诺图片配置错误会阻止 Connection 路由注册。鉴权、协议、重连、取消、HTTP 413 和流式请求绕过缓冲上限的行为保持原实现。
+
+兼容性说明：内部业务消费者全部同步迁移，具体类型导入路径见 Connection 的包 README。自定义 HostConnectionHandle 实现需要提供真实的 maxRequestBodyBytes；HostConnectionService 的现有三参数构造仍使用原默认上限，可通过第四参数传入配置值。SessionController 显式等待 connection 和 attachments；任一依赖撤下或替换时，沿 Cordis 生命周期撤下并重新校验消费方。
+
+新增回归覆盖直接依赖隔离、Host/Client 编译引用和类型出口，以及容量恰好满足、差一字节、晚注入、替换、卸载和真实 Loader 的错误归属。Connection 原有 14 个文件、188 个测试通过；新增隔离检查 4 个测试通过；Host/Client 独立编译通过；Session API 50 个文件、1088 个测试通过；Liveshare 消费者 3 个测试通过。完整构建 10 项通过；使用新产物的真实 shell 组合与 Desktop Host 两项验收通过，覆盖鉴权、语言设置持久化、重启、退出和缺少 Office 载荷的启动。修改过的 TypeScript 文件静态检查在修正测试 void 回调写法后通过，零警告、零错误；最新 build:check 两项通过；依赖策略覆盖的 97 个包检查通过。未运行全仓测试或 Electron 窗口视觉验证，第一模块记录的四个样式失败仍留待 Shell 模块处理。
+
+回归修复：第一模块将通用设置 fixture 去业务化后，三个 Session 模型用例仍依赖其隐式默认模型装配。本模块将真实模型装配放回这些业务测试自身的 profile patch，保留原断言和真实配置写入；未修改模型生产逻辑，也未把 AI 依赖加回通用设置包。

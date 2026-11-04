@@ -9,7 +9,7 @@
  */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 // Type-only: pulls the Workspace navigation service merge (`ctx.uiWorkspace`).
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 

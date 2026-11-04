@@ -217,6 +217,9 @@ export interface HostConnectionHandle {
    */
   readonly allowsRemoteAuthorities: boolean
 
+  /** Buffered body limit for the shared /api HTTP route; streaming routes bypass this cap. */
+  readonly maxRequestBodyBytes: number
+
   /**
    * Compose exact Fetch routes and the shared-channel RPC interceptor.
    * @param channel - shared channel mounted by Connection.

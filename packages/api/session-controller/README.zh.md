@@ -106,6 +106,8 @@ GUI 模型选择要求确切提供方／模型对出现在可用目录中；不�
 
 生成的配置目录是所有受支持字段及其 JSDoc 的完整来源。
 
+Session Controller 等待 `connection` 和 `attachments` 后激活，并在发布服务前检查 `connection.maxRequestBodyBytes` 不小于 `ceil(attachments.imageLimits.maxMessageImageBytes * 4 / 3) + 1 MiB`，为 base64 图片载荷与 RPC 信封保留容量。容量不足导致 Session Controller 激活失败，而非 Connection 激活失败；任一依赖被替换时都会重新检查。Connection 独立通过 HTTP 413 执行缓冲请求体上限，流式上传路由不受该上限限制。编码图片 prompt 与上传凭据仍同时受支持。
+
 -----
 
 Blockquote 作为普通 prompt 文本传递，不携带 quote 元数据。本地提交回显与持久消息使用同一文本渲染规则；队列编辑替换 content，同时保留 prompt 关联信息。

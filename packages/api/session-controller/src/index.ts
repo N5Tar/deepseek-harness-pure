@@ -8,6 +8,7 @@ import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { errorChain, ReasoningEffortId, type MessageSource } from '@deepseek-ai/dsh-llm'
 import type {} from '@deepseek-ai/dsh-client-file-upload'
+import type {} from '@deepseek-ai/dsh-client-connection'
 import { canOpenNativePath, nativeFileManager, nativeFileApplications, openNativeFileApplication, openNativeAssociatedPath, revealNativePath } from '@deepseek-ai/dsh-native-command'
 import type { SessionId } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-session-projection-cache'
@@ -20,6 +21,7 @@ import {
   ApiSessionAgentController,
   type ApiSessionAgentResult,
 } from './agent.ts'
+import { assertImageBodyCapacity } from './image-body-capacity.ts'
 import { SessionCommandController, hasPromptContent } from './commands.ts'
 import { SessionControlController } from './control.ts'
 import { HistoryController } from './history/controller.ts'
@@ -137,6 +139,7 @@ export class SessionController extends TypertRemoteService {
     'agentDefaultModel',
     'agents',
     'attachments',
+    'connection',
     'fileUploads',
     'fs',
     'llm',
@@ -174,8 +177,10 @@ export class SessionController extends TypertRemoteService {
    * @param ctx - Host context containing the Session capability assembly.
    * @param config - native-opener and list-scheduling deployment policy.
    * @param internals - host integrations replaceable by direct unit tests.
+   * @throws Error before service publication when Connection's buffered cap cannot hold the configured image budget.
    */
   constructor(ctx: Context, config: Config, internals: SessionControllerInternals = {}) {
+    assertImageBodyCapacity(ctx.connection.maxRequestBodyBytes, ctx.attachments.imageLimits.maxMessageImageBytes)
     super(ctx, 'sessionController', { namespace: 'session' })
     this.listWorkSliceMs = SessionController.Config(config).listWorkSliceMs
     this.fileApplications = internals.fileApplications ?? nativeFileApplications

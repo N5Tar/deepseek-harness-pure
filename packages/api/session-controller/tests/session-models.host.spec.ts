@@ -4,8 +4,11 @@
  * catalog injection, unavailable-model refusals, and the prompt-assembly
  * boundary for a running selection change.
  */
+import { writeFile } from 'node:fs/promises'
+import { readProfilePatches, reconcileProfilePatches } from '@deepseek-ai/dsh-app-boot'
 import { AgentModel, modelSelectionProjectionDefinition } from '@deepseek-ai/dsh-agent'
 import { createInboxStub } from '@deepseek-ai/dsh-agent-loop-testkit'
+import AgentDefaultModel from '@deepseek-ai/dsh-agent-default-model'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 
 import { describe, expect, it, vi, onTestFinished } from 'vitest'
@@ -25,7 +28,25 @@ import type { SessionPromptRequest, SessionRequestId } from '../src/types.ts'
 import { buildModelCatalog, hasProviderApiKey } from '../src/catalog.ts'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { RemoteError } from '@deepseek-ai/dsh-typert-protocol'
-import { createSessionTestController, createSessionTestRemote } from './test-remote.ts'
+import { createSessionTestController, createSessionTestRemote, TEST_IMAGE_LIMITS } from './test-remote.ts'
+
+/** Real editable model configuration layered onto the generic profile fixture. */
+async function modelConfigurationFixture() {
+  const { configurationFixture } = await import('../../../settings/settings/tests/configuration-fixture.ts')
+  const configured = await configurationFixture({ hmr: false })
+  configured.ctx.loader.builtins.defaultModel = AgentDefaultModel
+  const options = {
+    id: 'session-test-default-model',
+    name: 'cordis:defaultModel',
+    config: { provider: 'deepseek-official', model: 'deepseek-chat' },
+  }
+  await writeFile(configured.profile.patchPath, JSON.stringify([{ insert: [options] }]))
+  await reconcileProfilePatches(configured.ctx, readProfilePatches('dsh', configured.profile), 'dsh')
+  await configured.ctx.loader.await()
+  const entry = configured.ctx.configEditor.entries().find(row => row.options.id === options.id)!
+  await entry.fiber!.await()
+  return configured
+}
 
 function request<P>(payload: P): P {
   return payload
@@ -360,8 +381,7 @@ describe('Web session model selection', () => {
   })
 
   it.each([false, true])('account login replaces a saved default only without another API key: %s', async (configuredKey) => {
-    const { configurationFixture } = await import('../../../settings/settings/tests/configuration-fixture.ts')
-    const configured = await configurationFixture({ hmr: false })
+    const configured = await modelConfigurationFixture()
     const { ctx } = await harness(undefined, configured.ctx)
     ctx.effect(() => ctx.llm.registerAdapter(['deepseek-account'], new CatalogAdapter('Account', [
       { provider: 'deepseek-account', id: 'first-model', name: 'First' },
@@ -831,6 +851,7 @@ describe('Web session model selection', () => {
       attachmentId: 'saved-image', mediaType: 'image/png' as const, bytes: 1, width: 1, height: 1,
     }
     ctx.provide('attachments', Object.setPrototypeOf({
+      imageLimits: TEST_IMAGE_LIMITS,
       saveImages: () => {
         if (saveMode === 'error') return Promise.reject(new Error('image store offline'))
         if (saveMode === 'remote') {
@@ -905,8 +926,7 @@ describe('Web session model selection', () => {
 })
 
 it('initializes the account model without reasoning metadata and rejects an empty account catalog', async () => {
-  const { configurationFixture } = await import('../../../settings/settings/tests/configuration-fixture.ts')
-  const configured = await configurationFixture({ hmr: false })
+  const configured = await modelConfigurationFixture()
   const { ctx } = await harness(undefined, configured.ctx)
   ctx.provide('credentials', { describe: vi.fn() } as never)
   const dispose = ctx.llm.registerAdapter(['deepseek-account'], new CatalogAdapter('Account', [

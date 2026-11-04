@@ -27,6 +27,10 @@ The package carries browser-to-Host Remote calls, exact Fetch responses, and con
 
 The `./client` import selects the standalone `lib/client.node.js` ESM bundle in Node and the `lib/client.browser.js` loader factory in browsers. The Web Host still serves the browser export at the logical `/plugins/.../client.js` URL. Import the Client entry for a non-page Cordis tree; the separate package root is the Host entry.
 
+Client type imports are transport-only. Import `SessionId` and `SessionEvent` from `@deepseek-ai/dsh-session/types`, `MessageId` from `@deepseek-ai/dsh-llm/brand`, and `ContentBlock` and `StreamChunk` from `@deepseek-ai/dsh-llm/types`; Connection does not re-export these domain types.
+
+The Host exposes `connection.maxRequestBodyBytes` for consumers to validate their encoded request budgets. Connection does not inspect attachment or model settings; the Session API validates its image budget before publishing its own service.
+
 A static desktop page can provide `__DSH_TRANSPORT__.streamBaseUrl` for the HTTP origin of its owned Host. The Gateway uses that origin for its WebSocket while HTTP transport remains independently selected. The desktop carrier owns authentication; setting the origin alone grants no access.
 
 Unary RPC requests use JSON. A Host handler may return byte attachments that it has already separated from the JSON-compatible result value, with each attachment naming its result-relative path. Connection writes these values as multipart parts. The JSON `metadata` part contains the RPC response envelope with `null` placeholders and an attachment table recording each path, codec, and part identifier. Paths use string keys and numeric array indices; no business field name is reserved. The Client validates the envelope, `rpcId`, attachment table, and parts, then restores each byte value as an `ArrayBuffer`-backed view. Results without attachments, including base64 strings, and failures remain JSON. Logical RPC carriers return decoded native values directly. Connection does not discover binary fields or depend on Typert; the handler that owns a result protocol performs any type-directed or runtime projection before returning. Binary parameters, events, and streamed binary results are unsupported.
@@ -77,7 +81,7 @@ None; this package neither assembles nor sends a provider request.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- **Buffered `/api` routes retain each request body in memory** — `maxRequestBodyBytes` (default 300 MiB, sized for the default 200 MiB aggregate image limit after base64 expansion plus envelope headroom) bounds ordinary image and RPC envelopes. Opt-in streaming routes receive backpressured chunks and bypass the aggregate cap; route implementations own persistence, cancellation, and any storage quota.
+- **Buffered `/api` routes retain each request body in memory** — `maxRequestBodyBytes` (default 300 MiB) bounds buffered request envelopes. Opt-in streaming routes receive backpressured chunks and bypass the aggregate cap; route implementations own persistence, cancellation, and any storage quota.
 - **A plain-HTTP listener exposes the bearer cookie in transit** — such a deployment cannot mark the browser cookie `Secure`, so serving the same authority over a network can leak the session cookie; configure TLS on the Web carrier ([`dsh-host-webserver`](../../host/webserver/README.md)) to have the cookie marked `Secure` and confined to TLS.
 - **Unused API Peers may remain until Host shutdown** — no connect deadline or idle collection is imposed on lightweight records whose caller never establishes a WebSocket. Cookie expiry still rejects new requests. API callers must reconnect through `/connect` after their owning socket closes or the Host restarts.
 - **There is no logout operation** — clearing the browser cookie ends one browser session; deleting the owner credential record and restarting `dsh` revokes every session.

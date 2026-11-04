@@ -27,6 +27,7 @@ import {
 } from '@deepseek-ai/dsh-session-persistence'
 import {
   createSessionTestRemote,
+  TEST_IMAGE_LIMITS,
   testSessionPersistence,
 } from './test-remote.ts'
 
@@ -909,7 +910,7 @@ describe('sessions.prompt synchronous rejection', () => {
     }
     const saveImages = vi.fn(() => Promise.resolve([savedImage]))
     ctx.provide('attachments', Object.setPrototypeOf(
-      { saveImages },
+      { saveImages, imageLimits: TEST_IMAGE_LIMITS },
       AttachmentStore.prototype,
     ) as never)
     ctx.provide('llm', {

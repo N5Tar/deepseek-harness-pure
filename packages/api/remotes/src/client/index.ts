@@ -107,11 +107,12 @@ export type {} from '@deepseek-ai/dsh-api-session-controller/types'
  * the carrier's runtime values stay behind their own module edge.
  */
 export type {
-  ConnectionHandle, ConnectionSinks, ContentBlock,
-  MessageId,
-  RpcId, RpcRequest, RpcResponse, RpcResult, SessionId,
-  StreamChunk,
+  ConnectionHandle, ConnectionSinks,
+  RpcId, RpcRequest, RpcResponse, RpcResult,
 } from '@deepseek-ai/dsh-client-connection/client'
+export type { SessionId } from '@deepseek-ai/dsh-session/types'
+export type { MessageId } from '@deepseek-ai/dsh-llm/brand'
+export type { ContentBlock, StreamChunk } from '@deepseek-ai/dsh-llm/types'
 export type {} from '@deepseek-ai/dsh-api-gateway/client'
 export type {} from '@deepseek-ai/dsh-cordis-host-runner/remote'
 

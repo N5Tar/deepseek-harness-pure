@@ -26,16 +26,7 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../attachment/attachment"
-    },
-    {
-      "path": "../../core/session"
-    },
-    {
       "path": "../../credentials/credentials"
-    },
-    {
-      "path": "../../llm/llm"
     },
     {
       "path": "../../typert/protocol"

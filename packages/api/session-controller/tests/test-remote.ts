@@ -286,6 +286,12 @@ async function installControllers(
       },
     } as never)
   }
+  if (ctx.get('connection') === undefined) {
+    ctx.provide('connection', {
+      maxRequestBodyBytes: 300 * 1024 * 1024,
+      fetch: { register: () => async () => {} },
+    } as never)
+  }
   if (ctx.get('fileUploads') === undefined) {
     ctx.provide('fileUploads', {
       registerAgentResolver: () => () => {},
