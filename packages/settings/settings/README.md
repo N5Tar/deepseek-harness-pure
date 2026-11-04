@@ -44,7 +44,7 @@ Each form reports `autoGenerate`, enabled by default, for clients that build pag
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-The [form projection](src/schema.ts) strips runtime references and ordinary fields. The [service](src/index.ts) supplies revisioned descriptors and validates edits against the full plugin Config before delegating persistence. Business plugins read their Config references directly.
+The [form projection](src/schema.ts) strips runtime references and ordinary fields. The [service](src/index.ts) supplies revisioned descriptors and validates edits against the full plugin Config before delegating persistence. Consumer plugins read their Config references directly; Settings requires neither Session nor Agent services. The configuration tests boot a generic consumer through the real Loader and verify live edits without remounting, profile persistence, and restart restoration.
 
 Secret roles are redacted from values, inherited values, profile overrides, and schema defaults; clients receive presence markers. Path edits preserve fields a client did not receive.
 

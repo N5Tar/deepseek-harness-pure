@@ -15,13 +15,7 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../preset/agent-preset-registry"
-    },
-    {
       "path": "../../credentials/credentials"
-    },
-    {
-      "path": "../../core/session"
     },
     {
       "path": "../../util/native-command"

@@ -22,7 +22,7 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
+      "path": "../../api/shell-remotes"
     },
     {
       "path": "../connection/tsconfig.client.json"

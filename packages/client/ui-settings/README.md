@@ -25,7 +25,7 @@ This package lets web-client features expose editable preferences backed by the 
 <a id="use-this-package"></a>
 ## Use this package
 
-Feature plugins use this package to store and edit their preferences without re-implementing transport or schema handling. Mount it once per composition; it injects the `remote` service with its `settings` namespace and owns the single `settings.describe` reader in the browser.
+Feature plugins use this package to store and edit their preferences without re-implementing transport or schema handling. Mount it once per composition; it injects the `remote` service with its `settings` namespace and owns the single `settings.describe` reader in the browser. Its settings types belong to the settings service, and its Remote declarations come from the settings-only shell assembly; no full product API assembly is required.
 
 ### Configuration forms
 

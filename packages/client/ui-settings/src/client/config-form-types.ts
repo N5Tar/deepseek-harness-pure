@@ -2,7 +2,7 @@
  * Client configuration values and atomic write operations.
  */
 
-import type { SettingsPathOpView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { SettingsPathOpView } from '@deepseek-ai/dsh-settings/types'
 
 /** Client-side sync state of one settings namespace. */
 export interface ConfigFormSnapshot<T> {

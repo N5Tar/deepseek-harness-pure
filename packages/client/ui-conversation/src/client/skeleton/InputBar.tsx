@@ -24,9 +24,8 @@ import {
 import type {} from '@deepseek-ai/dsh-plan-mode/client'
 // Type-only: the `goal` projection key merge (hint disambiguation).
 import type {} from '@deepseek-ai/dsh-goal/client'
-// The `imageLimits` projection key merge (intake pre-check) arrives with the
-// wire types: apiproxy's sessions contract declares it, and client-runtime's
-// api-remotes import already places it in every client program.
+// Declare the Session and upload endpoints queried by useAccess in this component.
+import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { Translate } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ComposerBarProps } from '../contract/slots.ts'
 import { DraftEditor } from '../input/editor/DraftEditor.tsx'

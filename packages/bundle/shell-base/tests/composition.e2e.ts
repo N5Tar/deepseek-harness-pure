@@ -114,7 +114,6 @@ describe('standalone shell composition', () => {
     const ids = graph.entries.map(entry => entry.id)
     expect(ids).toContain('@deepseek-ai/dsh-client-ui-shell')
     expect(ids).toContain('@deepseek-ai/dsh-api-shell-remotes')
-    // Informational package inject metadata can still name an absent full assembly.
     expect(ids).not.toContain('@deepseek-ai/dsh-api-remotes')
     expect(ids).not.toContain('@deepseek-ai/dsh-client-ui-conversation')
   })

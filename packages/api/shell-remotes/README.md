@@ -27,7 +27,7 @@ Use this plugin to let a standalone shell read and save preferences through the 
 
 The [shell-base composition](../../bundle/shell-base/README.md) mounts this plugin together with the Gateway, settings controller, and local settings provider. It accepts no plugin configuration. Do not mount it alongside the full Remote assembly: both select the same configuration namespaces.
 
-The Client entry requires the `remote` service. The Host marker performs no business work; module discovery publishes its browser entry through the normal dual-entry package mechanism.
+The Client entry requires the `remote` service. Its declaration entry exports the Gateway, configuration namespaces, and settings event selection for type-only consumers without importing the full business assembly. The Host marker performs no business work; module discovery publishes its browser entry through the normal dual-entry package mechanism.
 
 -----
 

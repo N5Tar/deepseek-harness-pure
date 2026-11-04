@@ -3,14 +3,35 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { onTestFinished } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import Timer from '@deepseek-ai/cordis-plugin-timer'
 import { boot, initProfile, readProfilePatches, type ProfileContext } from '@deepseek-ai/dsh-app-boot'
 import ConfigEditor from '@deepseek-ai/dsh-config-editor'
 import Hmr from '@deepseek-ai/dsh-hmr'
-import DefaultModel from '@deepseek-ai/dsh-agent-default-model'
 import Settings from '../src/index.ts'
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    configurationConsumer: ConfigurationConsumer
+  }
+}
+
+/** Test-only consumer that reads Loader-owned volatile references on demand. */
+class ConfigurationConsumer extends Service {
+  static Config = z.object({
+    category: z.string().required(),
+    label: z.string().required().volatile(),
+  })
+
+  constructor(ctx: Context, private readonly config: ReturnType<typeof ConfigurationConsumer.Config>) {
+    super(ctx, 'configurationConsumer')
+  }
+
+  currentValue() {
+    return { category: this.config.category, label: this.config.label.get() }
+  }
+}
 
 export async function configurationFixture(options: { schema?: z; apply?: (ctx: Context, config: unknown) => void; hmr?: boolean } = {}) {
   const home = realpathSync(mkdtempSync(join(tmpdir(), 'settings-config-')))
@@ -24,7 +45,7 @@ export async function configurationFixture(options: { schema?: z; apply?: (ctx: 
   writeFileSync(join(bundle, 'cordis.patch.yml'), JSON.stringify([{ insert: [
     { id: 'config-editor', name: 'cordis:editor' },
     { id: 'settings', name: 'cordis:settings' },
-    { id: 'default-model', name: 'cordis:model', config: { provider: 'test', model: 'original' } },
+    { id: 'consumer', name: 'cordis:consumer', config: { category: 'test', label: 'original' } },
     { id: 'first', name: 'cordis:probe', config: { ordinary: 'fixed', token: 'private' } },
     { id: 'second', name: 'cordis:probe', config: { ordinary: 'second' } },
   ] }]))
@@ -42,7 +63,7 @@ export async function configurationFixture(options: { schema?: z; apply?: (ctx: 
       ctx.provide('profileContext', profile)
       ctx.provide('appReady', { onReady: (listener: () => void) => { listener(); return () => {} } })
       Object.assign(ctx.loader.builtins, {
-        editor: ConfigEditor, settings: Settings, model: DefaultModel, probe: Probe,
+        editor: ConfigEditor, settings: Settings, consumer: ConfigurationConsumer, probe: Probe,
       })
     })
     onTestFinished(async () => { await ctx.fiber.dispose() })

@@ -6,17 +6,18 @@ import { parse } from 'yaml'
 import z from '@deepseek-ai/schemastery'
 import { configurationFixture as fixture } from './configuration-fixture.ts'
 
-it('persists a model edit, updates the real consumer without remounting, and restores it at restart', async () => {
+it('persists a configuration edit, updates the live consumer without remounting, and restores it at restart', async () => {
   const { ctx, profile, start } = await fixture()
-  const consumer = ctx.agentDefaultModel
-  const fiber = [...ctx.loader.entries()].find(entry => entry.options.id === 'default-model')!.fiber
-  await ctx.settings.mutate('default-model', [{ op: 'set', path: ['model'], value: 'changed' }])
-  expect([...ctx.loader.entries()].find(entry => entry.options.id === 'default-model')!.fiber === fiber).toBe(true)
-  expect(consumer.currentSelection()).toEqual({ provider: 'test', model: 'changed' })
-  expect(parse(readFileSync(profile.patchPath, 'utf8'))).toContainEqual({ id: 'default-model', name: 'cordis:model', config: { provider: 'test', model: 'changed' } })
+  const consumer = ctx.configurationConsumer
+  const fiber = [...ctx.loader.entries()].find(entry => entry.options.id === 'consumer')!.fiber
+  expect(consumer.currentValue()).toEqual({ category: 'test', label: 'original' })
+  await ctx.settings.mutate('consumer', [{ op: 'set', path: ['label'], value: 'changed' }])
+  expect([...ctx.loader.entries()].find(entry => entry.options.id === 'consumer')!.fiber === fiber).toBe(true)
+  expect(consumer.currentValue()).toEqual({ category: 'test', label: 'changed' })
+  expect(parse(readFileSync(profile.patchPath, 'utf8'))).toContainEqual({ id: 'consumer', name: 'cordis:consumer', config: { category: 'test', label: 'changed' } })
   await ctx.fiber.dispose()
   const restored = await start()
-  expect(restored.agentDefaultModel.currentSelection()).toEqual({ provider: 'test', model: 'changed' })
+  expect(restored.configurationConsumer.currentValue()).toEqual({ category: 'test', label: 'changed' })
 })
 
 it('isolates instances, hides ordinary fields, rejects invalid edits, and redacts secrets', async () => {
@@ -38,11 +39,11 @@ it('isolates instances, hides ordinary fields, rejects invalid edits, and redact
 
 it('refuses an edit shadowed by a higher home layer', async () => {
   const { ctx, home, profile } = await fixture()
-  writeFileSync(join(home, 'cordis.patch.yml'), JSON.stringify([{ id: 'default-model', config: { provider: 'test', model: 'home' } }]))
+  writeFileSync(join(home, 'cordis.patch.yml'), JSON.stringify([{ id: 'consumer', config: { category: 'test', label: 'home' } }]))
   const before = readFileSync(profile.patchPath, 'utf8')
-  await expect(ctx.settings.update('default-model', { model: 'profile' })).rejects.toThrow('overridden')
+  await expect(ctx.settings.update('consumer', { label: 'profile' })).rejects.toThrow('overridden')
   expect(readFileSync(profile.patchPath, 'utf8')).toBe(before)
-  expect(ctx.agentDefaultModel.currentSelection().model).toBe('home')
+  expect(ctx.configurationConsumer.currentValue().label).toBe('home')
 }, 15_000)
 
 it('serializes concurrent writes and refuses stale revisions after external changes', async () => {
@@ -316,10 +317,10 @@ it('imports the removed settings.yaml into the profile once and keeps rejected s
   const { ctx, home, profile, start } = await fixture()
   await ctx.fiber.dispose()
   const legacy = join(home, 'settings.yaml')
-  writeFileSync(legacy, 'default-model:\n  model: legacy\nfirst:\n  ordinary: rejected\nmissing:\n  count: 1\n')
+  writeFileSync(legacy, 'consumer:\n  label: legacy\nfirst:\n  ordinary: rejected\nmissing:\n  count: 1\n')
   const restored = await start()
-  await vi.waitFor(() => { expect(restored.agentDefaultModel.currentSelection().model).toBe('legacy') })
-  expect(parse(readFileSync(profile.patchPath, 'utf8'))).toContainEqual({ id: 'default-model', name: 'cordis:model', config: { provider: 'test', model: 'legacy' } })
+  await vi.waitFor(() => { expect(restored.configurationConsumer.currentValue().label).toBe('legacy') })
+  expect(parse(readFileSync(profile.patchPath, 'utf8'))).toContainEqual({ id: 'consumer', name: 'cordis:consumer', config: { category: 'test', label: 'legacy' } })
   expect(restored.settings.describe({ redactSecrets: true }).find(row => row.ns === 'first')!.value).toEqual({ count: 2, list: [] })
   expect(existsSync(legacy)).toBe(false)
   expect(readFileSync(`${legacy}.imported`, 'utf8')).toContain('rejected')
@@ -329,14 +330,14 @@ it('imports the removed settings.yaml into the profile once and keeps rejected s
   const again = await start()
   await vi.waitFor(() => { expect(readFileSync(`${legacy}.imported`, 'utf8')).toBe('') })
   await again.fiber.dispose()
-  writeFileSync(legacy, 'default-model:\n  model: blocked\n')
+  writeFileSync(legacy, 'consumer:\n  label: blocked\n')
   rmSync(`${legacy}.imported`)
   mkdirSync(join(home, 'settings.yaml.imported', 'occupied'), { recursive: true })
   const blocked = await start()
   const failures = (): unknown[] => blocked.logger.buffer.filter(message => message.type === 'error').map((message): unknown => message.args[0])
   // The rename fails with EISDIR on POSIX and EPERM on Windows; the reported error names the rename either way.
   await vi.waitFor(() => { expect(failures().some(failure => failure instanceof Error && failure.message.includes('rename'))).toBe(true) })
-  expect(blocked.agentDefaultModel.currentSelection().model).toBe('legacy')
+  expect(blocked.configurationConsumer.currentValue().label).toBe('legacy')
 })
 
 it('describes an entry whose required field only the profile supplies, and reports a failed refresh instead of crashing', async () => {

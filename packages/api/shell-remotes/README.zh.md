@@ -27,7 +27,7 @@ kind: "package-reference"
 
 [shell-base 组合](../../bundle/shell-base/README.zh.md)将此插件与 Gateway、设置控制器及本地设置提供者一起挂载。它不接受插件配置。不要将其与完整 Remote 组合同时挂载：两者选择相同的配置命名空间。
 
-Client 入口需要 `remote` 服务。Host 标记不执行业务工作；模块发现通过正常的双入口包机制发布其浏览器入口。
+Client 入口需要 `remote` 服务。其声明入口向仅导入类型的消费者导出 Gateway、配置命名空间和设置事件选择，无需导入完整业务装配。Host 标记不执行业务工作；模块发现通过正常的双入口包机制发布其浏览器入口。
 
 -----
 

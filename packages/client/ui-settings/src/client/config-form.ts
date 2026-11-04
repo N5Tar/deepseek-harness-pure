@@ -6,25 +6,10 @@ import { Service } from '@deepseek-ai/cordis'
 import type { Context } from '@deepseek-ai/cordis'
 import type {
   SettingsNamespaceView, SettingsPathOpView,
-} from '@deepseek-ai/dsh-api-remotes/client'
+} from '@deepseek-ai/dsh-settings/types'
 import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'
-// Type-only, and deliberately NOT `@deepseek-ai/dsh-api-remotes/client`: this
-// package is reachable from the Host build graph through its feature-package
-// callers, and api-remotes' Client face imports a Host-tsdown-generated
-// `/remote` artifact, which would deadlock the Host tsc phase. The gateway's
-// Client half declares `ctx.remote` with no generated import, and the
-// allowlist's `types` subpath is a pure-type source file, so the pair supplies
-// `$on` and its key face without dragging a build artifact in. The runtime
-// `remote` injection belongs to the providing plugin's apply, which registers
-// the mirror's invalidation subscriptions.
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type {} from '@deepseek-ai/dsh-api-remotes/types'
-// The forwarded event's own declaration: `$on`'s key face is
-// `Extract<keyof Events, keyof Selection>`, so the allowlist alone resolves to
-// never — the owning package's client-safe, type-only subpath supplies the
-// cordis `Events` entry (and with it the branded `SettingsNamespace`).
-import type {} from '@deepseek-ai/dsh-settings/types'
+import type {} from '@deepseek-ai/dsh-api-shell-remotes/client'
 import type { SettingsSchemaService } from './schema.ts'
 import type { ConfigForm, ConfigFormSnapshot } from './config-form-types.ts'
 import { SettingsDescribeMirror, type SettingsDescribeFace } from './settings-mirror.ts'
