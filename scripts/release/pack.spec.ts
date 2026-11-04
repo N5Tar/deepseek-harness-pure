@@ -270,8 +270,11 @@ describe('release pack CLI', () => {
     expect(result.status, result.stderr).toBe(0)
     expect(readFileSync(join(root, 'packed', PUBLISH_ORDER_FILE), 'utf8')).toBe('\n')
     expect(readdirSync(join(root, 'packed'))).toEqual([PUBLISH_ORDER_FILE])
-    expect(existsSync(join(root, 'hooks.log'))).toBe(false)
-  })
+    // `pnpm exec` may install the fixture workspace, which runs `prepare`; only
+    // a pack runs `prepack` and `postpack`, so those prove nothing was packed.
+    const hooks = existsSync(join(root, 'hooks.log')) ? readFileSync(join(root, 'hooks.log'), 'utf8') : ''
+    expect(hooks).not.toMatch(/:(?:prepack|postpack)$/m)
+  }, 120_000)
 
   it('leaves no publish order after a pack hook fails', async () => {
     const root = fixture()
@@ -318,7 +321,7 @@ describe('release pack CLI', () => {
     expect(result.stderr).toContain('@deepseek-ai/zebra publishes source file package/src/index.ts')
     expect(readdirSync(join(root, 'packed')).filter(name => name.endsWith('.tgz'))).toHaveLength(2)
     expect(existsSync(join(root, 'packed', PUBLISH_ORDER_FILE))).toBe(false)
-  })
+  }, 120_000)
 
   it.each(['dependencies', 'optionalDependencies', 'peerDependencies'])(
     'rejects nonexact DSH %s in the produced tarball before recording publication', async (section) => {
@@ -330,7 +333,7 @@ describe('release pack CLI', () => {
       expect(result.status).not.toBe(0)
       expect(result.stderr).toContain(`packed ${section}.@deepseek-ai/dsh-library must equal 1.2.3`)
       expect(existsSync(join(root, 'packed', PUBLISH_ORDER_FILE))).toBe(false)
-    },
+    }, 120_000,
   )
 
   it('stops the ready pack hook and its stalled descendant before fixture cleanup', async () => {
