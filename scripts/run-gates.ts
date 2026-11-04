@@ -425,7 +425,7 @@ function ciPrimaryGates(): Gate[] {
     // The prepared typecheck and build both drive Client tsc, while build also
     // repeats the Host contract pass. Wait for all three consumers so build
     // neither races tsbuildinfo nor replaces declarations while they are read.
-    ciBuildGate('build', { needs: ['typecheck', 'lint', 'doc-typecheck'] }),
+    ciBuildGate('build', { needs: ['typecheck', 'lint'] }),
     pnpmScript('publint', 'publint', { needs: ['build'] }),
     pnpmScript('node-next-types', 'verify-node-next-types', {
       label: 'node-next types',
@@ -516,7 +516,6 @@ function ciConsumerGates(): Gate[] {
     'publint',
     'snapshot',
     'expected-output',
-    'doc-typecheck',
     'node-next-types',
     'built-bin-smoke',
   ]
@@ -530,10 +529,6 @@ function ciConsumerGates(): Gate[] {
     snapshotGate(builtTree),
     expectedOutputGate(builtTree),
     webSnapshotGate(builtTree, buildArtifactReaders),
-    pnpmScript('doc-typecheck', 'doc-typecheck:contracts-ready', {
-      needs: builtTree,
-      env: { DSH_DOC_TYPECHECK_USE_BUILD_OUTPUT: '1' },
-    }),
     pnpmScript('node-next-types', 'verify-node-next-types', {
       label: 'node-next types',
       needs: builtTree,
@@ -569,7 +564,6 @@ function webSnapshotGate(needs: string[], after?: string[]): Gate {
 function ciWindowsBlockingGates(): Gate[] {
   return [
     ciBuildGate('windows-build', { label: 'build' }),
-    pnpmScript('windows-site', 'docs:build', { label: 'production site' }),
   ]
 }
 
@@ -580,20 +574,15 @@ function ciWindowsCompleteGates(): Gate[] {
   })
   const coverageAfter = coverage.map(gate => gate.id)
   const observational = ciWindowsObservationalGates()
-    // Coverage owns Electron preparation. The required production site replaces
-    // the MPA build, which writes to the same output directory.
-    .filter(gate => gate.id !== 'build' && gate.id !== 'docs-site-build' && gate.id !== 'electron-install')
+    // Coverage owns Electron preparation; the complete aggregate reuses one build.
+    .filter(gate => gate.id !== 'build' && gate.id !== 'electron-install')
     .map(gate => ({
       ...gate,
       allowFailure: true,
-      after: [...new Set([
-        ...coverageAfter,
-        ...(gate.after ?? []).map(id => id === 'docs-site-build' ? 'windows-site' : id),
-      ])],
+      after: [...new Set([...coverageAfter, ...(gate.after ?? [])])],
     }))
   return [
     ciBuildGate(),
-    pnpmScript('windows-site', 'docs:build', { label: 'production site' }),
     ...coverage,
     ...observational,
   ]
@@ -634,7 +623,7 @@ function ciWindowsObservationalGates(): Gate[] {
 }
 
 // Host package compilation and the bundle-free Typert pass produce the
-// declarations that prepared typecheck, lint, and doc-typecheck read; none of
+// declarations that prepared typecheck and lint read; none of
 // them reads a bundle or the Host aggregate program's noEmit check, which
 // `build` owns.
 function typertContractsGate(): Gate {

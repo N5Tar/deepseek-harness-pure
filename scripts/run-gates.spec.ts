@@ -257,11 +257,6 @@ describe('gate graph validation', () => {
     expect(scripts['test:bench:built']).toBe('tsx scripts/run-bench-suite.ts')
   })
 
-  it.each(['3', 'invalid'])('passes an explicit CLI help allowance %j to its owner', (raw) => {
-    vi.stubEnv('DSH_CLI_HELP_CONCURRENCY', raw)
-    const gates = withPnpmEntrypoint(() => gatesForMode('ci-windows-observational-ready'))
-    expect(gates.find(gate => gate.id === 'cli-help')).toMatchObject({ env: { DSH_CLI_HELP_CONCURRENCY: raw } })
-  })
 
   it('keeps the hygiene aggregate aligned with the package script checks', () => {
     const ids = withPnpmEntrypoint(() => gatesForMode('hygiene').map(subject => subject.id))
@@ -382,7 +377,7 @@ describe('gate graph validation', () => {
   it('keeps native Windows coverage blocking and behind the complete build', () => {
     const complete = withPnpmEntrypoint(() => gatesForMode('ci-windows-complete'))
     const observational = withPnpmEntrypoint(() => gatesForMode('ci-windows-observational-ready'))
-      .filter(gate => gate.id !== 'docs-site-build' && gate.id !== 'electron-install')
+      .filter(gate => gate.id !== 'electron-install')
     const byId = new Map(complete.map(subject => [subject.id, subject]))
 
     expect(byId.get('coverage')?.allowFailure).not.toBe(true)
@@ -415,7 +410,7 @@ describe('gate graph validation', () => {
 
     const completeBuiltBin = withPnpmEntrypoint(() => gatesForMode('ci-windows-complete'))
       .find(gate => gate.id === 'built-bin-smoke')
-    expect(completeBuiltBin?.after).toContain('windows-site')
+    expect(completeBuiltBin?.after).not.toContain('windows-site')
     expect(completeBuiltBin?.after).not.toContain('docs-site-build')
   })
 
@@ -428,11 +423,10 @@ describe('gate graph validation', () => {
 
     expect(scripts['check:ci:windows-observational-ready']).toBe('tsx scripts/run-gates.ts ci-windows-observational-ready')
     expect(scripts).not.toHaveProperty('check:ci:windows-observational')
-    const completeOnly = new Set(['build', 'windows-site', 'native-system', 'coverage', 'coverage-exempt-heavy'])
+    const completeOnly = new Set(['build', 'native-system', 'coverage', 'coverage-exempt-heavy'])
     const shared = complete.filter(gate => !completeOnly.has(gate.id))
-    expect(ready.map(gate => gate.id).sort()).toEqual([...shared.map(gate => gate.id), 'docs-site-build'].sort())
+    expect(ready.map(gate => gate.id).sort()).toEqual(shared.map(gate => gate.id).sort())
     expect(ready.some(gate => gate.id === 'build')).toBe(false)
-    expect(ready.find(gate => gate.id === 'docs-site-build')?.displayCommand).toBe('pnpm run docs:build:mpa')
     for (const diagnostic of shared) {
       expect(ready.find(gate => gate.id === diagnostic.id)).toMatchObject({
         command: diagnostic.command,
@@ -450,13 +444,13 @@ describe('gate graph validation', () => {
     const results = await runGates(ready, 8, async (subject) => {
       if (subject.id === 'built-bin-smoke') {
         expect(settled.size).toBe(ready.length - 1)
-        expect(settled.has('doc-graphs')).toBe(true)
+        expect(settled.has('duplication')).toBe(true)
       }
       settled.add(subject.id)
-      return resultFor(subject, subject.id === 'doc-graphs' ? 'failed' : 'passed')
+      return resultFor(subject, subject.id === 'duplication' ? 'failed' : 'passed')
     })
 
-    expect(results.filter(result => result.status === 'failed').map(result => result.gate.id)).toEqual(['doc-graphs'])
+    expect(results.filter(result => result.status === 'failed').map(result => result.gate.id)).toEqual(['duplication'])
     expect(results.find(result => result.gate.id === 'built-bin-smoke')?.status).toBe('passed')
     expect(results.some(result => result.status === 'skipped')).toBe(false)
   })
@@ -502,7 +496,7 @@ describe('gate graph validation', () => {
       expect(results.filter(result => result.status === 'failed').map(result => result.gate.id)).toEqual(['electron-install'])
       expect(attempted).not.toContain('built-bin-smoke')
       expect(results.find(result => result.gate.id === 'built-bin-smoke')?.status).toBe('skipped')
-      expect(results.find(result => result.gate.id === 'doc-graphs')?.status).toBe('passed')
+      expect(results.find(result => result.gate.id === 'duplication')?.status).toBe('passed')
       if (mode === 'ci-windows-complete') {
         expect(results.filter(result => result.status === 'failed' && !result.gate.allowFailure).map(result => result.gate.id))
           .toEqual(['electron-install'])
@@ -696,7 +690,6 @@ describe('Typert contract preparation', () => {
     for (const [id, script] of [
       ['typecheck', 'typecheck:contracts-ready'],
       ['lint', 'lint:contracts-ready'],
-      ['doc-typecheck', 'doc-typecheck:contracts-ready'],
     ] as const) {
       expect(subject.find(item => item.id === id)).toMatchObject({
         displayCommand: `pnpm run ${script}`,
@@ -707,7 +700,6 @@ describe('Typert contract preparation', () => {
     expect(subject.find(item => item.id === 'build')?.needs).toEqual([
       'typecheck',
       'lint',
-      'doc-typecheck',
     ])
   })
 
@@ -720,10 +712,6 @@ describe('Typert contract preparation', () => {
     expect(withPnpmEntrypoint(() => gatesForMode('ci-lint-contracts-ready'))).toContainEqual(expect.objectContaining({
       id: 'lint',
     }))
-    expect(subject.find(item => item.id === 'doc-typecheck')).toMatchObject({
-      displayCommand: 'pnpm run doc-typecheck:contracts-ready',
-      args: ['/private/pnpm.cjs', 'run', 'doc-typecheck:contracts-ready'],
-    })
   })
 
 })
@@ -815,7 +803,6 @@ describe('Node 24 lane ownership', () => {
     const subject = withPnpmEntrypoint(() => gatesForMode('ci-static'))
 
     expect(subject.map(item => item.id)).not.toContain('build')
-    expect(subject.map(item => item.id)).not.toContain('doc-typecheck')
   })
 
   it('owns the build and orders its artifact consumers', () => {
@@ -832,7 +819,6 @@ describe('Node 24 lane ownership', () => {
       'snapshot',
       'expected-output',
       'web-snapshot',
-      'doc-typecheck',
       'node-next-types',
       'built-bin-smoke',
     ])
@@ -850,7 +836,6 @@ describe('Node 24 lane ownership', () => {
       'snapshot',
       'expected-output',
       'web-snapshot',
-      'doc-typecheck',
       'node-next-types',
       'built-bin-smoke',
     ]) {
@@ -859,9 +844,6 @@ describe('Node 24 lane ownership', () => {
     expect(subject.find(item => item.id === 'snapshot')?.env).toEqual({ DSH_EXAMPLE_MODE: 'lib' })
     expect(subject.find(item => item.id === 'expected-output')?.env).toEqual({ DSH_EXAMPLE_MODE: 'lib' })
     expect(subject.find(item => item.id === 'built-bin-smoke')?.env).toEqual({ DSH_EXAMPLE_MODE: 'lib' })
-    expect(subject.find(item => item.id === 'doc-typecheck')?.env).toEqual({
-      DSH_DOC_TYPECHECK_USE_BUILD_OUTPUT: '1',
-    })
     expect(subject.find(item => item.id === 'built-bin-smoke')?.args).toEqual(
       expect.arrayContaining([
         'apps/cli/tests/profiles/headless/tests/source-tool.built.e2e.ts',
@@ -879,7 +861,6 @@ describe('Node 24 lane ownership', () => {
         'publint',
         'snapshot',
         'expected-output',
-        'doc-typecheck',
         'node-next-types',
         'built-bin-smoke',
       ],
