@@ -18,7 +18,7 @@ import { act } from '@testing-library/react'
 import { createInProcessModules, loadPluginModules } from './modules.ts'
 import { assertPlan, graphFromRoster, type AssemblyPlan } from './roster.ts'
 import { REMOTES_PACKAGE, remoteNamespacesOf, remoteProxiesPlugin } from './remote-proxies.ts'
-import { allowAllAccessPlugin, staticAccessPlugin } from '../access.ts'
+import { allowAllAccessPlugin, staticAccessPlugin } from '@deepseek-ai/dsh-client-ui-test-bench'
 
 /** The remote-access row: it mounts its own generated Remote contribution and publishes the access Hooks. */
 const REMOTE_ACCESS_PACKAGE = '@deepseek-ai/dsh-api-remote-access'

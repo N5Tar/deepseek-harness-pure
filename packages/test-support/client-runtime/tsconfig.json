@@ -92,6 +92,9 @@
     },
     {
       "path": "../../client/ui-context-menu"
+    },
+    {
+      "path": "../ui-test-bench"
     }
   ]
 }

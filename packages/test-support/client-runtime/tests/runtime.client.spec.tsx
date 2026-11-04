@@ -9,7 +9,7 @@ import { AttachmentId } from '@deepseek-ai/dsh-attachment'
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { stubConfigForm } from '../src/config-form.ts'
+import { stubConfigForm } from '@deepseek-ai/dsh-client-ui-test-bench'
 import { act, cleanup } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { createSnapshotStore, defineStore } from '@deepseek-ai/dsh-client-store'

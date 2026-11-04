@@ -10,10 +10,6 @@
  * machinery — everything mounts the production implementations.
  * @module @deepseek-ai/dsh-client-test-runtime
  */
-/* oxlint-disable typescript/no-redundant-type-constituents --
- * `keyof SlotMap & string` is the declare-merge key pattern (see ui-slots):
- * this compilation unit sees only the runtime's 'root' row, but consumer
- * programs merge their own keys in; the rule fires on the narrow-map view. */
 import { Context, Inject } from '@deepseek-ai/cordis'
 import type { Fiber, Plugin } from '@deepseek-ai/cordis'
 import { createElement, Fragment, useSyncExternalStore } from 'react'
@@ -23,8 +19,6 @@ import type { RenderResult } from '@testing-library/react'
 import type { queries } from '@testing-library/dom'
 import type { BoundFunctions } from '@testing-library/dom'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
-import { bindSnapshotSelector as bindRendererSnapshotSelector } from '@deepseek-ai/dsh-client-ui-renderer/src/client/bind.ts'
-import { createSlotRenderer as createRenderer } from '@deepseek-ai/dsh-client-ui-renderer/src/client/scoped-slots.tsx'
 import {
   apply as applyUiSession, inject as uiSessionInject,
 } from '@deepseek-ai/dsh-client-ui-session/client'
@@ -33,52 +27,34 @@ import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { PanelInfo } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {
-  ChildrenDecl, ComposedProps, HostObservable, OwnerOf, RenderOpts, SlotComponent, SlotMap, SlotRenderer,
+  ChildrenDecl, ComposedProps, OwnerOf, RenderOpts, SlotComponent, SlotMap,
   ScopedStandardSourceBinding, SessionProviderComponent, SlotEntryDef, SlotFactoryMap, SlotRendererHost, SlotSpec,
-  SnapshotSelectorHook, StoredFactory, StoreInstanceLike,
+  StoredFactory, StoreInstanceLike,
 } from '@deepseek-ai/dsh-client-ui-slots'
-import { registerDomSnapshotSerializer } from './snapshot.ts'
-import { TestRemote } from './remote.ts'
+import {
+  createSlotRenderer, registerDomSnapshotSerializer, TestRemote, allowAllAccessPlugin,
+} from '@deepseek-ai/dsh-client-ui-test-bench'
 import { TestSessions } from './sessions.ts'
 import { TestWorkspaces } from './workspaces.ts'
 import type { Stabilizer } from './fixtures.ts'
-import { allowAllAccessPlugin } from './access.ts'
 
 export type { UseSession } from '@deepseek-ai/dsh-client-ui-session/client'
-export { domSnapshotSerializer, registerDomSnapshotSerializer } from './snapshot.ts'
+export {
+  domSnapshotSerializer, registerDomSnapshotSerializer, stubConfigForm, RemoteError, TestRemote,
+  contextMenuHook, makeTranslate, allowAllAccess, allowAllAccessPlugin, StaticRemoteAccess,
+  staticAccessPlugin, usePinnedBrowserLanguages, bindSnapshotSelector, createSlotRenderer,
+} from '@deepseek-ai/dsh-client-ui-test-bench'
+export type {
+  StubConfigForm, AccessStandardProps, StaticAccessPlugin,
+} from '@deepseek-ai/dsh-client-ui-test-bench'
 export { FixtureSession, TestSessions } from './sessions.ts'
-export { stubConfigForm } from './config-form.ts'
-export type { StubConfigForm } from './config-form.ts'
 export { TestWorkspaces } from './workspaces.ts'
-export { RemoteError, TestRemote } from './remote.ts'
 export {
   chatSnapshot, conversationSnapshot, sessionSnapshot, workspaceSnapshot,
 } from './fixtures.ts'
 export type {
   FixtureSnapshot, SessionBehaviorOverrides, SessionFixture, SessionFixtureSnapshot, Stabilizer,
 } from './fixtures.ts'
-export { contextMenuHook } from './context-menu.ts'
-export { makeTranslate } from './translate.ts'
-export { allowAllAccess, allowAllAccessPlugin, StaticRemoteAccess, staticAccessPlugin } from './access.ts'
-export type { AccessStandardProps, StaticAccessPlugin } from './access.ts'
-export { usePinnedBrowserLanguages } from './locale-env.ts'
-
-/**
- * Bind an observable source to the production renderer's selector hook.
- * @param source - Observable snapshot source.
- * @returns Typed React selector hook.
- */
-export function bindSnapshotSelector<T>(source: HostObservable<T>): SnapshotSelectorHook<T> {
-  return bindRendererSnapshotSelector(source)
-}
-
-/**
- * Create the production slot renderer used by client feature tests.
- * @returns Slot renderer instance.
- */
-export function createSlotRenderer(): SlotRenderer {
-  return createRenderer()
-}
 
 /** Erased register face for the internal root call (the public declaration contract holds the typing). */
 type ErasedRegister = (options: object, component: unknown) => () => void

@@ -1,27 +1,34 @@
 /**
- * Static access for client specs. Production pages receive the
+ * Static access for base client specs. Production pages receive the
  * `remoteAccess` Client service and the global-resource `useRemoteAccess` Hook
- * from the remote-access Client plugin, and the Session and Workspace access
- * Hooks (Session-scope `useAccess`, `useSessionAccess`, `useWorkspaceAccess`)
- * from ui-session and ui-workspace over that service. The test runtimes
- * install an allow-all service and `useRemoteAccess` Hook instead, and
- * hand-built component props spread {@link allowAllAccess}; a spec of a
- * refused path overrides one Hook or provides a {@link StaticRemoteAccess}
- * that refuses the action.
- * @module @deepseek-ai/dsh-client-test-runtime/src/access
+ * from the remote-access Client plugin, while scope-specific access Hooks come
+ * from the plugins that own those scopes. The base bench installs an allow-all
+ * service and `useRemoteAccess` Hook; hand-built component props spread
+ * {@link allowAllAccess}.
+ *
+ * The bench declares the access Hooks itself instead of deriving them from the
+ * Session and Workspace plugins: base UI renders the root scope, so importing
+ * those packages for their declaration merge would pull the business stacks
+ * back into every base spec.
+ * @module @deepseek-ai/dsh-client-ui-test-bench/src/access
  */
 
 import { Service, type Context } from '@deepseek-ai/cordis'
 import type { AccessEffect, ClientRemoteAccess, RemoteEndpoint, TypertResourceKind } from '@deepseek-ai/dsh-api-remote-access/client'
-import type { GlobalStandardProps, HostObservable, SessionStandardProps } from '@deepseek-ai/dsh-client-ui-slots'
+import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-session/client'
-import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 
 /** The access Hooks every Slot component receives. */
-export type AccessStandardProps =
-  & Pick<GlobalStandardProps, 'useRemoteAccess' | 'useSessionAccess' | 'useWorkspaceAccess'>
-  & Pick<SessionStandardProps, 'useAccess'>
+export interface AccessStandardProps {
+  /** Answer for one global-resource action. */
+  useRemoteAccess: (action: RemoteEndpoint) => boolean
+  /** Answer for one Session-scoped action; the bench mounts no Session scope. */
+  useAccess: (action: RemoteEndpoint) => boolean
+  /** Answer for one Session-resource action; the bench mounts no Session scope. */
+  useSessionAccess: (sessionId: string, action: RemoteEndpoint) => boolean
+  /** Answer for one Workspace-resource action; the bench mounts no Workspace scope. */
+  useWorkspaceAccess: (workspaceId: string, action: RemoteEndpoint) => boolean
+}
 
 /** Access Hooks that allow every action on every resource, for hand-built component props. */
 export const allowAllAccess: AccessStandardProps = {
@@ -74,15 +81,14 @@ export interface StaticAccessPlugin {
 
 /**
  * Plugin standing in for the remote-access Client row with fixed answers: it
- * provides a {@link StaticRemoteAccess}, so ui-session and ui-workspace
- * publish their resource Hooks over it, and the matching `useRemoteAccess`
+ * provides a {@link StaticRemoteAccess} and the matching `useRemoteAccess`
  * Hook on the global resource.
  * @param allows - the fixed answer for each action on every resource.
  * @returns the plugin.
  */
 export function staticAccessPlugin(allows: (action: string) => boolean): StaticAccessPlugin {
   return {
-    name: 'client-test-runtime:static-access',
+    name: 'client-ui-test-bench:static-access',
     inject: ['slots'],
     apply(ctx: Context): void {
       new StaticRemoteAccess(ctx, allows)

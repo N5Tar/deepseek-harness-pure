@@ -2,7 +2,7 @@
 /** Root registration and theme projection require no Session services. */
 import { act, cleanup, screen } from '@testing-library/react'
 import { afterEach, expect, it, onTestFinished } from 'vitest'
-import { SlotTestRuntime } from '@deepseek-ai/dsh-client-test-runtime'
+import { SlotTestBench } from '@deepseek-ai/dsh-client-ui-test-bench'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import type { ThemeRuntime, ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
 import * as plugin from '../src/client/index.ts'
@@ -17,7 +17,7 @@ afterEach(cleanup)
 
 it('registers a localized root and content slot without declaring Session or layout dependencies, then removes them', async () => {
   applyHost()
-  const runtime = await SlotTestRuntime.create()
+  const runtime = await SlotTestBench.create()
   onTestFinished(() => runtime.dispose())
   const locale = new LocaleRuntime(runtime.ctx)
   locale.setLocale('en')
@@ -44,7 +44,7 @@ it('registers a localized root and content slot without declaring Session or lay
 })
 
 it('updates and restores document palette values when the root is unloaded', async () => {
-  const runtime = await SlotTestRuntime.create()
+  const runtime = await SlotTestBench.create()
   onTestFinished(() => runtime.dispose())
   const locale = new LocaleRuntime(runtime.ctx)
   runtime.ctx.provide('locale', locale)

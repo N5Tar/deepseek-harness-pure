@@ -2,7 +2,7 @@
 /** Settings delegate persistence and share modal focus ownership with other client controls. */
 import { act, cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, onTestFinished, vi } from 'vitest'
-import { SlotTestRuntime } from '@deepseek-ai/dsh-client-test-runtime'
+import { SlotTestBench } from '@deepseek-ai/dsh-client-ui-test-bench'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import type { ThemePreference, ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
 import * as plugin from '../src/client/index.ts'
@@ -10,7 +10,7 @@ import * as plugin from '../src/client/index.ts'
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 async function bench() {
-  const runtime = await SlotTestRuntime.create()
+  const runtime = await SlotTestBench.create()
   onTestFinished(() => runtime.dispose())
   const locale = new LocaleRuntime(runtime.ctx)
   locale.setLocale('en')

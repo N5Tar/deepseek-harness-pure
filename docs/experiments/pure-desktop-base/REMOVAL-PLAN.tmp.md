@@ -1,6 +1,6 @@
 # AI 产品剥离：模块分支执行计划（临时）
 
-日期：2026-11-04。状态：第 01 项 pure/settings、第 02 项 pure/connection 均已合入并推送；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
+日期：2026-11-04。状态：第 01 项、第 02 项已合入并推送；第 03 项 pure/ui-test-runtime 实施中；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
 
 ## 目标与范围
 
@@ -32,7 +32,7 @@
 |---|---|---|---|---|
 | 01 | `pure/settings` | 清理 settings、settings-controller 的 Session / Agent preset 残余依赖和编译引用；设置 UI 改用所属设置类型及必要的 shell 远程声明；替换业务化 fixture | 设置链路不依赖全量业务 API；读写、冲突处理、主题与语言持久化正常 | 已合入 |
 | 02 | `pure/connection` | 移除 Connection 的 Session、LLM 消息等业务类型出口和业务声明；保留通用传输与 Peer 生命周期 | RPC、鉴权、取消、断开与资源清理测试通过；剩余消费者引用已调整 | 已合入 |
-| 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 待开始 |
+| 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 进行中 |
 | 04 | `pure/web-shell` | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 待开始 |
 | 05 | `pure/desktop-host` | 桌面 Host 脱离全量产品 CLI；直接使用通用启动能力；移除 Agent、任务、账号等 Host 业务集成 | 无密钥、无账号和旧用户目录可启动；Host 启停、就绪和失败报告正常 | 待开始 |
 | 06 | `pure/desktop-shell` | 纯桌面成为唯一模式；删除双模式、账号 Welcome、产品专属 IPC 和构建入口 | 不设置模式变量也启动底座；窗口、菜单、设置、退出与子进程清理正常 | 待开始 |
@@ -130,3 +130,21 @@ Connection 通过只读 maxRequestBodyBytes 公开共享 HTTP 路由的缓冲容
 新增回归覆盖直接依赖隔离、Host/Client 编译引用和类型出口，以及容量恰好满足、差一字节、晚注入、替换、卸载和真实 Loader 的错误归属。Connection 原有 14 个文件、188 个测试通过；新增隔离检查 4 个测试通过；Host/Client 独立编译通过；Session API 50 个文件、1088 个测试通过；Liveshare 消费者 3 个测试通过。完整构建 10 项通过；使用新产物的真实 shell 组合与 Desktop Host 两项验收通过，覆盖鉴权、语言设置持久化、重启、退出和缺少 Office 载荷的启动。修改过的 TypeScript 文件静态检查在修正测试 void 回调写法后通过，零警告、零错误；最新 build:check 两项通过；依赖策略覆盖的 97 个包检查通过。未运行全仓测试或 Electron 窗口视觉验证，第一模块记录的四个样式失败仍留待 Shell 模块处理。
 
 回归修复：第一模块将通用设置 fixture 去业务化后，三个 Session 模型用例仍依赖其隐式默认模型装配。本模块将真实模型装配放回这些业务测试自身的 profile patch，保留原断言和真实配置写入；未修改模型生产逻辑，也未把 AI 依赖加回通用设置包。
+
+## 第 03 项执行记录
+
+新建 `@deepseek-ai/dsh-client-ui-test-bench`（`packages/test-support/ui-test-bench`）：真实 Cordis Context、SlotRegistry 与生产渲染器的底座 Slot 测试台，不含 Session、Agent、Workspace、模型服务或其 fixture。
+
+拆分依据是依赖边界而不是目录名称：`remote`、`config-form`、`context-menu`、`translate`、`snapshot`、`locale-env`、`access` 七个模块本就不依赖业务包，已移入新包；`sessions`、`workspaces`、`fixtures` 和整机 assembly 留在 `client-runtime`，由其自带测试台继续服务 Session scope。`client-runtime` 改为从新包再导出通用能力，保持其现有消费者 API 不变，也避免复制实现。
+
+访问 Hook 的类型不再从 Session/Workspace 包派生：底座渲染 root scope，为声明合并而导入业务包会把整条业务栈拉回每个底座用例。新包自带 Hook 签名，`allowAllAccess` 的运行时行为不变。
+
+底座迁移：`ui-shell`、`ui-theme`、`locale`、`ui-settings` 的测试与开发依赖改到新包，`ui-shell` 从含 Session 的测试运行时改用 `SlotTestBench`。`ui-renderer` 保留原测试运行时，因为其套件本身就在验证 Session/Workspace scope 绑定，属该包职责。
+
+回归修复：第一模块把 `ui-settings` 的 `dsh.client.inject` 元数据指向 shell 专属装配包后，`web-app` 整机装配测试把它报为悬空 inject 目标。该包只通过 `remote` 服务访问装配，故移除这条元数据。
+
+新增测试覆盖：测试台组装时无业务服务、root 注册经生产入口渲染并在 fiber 释放后移除、缺失必需服务时挂载立即失败、销毁幂等，以及一道依赖守卫断言上述五个底座包及其编译引用不含 Session/Workspace/子代理测试栈。
+
+验证：新包 3 个测试文件、14 个测试通过；`client-runtime` 与底座包合计 16 个文件、144 个测试通过（另 1 个预期失败）；底座四包 1439 个测试通过，另有 4 个先前已记录的 `ui-shell` 样式失败未变。完整构建与产物装配验证进行中。
+
+保留事项：`SlotTestBench.declare`/`renderSlot` 在无 Session 适配器下的自动 frame 路径存在差异，本模块未把它作为底座用例依赖；该路径与含 Session 版本共用渲染器行为，留待渲染器模块核对。

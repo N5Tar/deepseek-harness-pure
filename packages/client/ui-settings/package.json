@@ -28,9 +28,6 @@
   },
   "dsh": {
     "client": {
-      "inject": [
-        "@deepseek-ai/dsh-api-shell-remotes"
-      ],
       "platform": "web"
     }
   },
@@ -47,11 +44,11 @@
     "@deepseek-ai/dsh-api-shell-remotes": "workspace:*",
     "@deepseek-ai/dsh-client-connection": "workspace:*",
     "@deepseek-ai/dsh-client-store": "workspace:*",
-    "@deepseek-ai/dsh-client-test-runtime": "workspace:*",
     "@deepseek-ai/dsh-client-ui-slots": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-test-bench": "workspace:*",
     "@deepseek-ai/dsh-settings": "workspace:*",
-    "react": "^18.2.0",
-    "@deepseek-ai/dsh-util-values": "workspace:*"
+    "@deepseek-ai/dsh-util-values": "workspace:*",
+    "react": "^18.2.0"
   },
   "files": [
     "locale/*.json",

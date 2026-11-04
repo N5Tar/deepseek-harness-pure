@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { contextMenuHook } from '@deepseek-ai/dsh-client-test-runtime'
+import { contextMenuHook } from '@deepseek-ai/dsh-client-ui-test-bench'
 /** FontFamilyRow behavior: the field shows the persisted list, blur and Enter
  * commit the normalized input, and the field follows store changes. Also
  * covers the font-list normalization it relies on. */
@@ -9,7 +9,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { WorkspaceSnapshot } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
-import { allowAllAccess, bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
+import { allowAllAccess, bindSnapshotSelector } from '@deepseek-ai/dsh-client-ui-test-bench'
 import { FontFamilyRow } from '../src/client/FontFamilyRow.tsx'
 import type { FontFamilyRowComponentProps } from '../src/client/FontFamilyRow.tsx'
 import { createFontRowStore } from '../src/client/settings-store.ts'
