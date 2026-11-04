@@ -1,5 +1,5 @@
 /** Internal React bindings for renderer hosts and standard-source scopes. */
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react'
 import type {
   HostObservable,
   KeyedStandardSource,
@@ -26,6 +26,30 @@ export function useHost(): SlotRendererHost {
 
 const RootBindingContext = createContext<StandardSourceBinding | null>(null)
 const ScopeBindingContext = createContext<StandardSourceBinding | null>(null)
+
+/**
+ * Read an optional scope binding for root or mixed-scope dispatch.
+ * @returns The inherited binding, or absence when no adapter is installed.
+ */
+export function useOptionalScopeBinding(): StandardSourceBinding | undefined {
+  return useContext(ScopeBindingContext) ?? undefined
+}
+
+/**
+ * Keep the root tree mounted independently of Session adapter lifetimes.
+ * @param props - Root subtree.
+ * @returns A stable provider with an optional domain-owned binding.
+ */
+export function RootScopeProvider({ children }: { children: ReactNode }) {
+  const host = useHost()
+  observableHook(host.scopeRevision)(value => value)
+  const source = host.scope('session-maybe')?.current
+  const binding = useSyncExternalStore(
+    listener => source?.subscribe(listener) ?? (() => {}),
+    () => source?.getSnapshot() ?? null,
+  )
+  return <ScopeBindingContext.Provider value={binding}>{children}</ScopeBindingContext.Provider>
+}
 
 /**
  * Read the root standard-source binding.

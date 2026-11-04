@@ -14,9 +14,9 @@ import {
   type StoredEntry, type StoredFactory, type Translate,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  HostContext, RootStandardProvider, ScopeBindingProvider, ScopeProvider,
+  HostContext, RootStandardProvider, RootScopeProvider, ScopeBindingProvider,
   keyedObservableHook, maybeObservableHook, observableHook, useHost, useRootBinding,
-  useScopeBinding,
+  useScopeBinding, useOptionalScopeBinding,
 } from './bindings.tsx'
 import { SlotAssemblyError } from './errors.ts'
 
@@ -734,8 +734,8 @@ interface MaybeIncarnation {
 
 const FIRST_INCARNATION: MaybeIncarnation = { adopted: undefined, epoch: 0 }
 
-function useMaybeIncarnation(binding: StandardSourceBinding): number {
-  const identity = binding.key === undefined
+function useMaybeIncarnation(binding: StandardSourceBinding | undefined): number {
+  const identity = binding?.key === undefined
     ? undefined
     : (binding as ScopedStandardSourceBinding).ctx
   // The child key is an incarnation counter, NOT the session id: adoption
@@ -810,7 +810,7 @@ function useFactorySlotRuntime(name: string, fallback: FC<InjectedProps>): FC<In
   return useMemo(function bindFactoryLocalComponent() {
     return function BoundFactoryLocalComponent(localProps: InjectedProps): ReactNode {
       const current = useContext(FactoryOccurrenceContext)
-      const localScopeBinding = useScopeBinding()
+      const localScopeBinding = useOptionalScopeBinding()
       const localMaybeEpoch = useMaybeIncarnation(localScopeBinding)
       if (!host.isFactoryLive(definition)) {
         throw new StaleAuthorizationError(`local slot '${name}' from a disposed Factory`)
@@ -818,7 +818,10 @@ function useFactorySlotRuntime(name: string, fallback: FC<InjectedProps>): FC<In
       if (current === null || current.definition !== definition) {
         throw new SlotOwnershipError(`local slot '${name}' rendered outside factory '${definition.name}'`)
       }
-      if (declared.scope === 'session' && localScopeBinding.key === undefined) {
+      if (declared.scope !== 'root' && localScopeBinding === undefined) {
+        throw new SlotAssemblyError(`scope '${declared.scope}' local slot '${name}' rendered without an installed adapter`)
+      }
+      if (declared.scope === 'session' && localScopeBinding?.key === undefined) {
         throw new SlotAssemblyError(
           `strict session local slot '${name}' from factory '${definition.name}' rendered without a scope binding`)
       }
@@ -904,11 +907,14 @@ interface FactoryOccurrenceProps {
 }
 
 function FactoryOccurrence({ definition, inputProps, selected, caller, binding, maybeEpoch }: FactoryOccurrenceProps & {
-  binding: StandardSourceBinding
+  binding: StandardSourceBinding | undefined
   maybeEpoch: number
 }) {
   if (definition.scope === 'root') {
     return <FactoryOccurrenceBody definition={definition} inputProps={inputProps} selected={selected} caller={caller} />
+  }
+  if (binding === undefined) {
+    throw new SlotAssemblyError(`scope '${definition.scope}' factory '${definition.name}' rendered without an installed adapter`)
   }
   if (definition.scope === 'session') {
     if (binding.key === undefined) {
@@ -984,7 +990,7 @@ function FactoryOutlet({ name, inputProps, slots: selected = EMPTY_FACTORY_SELEC
 }) {
   const host = useHost()
   const ancestors = useContext(FactoryAncestryContext)
-  const binding = useScopeBinding()
+  const binding = useOptionalScopeBinding()
   const maybeEpoch = useMaybeIncarnation(binding)
   const version = useSyncExternalStore(
     listener => host.subscribeFactory(name, listener),
@@ -1002,7 +1008,7 @@ function FactoryOutlet({ name, inputProps, slots: selected = EMPTY_FACTORY_SELEC
   const scopeIdentity = definition.scope === 'root'
     ? 'root'
     : definition.scope === 'session'
-      ? binding.key === undefined
+      ? binding?.key === undefined
         ? 'session:absent'
         : `session:${sessionGenerationKeyOf(binding as ScopedStandardSourceBinding)}`
       : `session-maybe:${maybeEpoch}`
@@ -1081,7 +1087,7 @@ function SlotOutlet({ slotKey, ownerProps, opts, declaredInline }: {
   // Locale revision tick: a locale switch re-renders every outlet, and entry
   // bodies re-derive their `t` seat at the new revision (fresh identity).
   useLocaleRevision(host.locale)
-  const scopeBinding = useScopeBinding()
+  const scopeBinding = useOptionalScopeBinding()
   const spec = host.specOf(slotKey)
   // Retained elements keep their declaration's anchor after unload, but never
   // use that declaration to dispatch entries while the live spec is absent.
@@ -1105,14 +1111,17 @@ function renderOutletContent(
   slotKey: string,
   ownerProps: object,
   opts: (RenderOpts & ChainRenderOpts) | undefined,
-  scopeBinding: StandardSourceBinding,
+  scopeBinding: StandardSourceBinding | undefined,
   spec: SlotSpec<SlotEntryDef>,
 ): ReactNode {
+  if (spec.scope !== 'root' && scopeBinding === undefined) {
+    throw new SlotAssemblyError(`scope '${spec.scope}' slot '${slotKey}' rendered without an installed adapter`)
+  }
   const Anchor = spec.inline === true ? 'span' : 'div'
   if (spec.kind === 'chain' && opts?.fallbackOnly === true) {
     return renderChainResult(slotKey, null, opts, Anchor)
   }
-  if (spec.scope === 'session' && scopeBinding.key === undefined) {
+  if (spec.scope === 'session' && scopeBinding?.key === undefined) {
     throw new SlotAssemblyError(`strict session slot '${slotKey}' rendered without a scope binding`)
   }
   const entries = host.entriesOf(slotKey)
@@ -1321,9 +1330,9 @@ export function createSlotRenderer(): SlotRenderer {
       return (
         <HostContext.Provider value={host}>
           <RootStandardProvider>
-            <ScopeProvider scope="session-maybe">
+            <RootScopeProvider>
               <RootOutlet ownerProps={ownerProps} />
-            </ScopeProvider>
+            </RootScopeProvider>
           </RootStandardProvider>
         </HostContext.Provider>
       )

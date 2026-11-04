@@ -47,7 +47,7 @@ The package realizes one boundary: the object layer (runtime, React-free) owns b
 
 ### Activation and mount
 
-The plugin activates after `slots`, `sessions`, and `layout`; it installs `createSlotRenderer()` and reflects the `uiRenderer` service. `mountApp` looks for the boot kernel's `[data-dsh-boot]` element: when present it hydrates through `BootHandoff` (a one-frame pass-through that preserves the loading DOM), otherwise it creates a fresh root and flushes the render synchronously.
+The plugin creates `slots`, installs `createSlotRenderer()`, and provides the `uiRenderer` service without requiring Session or layout services. Root-scoped entries, children, Factories, and local Factory slots render without a Session scope adapter; scoped consumers still fail explicitly when that adapter is missing. Installing or removing the adapter preserves root component state while updating inherited bindings. `mountApp` looks for the boot kernel's `[data-dsh-boot]` element: when present it hydrates through `BootHandoff` (a one-frame pass-through that preserves the loading DOM), otherwise it creates a fresh root and flushes the render synchronously.
 
 ### Slot bindings
 
