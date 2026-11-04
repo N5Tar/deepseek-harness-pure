@@ -27,7 +27,7 @@ kind: "package-library"
 
 用此包启动应用是一个小而显式的入口：你给它一个配置文件，它运行整个启动过程。本节说明你能做什么、能得到什么；每个结果背后的 helper 调用记录在下方可折叠的实现章节中。
 
-profile 加载时会从 `dsh.profile.bundles` 移除已停用的安装方 bundle 选项，仅在需要时重写 manifest，保留其他字段。[Team 迁移](../../../docs/upgrade-guide/v0.2.1-rc.2/session-team-mode/guide.zh.md)说明默认组合与保留的行覆盖。
+profile 加载时会从 `dsh.profile.bundles` 移除已停用的安装方 bundle 选项，仅在需要时重写 manifest，保留其他字段。Team 迁移说明默认组合与保留的行覆盖。
 
 ### 何时使用
 
@@ -88,7 +88,7 @@ profile 导入插件前，DSH 会将其声明的 DSH 版本要求与 `getDshRunt
 
 `resolvePluginResource(specifier, parentURL)` 通过活动的 Node ESM 解析器将插件模块或导出资源解析为本地文件路径，不执行其代码。解析器不可用或资源无法解析为本地文件时会抛出错误。
 
-使用 `readPluginMeta(specifier, parentURL)` 或 `ctx.pluginPackages.metaOf(specifier, parentURL)` 读取已安装包的展示文本，无需导入或激活插件。查询使用完整包标识与调用方的解析基准，并遵循 Node exports。文件路径与文件 URL 不解析资源，直接返回无元信息。包根标识缺失的 locale 字段回退到可访问的 `package.json`；子路径标识从不读取 `package.json`。格式错误的元信息返回 `error` 诊断。结果保留翻译，由 Client 选择语言。即使 locale 文本完整，读取器也会加载图片 data URL：包根使用清单 `icon`，省略该字段时使用 `<包名>/icon`；子路径使用 `<标识>/icon`。图标出错时，保留有效文本并附上诊断。作者格式见[插件展示元信息](../../../docs/cookbook/adding-a-package.zh.md#plugin-display-metadata)。
+使用 `readPluginMeta(specifier, parentURL)` 或 `ctx.pluginPackages.metaOf(specifier, parentURL)` 读取已安装包的展示文本，无需导入或激活插件。查询使用完整包标识与调用方的解析基准，并遵循 Node exports。文件路径与文件 URL 不解析资源，直接返回无元信息。包根标识缺失的 locale 字段回退到可访问的 `package.json`；子路径标识从不读取 `package.json`。格式错误的元信息返回 `error` 诊断。结果保留翻译，由 Client 选择语言。即使 locale 文本完整，读取器也会加载图片 data URL：包根使用清单 `icon`，省略该字段时使用 `<包名>/icon`；子路径使用 `<标识>/icon`。图标出错时，保留有效文本并附上诊断。作者格式见插件展示元信息。
 
 app-boot 应用的 profile 模板、安装方拥有的 profile 组合包元组和已退役组合包列表位于 [`@deepseek-ai/dsh-official-bundles`](../../util/official-bundles/README.zh.md)，安装方的默认、可选和按需组合包列表也在该包中。
 
@@ -175,7 +175,7 @@ Loader 结算后，app-boot 在仅 optional 条目未激活时输出警告。如
 
 当包级约定不够用时阅读以下页面。它们从共享启动机制逐步进入组合模型及其背后的决策证据。
 
-- [Cordis 入门](../../../docs/cordis-primer.zh.md)——Loader、`!!js` 配置表达式，以及 include/group 语义。
+- Cordis 入门——Loader、`!!js` 配置表达式，以及 include/group 语义。
 - [dsh 应用](../../../apps/cli/README.zh.md)——消费这些 helper 的 `dsh` bin。
 - [dsh-cmdline](../cmdline/README.zh.md)——各 bin 使用的启动器到应用命令行交接。
 - [Profile 组合包](../../bundle/README.zh.md)——组合进 `dsh --profile` 的可安装 patch 层。

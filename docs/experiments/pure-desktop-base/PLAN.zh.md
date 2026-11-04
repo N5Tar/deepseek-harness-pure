@@ -79,7 +79,7 @@
 | [Profile 管理](../../../apps/desktop/src/project-manager.ts)与 [恢复实现](../../../packages/boot/app-boot/src/profile-sanitize.ts) | 默认组合与恢复组合都应指向纯净底座；配置备份和安装文件保留行为需实测 |
 | [原生菜单](../../../apps/desktop/src/preload-menu.ts) | 验证新 Root 的窗口控制区、菜单挂载条件和拖拽区域 |
 
-架构与组合原则参考[架构文档](../../architecture.zh.md)，生命周期与安全审查参考[防御性模式](../../defensive-patterns/README.zh.md)，测试选择参考[测试策略](../../testing.zh.md)。本计划不复制这些文档的完整规则。
+架构与组合原则参考架构文档，生命周期与安全审查参考防御性模式，测试选择参考测试策略。本计划不复制这些文档的完整规则。
 
 <a id="target-structure"></a>
 

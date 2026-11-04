@@ -50,7 +50,7 @@ The keyless [composition test](tests/composition.e2e.ts) requires built Client b
 <a id="further-exploration"></a>
 ## Further Exploration
 
-- [Application composition](../../../docs/architecture.md) — profiles and ordered bundle layers.
+- Application composition — profiles and ordered bundle layers.
 - [Pure desktop plan](../../../docs/experiments/pure-desktop-base/PLAN.md) — implementation scope and acceptance criteria.
 
 <a id="model-experience"></a>

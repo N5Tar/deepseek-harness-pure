@@ -48,7 +48,7 @@ The [Client entry](src/client/index.ts) mounts the settings controller's generat
 
 - [Gateway](../gateway/README.md) — method dispatch and authenticated streams.
 - [Settings controller](../settings-controller/README.md) — configuration reads and writes.
-- [Web Client](../../../docs/subsystems/web-client.md) — module discovery and activation.
+- Web Client — module discovery and activation.
 
 <a id="model-experience"></a>
 ## Model Experience

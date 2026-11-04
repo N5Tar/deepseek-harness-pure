@@ -140,13 +140,13 @@ kind: "package-library"
 <a id="understand-the-implementation"></a>
 ## 理解实现
 
-`Button` 的 `md` 使用 H36/R12，`sm` 使用 H28/R8，包含描边控件。`outline` 变体保留 0.5px 透明边框用于布局，并通过内阴影绘制描边。描边宽度读取 ui-theme 随设备像素比更新的 `--dsh-hairline-width`，未安装主题时回退到 0.5px。功能样式通过 `--dsh-button-outline-color` 定制描边颜色，并保留边框宽度、透明边框颜色和 box-shadow。菜单与卡片遵循[共享圆角规则](../../../docs/web-styling.zh.md#corner-radii-and-settings-cards)；功能样式保留控件几何。
+`Button` 的 `md` 使用 H36/R12，`sm` 使用 H28/R8，包含描边控件。`outline` 变体保留 0.5px 透明边框用于布局，并通过内阴影绘制描边。描边宽度读取 ui-theme 随设备像素比更新的 `--dsh-hairline-width`，未安装主题时回退到 0.5px。功能样式通过 `--dsh-button-outline-color` 定制描边颜色，并保留边框宽度、透明边框颜色和 box-shadow。菜单与卡片遵循共享圆角规则；功能样式保留控件几何。
 
 锚点变为 inert 或隐藏时，portal 菜单会关闭；右键菜单使用 `returnFocus` 提供的原始控件。右键菜单打开期间会将自身 ID 加入该控件的 `aria-controls`，关闭时恢复原值。其所属区域保留的内容继续挂载。
 
 `Menu.listClassName` 独立控制菜单卡片样式，不影响入口容器，也适用于 portal 模式。前置图标使用 `--dsw-alias-menu-icon` 文本色；破坏性操作图标保留错误色。
 
-`Menu` 将卡片材质交给 `MenuSurface`，自定义菜单也使用该组件。`MenuSurface` 转发 div 属性和 ref，采用透明填充及模糊，`compact` 使用较小圆角。默认相对定位使材质层限制在容器内；调用方的类可以设置 fixed 或 absolute 定位。macOS 上，不接收交互的底层通过 CSS 锚点跟随卡片，并随卡片卸载；该底层要求 Web 外壳隔离 body 的层叠上下文。功能类控制布局和层级，组件负责材质和外圆角（[菜单规则](../../../docs/web-styling.zh.md#component-rules)）。 模态遮罩保留黑色半透明填充，不模糊背景。
+`Menu` 将卡片材质交给 `MenuSurface`，自定义菜单也使用该组件。`MenuSurface` 转发 div 属性和 ref，采用透明填充及模糊，`compact` 使用较小圆角。默认相对定位使材质层限制在容器内；调用方的类可以设置 fixed 或 absolute 定位。macOS 上，不接收交互的底层通过 CSS 锚点跟随卡片，并随卡片卸载；该底层要求 Web 外壳隔离 body 的层叠上下文。功能类控制布局和层级，组件负责材质和外圆角（菜单规则）。 模态遮罩保留黑色半透明填充，不模糊背景。
 
 `MenuGroup` 渲染以本地化标题命名的 `role="group"` 区段，标题 id 由各实例独立持有。自定义菜单与列表框共用其标题字体、间距和吸顶定位。标题原位透明；只有 `data-stuck` 才启用主题在浅／深色模式下的 94% 不透明分组标题填充。`data-platform="darwin"` 以外的标题使用 `--dsw-radius-md` 圆角；外围菜单保留半透明材质。
 
@@ -201,7 +201,7 @@ kind: "package-library"
 - [ui-tool](../ui-tool/README.zh.md)——拼装这些输出卡片的工具调用展示层。
 - [ui-conversation](../ui-conversation/README.zh.md)——渲染 Markdown 回复与工具卡片的聊天界面。
 - [ui-theme](../ui-theme/README.zh.md)——这些原子组件样式所依赖的 `--dsw-*` token 体系。
-- [Web 样式](../../../docs/web-styling.zh.md)——Web 客户端组件的权威样式规则。
+- Web 样式——Web 客户端组件的权威样式规则。
 
 -----
 

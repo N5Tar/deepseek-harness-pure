@@ -36,8 +36,8 @@ Two small plugins cover the two patterns; each README below explains when to kee
 
 Start with the tools subsystem reference for the tool-call pipeline, then the reminder's configuration and the timeout-library decision behind the policy.
 
-- [Tools subsystem reference](../../docs/subsystems/tools.md) — the tool-call pipeline and decisions both guards build on.
-- [Generated configuration catalog](../../docs/config-catalog.md#deepseek-aidsh-repeat-tool-reminder) — every accepted field of the repeat-call reminder.
+- Tools subsystem reference — the tool-call pipeline and decisions both guards build on.
+- Generated configuration catalog — every accepted field of the repeat-call reminder.
 - [Timeout deadline library Agent Note](../../.agents/notes/implemented/architecture/2026-07-06-timeout-deadline-library.md) — the timing/termination split `timeout-policy` enforces.
 
 <a id="dev-note"></a>

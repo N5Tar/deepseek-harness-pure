@@ -104,11 +104,11 @@ kind: "package-group"
 ## 相关文档
 
 - [实验包发布说明](../../scripts/experimental-package-policy.ts)——默认公开与私有例外。
-- [工作树](../../docs/subsystems/worktrees.zh.md)——显式创建分支与检出目录。
-- [Forges](../../docs/subsystems/forge.zh.md)——变更请求提供方、状态轮询、Session 绑定与面板。
-- [计算机操作](../../docs/subsystems/computer-use.zh.md)——桌面提供方选择。
-- [浏览器操作](../../docs/subsystems/browser-use.zh.md)——浏览器提供方选择与 Session 所有权。
-- [Agent Teams 子系统](../../docs/subsystems/agent-team.zh.md)——持久 Team 类型与 `ctx.agentTeams` 服务 API。
+- 工作树——显式创建分支与检出目录。
+- Forges——变更请求提供方、状态轮询、Session 绑定与面板。
+- 计算机操作——桌面提供方选择。
+- 浏览器操作——浏览器提供方选择与 Session 所有权。
+- Agent Teams 子系统——持久 Team 类型与 `ctx.agentTeams` 服务 API。
 - [实验子树规则](AGENTS.md)——实验状态放宽了什么、不放宽什么。
 
 -----

@@ -75,7 +75,7 @@ Account presence reads the credential store, and attempt state projects private 
 <a id="further-exploration"></a>
 ## Further Exploration
 
-The [credentials subsystem](../../../docs/subsystems/credentials.md) owns storage APIs; the [architecture](../../../docs/architecture.md) explains application composition.
+The credentials subsystem owns storage APIs; the architecture explains application composition.
 
 The attemptTimeoutMs limit includes initialization, browser waiting, and exchange. Initialization does not extend its absolute deadline; the server TTL may only shorten the remaining time. Credential persistence admitted before expiry completes without cancellation.
 

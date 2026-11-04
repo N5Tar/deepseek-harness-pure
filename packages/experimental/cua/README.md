@@ -94,7 +94,7 @@ The detail page reads the effective default (`selectedDefault ?? default`) from 
 
 - [macOS provider](../cua-macos/README.md)
 - [Object interfaces](src/types.ts)
-- [Consent storage migration](../../../docs/upgrade-guide/v0.2.1-rc.2/cua-consent-storage/guide.md)
+- Consent storage migration
 
 -----
 

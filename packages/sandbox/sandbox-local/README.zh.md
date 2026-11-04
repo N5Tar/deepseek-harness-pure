@@ -46,7 +46,7 @@ kind: "package-reference"
 | `runnerFailureSignatures` | `[]` | 识别自定义 runner 自身失败方言的不区分大小写 stderr 子串；与 `runnerCommand` 搭配必需 |
 | `probeTimeoutMs` | `5,000` | 每次竞争 runner 候选功能探测的超时时间 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-sandbox-local)是每个受支持字段及其 JSDoc 的穷尽式真源。
+生成的配置目录是每个受支持字段及其 JSDoc 的穷尽式真源。
 
 ### 受限执行与强制执行
 
@@ -106,7 +106,7 @@ Windows 档为每个工作区保留一个确定性写入 SID 和常驻 ACE，同
 
 先从子系统参考文档了解共享词汇，再看 seam 约定、消费方与 win32 档。
 
-- [进程沙箱子系统](../../../docs/subsystems/sandbox.zh.md)——模式、逐调用策略与分类方言。
+- 进程沙箱子系统——模式、逐调用策略与分类方言。
 - [沙箱 seam 包](../sandbox/README.zh.md)——本提供方实现的服务约定。
 - [Bash 沙箱执行器](../../shell/bash-sandbox/README.zh.md)——受限的 bash 消费方。
 - [Windows ACL 受限令牌档](../sandbox-windows-acl/README.zh.md)——本提供方挂载的 win32 后端。

@@ -48,7 +48,7 @@ kind: "package-reference"
 | `searchProvider` | （未设置） | 固定的搜索提供方 id；未设置时仅在恰好一个可用时自动选择 |
 | `fetchProvider` | （未设置） | 固定的抓取提供方 id；未设置时仅在恰好一个可用时自动选择 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-web)是每个受支持字段及其 JSDoc 的穷尽式真源。
+生成的配置目录是每个受支持字段及其 JSDoc 的穷尽式真源。
 
 ### 搜索与抓取
 
@@ -62,7 +62,7 @@ const result = await ctx.web.search({ query: 'deepseek harness', maxResults: 8 }
 const page = await ctx.web.fetch({ url: 'https://example.com' })
 ```
 
-两个调用都接受可选的 `AbortSignal`，用于把取消转发给提供方。规范化的请求与结果形状是调用方赖以构建的约定；[web 子系统](../../../docs/subsystems/web.zh.md) 参考中的词汇章节对其有穷尽式描述。
+两个调用都接受可选的 `AbortSignal`，用于把取消转发给提供方。规范化的请求与结果形状是调用方赖以构建的约定；web 子系统 参考中的词汇章节对其有穷尽式描述。
 
 ### 提供方选择
 
@@ -98,7 +98,7 @@ ctx.remote.$on('web/providers-changed', () => { /* re-read the lists */ })
 <a id="adding-a-provider"></a>
 #### 添加其他提供方
 
-内置组合之外的搜索或抓取后端是一个插件包，它以唯一的 `id` 和可选的 `title` 调用 `ctx.web.registerSearchProvider()` 或 `ctx.web.registerFetchProvider()`。要在某个 profile 中启用它，先用 `dsh plugin --profile <name> add <package>` 安装该包（[安装规则](../../../docs/user/develop/basic/publish.zh.md)），再把它的行加入该 profile 的用户 patch 层 `$DSH_HOME/profiles/<name>/cordis.patch.yml`，然后重启 DSH。该文件是由 patch 条目组成的顶层 YAML 数组；请追加下面的 `insert` 条目，或用它替换单独的 `[]`。示例挂载一个假想的 `@example/dsh-web-search-acme`；请换成提供方真实的包名，并添加其 README 说明的 `config`。
+内置组合之外的搜索或抓取后端是一个插件包，它以唯一的 `id` 和可选的 `title` 调用 `ctx.web.registerSearchProvider()` 或 `ctx.web.registerFetchProvider()`。要在某个 profile 中启用它，先用 `dsh plugin --profile <name> add <package>` 安装该包（安装规则），再把它的行加入该 profile 的用户 patch 层 `$DSH_HOME/profiles/<name>/cordis.patch.yml`，然后重启 DSH。该文件是由 patch 条目组成的顶层 YAML 数组；请追加下面的 `insert` 条目，或用它替换单独的 `[]`。示例挂载一个假想的 `@example/dsh-web-search-acme`；请换成提供方真实的包名，并添加其 README 说明的 `config`。
 
 ```yaml
 - insert:
@@ -150,7 +150,7 @@ const fetchOffered = await ctx.web.fetchReady('deepseek-official')
 
 ### 数据模型
 
-请求与结果类型定义了调用方赖以构建的规范化词汇——`Search` 请求／结果对与 `Fetch` 请求／结果对各一组——穷尽式字段与 JSDoc 见 [`src/types.ts`](src/types.ts) 与 [web 子系统](../../../docs/subsystems/web.zh.md) 参考。两个刻意的选择塑造了它们：`WebFetchBody` 是这里拥有的封闭联合（`html` | `text`），因此新增类型会破坏编译，直到每个消费方都处理它；`WebError` 继承 `HarnessError`，携带开放的字符串 `code`，因此消费方必须容忍提供方专有的取值。来源字段保持可选，因为并非每个提供方都返回全部字段。
+请求与结果类型定义了调用方赖以构建的规范化词汇——`Search` 请求／结果对与 `Fetch` 请求／结果对各一组——穷尽式字段与 JSDoc 见 [`src/types.ts`](src/types.ts) 与 web 子系统 参考。两个刻意的选择塑造了它们：`WebFetchBody` 是这里拥有的封闭联合（`html` | `text`），因此新增类型会破坏编译，直到每个消费方都处理它；`WebError` 继承 `HarnessError`，携带开放的字符串 `code`，因此消费方必须容忍提供方专有的取值。来源字段保持可选，因为并非每个提供方都返回全部字段。
 
 ### 选择流程
 
@@ -165,11 +165,11 @@ const fetchOffered = await ctx.web.fetchReady('deepseek-official')
 
 当包级约定不够用时阅读以下页面。它们从共享词汇逐步进入已交付后端、面向模型的工具与设计依据。
 
-- [web 子系统](../../../docs/subsystems/web.zh.md)——穷尽式的搜索／抓取请求与结果、提供方可用性与错误码。
+- web 子系统——穷尽式的搜索／抓取请求与结果、提供方可用性与错误码。
 - [web 包映射](../README.zh.md)——五包家族与各角色。
 - [dsh-tool-web](../tool-web/README.zh.md)——构建于本服务之上的面向模型 `web_search` 与 `web_fetch` 工具。
 - [dsh-web-fetch-http](../web-fetch-http/README.zh.md)——已交付的匿名 HTTP(S) 抓取后端。
-- [生成配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-web)——每个受支持配置字段及其源声明。
+- 生成配置目录——每个受支持配置字段及其源声明。
 - [web 能力 seam 决策](../../../.agents/notes/implemented/architecture/2026-06-24-web-capability-seam.zh.md)——搜索与抓取为何共用一项提供方选择服务。
 - [搜索就绪决策](../../../.agents/notes/implemented/architecture/2026-09-27-web-search-offered-by-provider-readiness.zh.md)——seam 为何为 `dsh-tool-web` 按路由回答搜索与抓取就绪。
 

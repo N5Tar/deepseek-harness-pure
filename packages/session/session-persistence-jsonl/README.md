@@ -50,7 +50,7 @@ Choose this backend when consumers benefit from one artifact per session — nav
 
 Live-event write batching is not configuration: the batching window is the seam's internal scheduling policy inside each write handle.
 
-The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-session-persistence-jsonl) is the exhaustive source for every accepted field and its JSDoc.
+The generated configuration catalog is the exhaustive source for every accepted field and its JSDoc.
 
 ### On-disk layout
 
@@ -131,7 +131,7 @@ The default artifact is a standard concatenation of independent Zstandard frames
 
 Read these pages when the package-level contract is not enough. They move from the shared persistence model to the sibling backend and the physical-format decisions.
 
-- [Session persistence subsystem](../../../docs/subsystems/persistence.md) — backend-neutral service semantics and provider relationships.
+- Session persistence subsystem — backend-neutral service semantics and provider relationships.
 - [Session persistence seam](../session-persistence/README.md) — the service contract this backend implements.
 - [Released Session format migrations](../../../.agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.md) — immutable generations, adjacent migration edges, and publication rules.
 

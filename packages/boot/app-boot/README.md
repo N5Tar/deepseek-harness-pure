@@ -27,7 +27,7 @@ English | [中文](README.zh.md)
 
 Starting an app with this package is a small, explicit entry point: you give it a config file and it runs the whole boot. This section covers what you can do and what you get; the helper calls behind each outcome are documented in the folded implementation section.
 
-Profile loading removes retired installation-bundle selections from `dsh.profile.bundles` and rewrites the manifest only when needed, preserving other fields. [Team migration](../../../docs/upgrade-guide/v0.2.1-rc.2/session-team-mode/guide.md) describes the default composition and retained row overrides.
+Profile loading removes retired installation-bundle selections from `dsh.profile.bundles` and rewrites the manifest only when needed, preserving other fields. Team migration describes the default composition and retained row overrides.
 
 ### When to use it
 
@@ -88,7 +88,7 @@ The projector preserves native omission behavior by checking literal defaults ag
 
 `resolvePluginResource(specifier, parentURL)` resolves a plugin module or exported resource to its local filesystem path through the active Node ESM resolver without evaluating it. It throws when the resolver is unavailable or the resource cannot resolve to a local file.
 
-Use `readPluginMeta(specifier, parentURL)` or `ctx.pluginPackages.metaOf(specifier, parentURL)` to read installed package display text without importing or activating the plugin. Lookup uses the complete package specifier and the caller's resolution base, respecting Node exports. File paths and file URLs return no metadata without resolving resources. For a package-root specifier, missing locale fields fall back to the accessible `package.json`; a subpath specifier never reads a `package.json`. Malformed metadata returns an `error` diagnostic. Results retain translations for Client-side language selection. The reader also loads an image data URL, even when locale text is complete: a package root uses its manifest `icon`, or `<package>/icon` when that field is omitted; a subpath uses `<specifier>/icon`. An icon error preserves valid text alongside the diagnostic. See [Plugin display metadata](../../../docs/cookbook/adding-a-package.md#plugin-display-metadata) for the author format.
+Use `readPluginMeta(specifier, parentURL)` or `ctx.pluginPackages.metaOf(specifier, parentURL)` to read installed package display text without importing or activating the plugin. Lookup uses the complete package specifier and the caller's resolution base, respecting Node exports. File paths and file URLs return no metadata without resolving resources. For a package-root specifier, missing locale fields fall back to the accessible `package.json`; a subpath specifier never reads a `package.json`. Malformed metadata returns an `error` diagnostic. Results retain translations for Client-side language selection. The reader also loads an image data URL, even when locale text is complete: a package root uses its manifest `icon`, or `<package>/icon` when that field is omitted; a subpath uses `<specifier>/icon`. An icon error preserves valid text alongside the diagnostic. See Plugin display metadata for the author format.
 
 The profile templates, installation-owned profile tuples, and retired bundle list that app-boot applies live in [`@deepseek-ai/dsh-official-bundles`](../../util/official-bundles/README.md), together with the installation's default, optional, and on-demand bundle lists.
 
@@ -175,7 +175,7 @@ The exports each own one stage of the boot: config resolution and snapshot repla
 
 Read these pages when the package-level contract is not enough. They move from the shared boot mechanics to the composition model and the decision evidence behind it.
 
-- [Cordis primer](../../../docs/cordis-primer.md) — Loader, `!!js` config expressions, and include/group semantics.
+- Cordis primer — Loader, `!!js` config expressions, and include/group semantics.
 - [dsh app](../../../apps/cli/README.md) — the `dsh` bin that consumes these helpers.
 - [dsh-cmdline](../cmdline/README.md) — the launcher-to-app command-line handoff the bins use.
 - [Profile bundles](../../bundle/README.md) — installable patch layers composed into `dsh --profile`.

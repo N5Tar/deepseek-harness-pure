@@ -79,7 +79,7 @@ These locations come from the preceding read-only investigation and must be rech
 | [Profile management](../../../apps/desktop/src/project-manager.ts) and [recovery implementation](../../../packages/boot/app-boot/src/profile-sanitize.ts) | Default and recovery compositions target the pure base; test configuration backups and installed-file retention |
 | [Native menus](../../../apps/desktop/src/preload-menu.ts) | Verify window-control clearance, menu mounting conditions, and drag regions in the new Root |
 
-Consult [architecture](../../architecture.md) for composition principles, [defensive patterns](../../defensive-patterns/README.md) for lifecycle and safety review, and [testing policy](../../testing.md) for test selection. This plan does not duplicate their complete rules.
+Consult architecture for composition principles, defensive patterns for lifecycle and safety review, and testing policy for test selection. This plan does not duplicate their complete rules.
 
 <a id="target-structure"></a>
 

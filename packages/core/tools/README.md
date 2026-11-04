@@ -145,10 +145,10 @@ Tool plugins call `ctx.tools.register()` and their schemas flow into prompt asse
 
 The package-level contract is enough for most consumers; read these when you need the surrounding domain.
 
-- [Tools subsystem](../../../docs/subsystems/tools.md) — the full pipeline types, schema DSL, and generated service API.
-- [Generated tool catalog](../../../docs/tool-catalog.md#deepseek-aidsh-tool-executor-ptc) — the shipped tools' schemas the model receives.
-- [Tool execution pipeline](../../../docs/tool-execution-pipeline.md) — the pipeline visualized.
-- [Adding a tool cookbook](../../../docs/cookbook/adding-a-tool.md) — step-by-step tool authoring.
+- Tools subsystem — the full pipeline types, schema DSL, and generated service API.
+- Generated tool catalog — the shipped tools' schemas the model receives.
+- Tool execution pipeline — the pipeline visualized.
+- Adding a tool cookbook — step-by-step tool authoring.
 - [Tool testkit](../../test-support/tool-testkit/README.md) — tool-definition and execution fixtures for tests and benchmarks.
 - [Cooperative cancellation Agent Note](../../../.agents/notes/implemented/architecture/2026-07-19-cooperative-tool-cancellation.md) — the full cancellation contract.
 - [Core group map](../README.md) — how the core packages compose.
@@ -162,7 +162,7 @@ The package-level contract is enough for most consumers; read these when you nee
 
 #### What the model sees
 
-In normal mode the model sees each visible definition's exact name, description, and JSON Schema; the shipped definitions are recorded in the generated [tool catalog](../../../docs/tool-catalog.md#deepseek-aidsh-tool-executor-ptc). Agent-scoped restrictions, shadows, and extension registrations change that agent's end-tool set.
+In normal mode the model sees each visible definition's exact name, description, and JSON Schema; the shipped definitions are recorded in the generated tool catalog. Agent-scoped restrictions, shadows, and extension registrations change that agent's end-tool set.
 
 #### Token effect
 

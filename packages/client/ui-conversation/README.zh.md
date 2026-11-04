@@ -38,13 +38,13 @@ kind: "package-reference"
 
 注册入口接受原有可调用的 `match`，或只读的事件类型到处理函数表。Registry 在注册关系变化时复制表条目并预计算有序候选 Set。函数形式的 Definition 保持原有可调用 API，接收全部事件；表中的处理函数只接收已声明类型。修改表需要注销后重新注册。只有 `entries()` 与 `fallbackEntry()` 的旧 assembler 适配器保留原有分发路径。
 
-所有接受的 Match 按顺序更新 State。两次 flush 之间，同一 Context 的重复更新合批发布。kind 和 id 相同时，Context 保持原有 key；传给 Definition 的 Context 快照仍为独立对象。fallback 只处理其目标上没有普通 Definition 匹配的输入。Definition 可以从 `match()` 返回 `exclusive: true`，在其目标上认领一个事件：该目标的其他 Definition 收不到这个事件，该目标的 fallback 也不运行（[语义](../../../docs/subsystems/conversation.zh.md#definition-and-typed-chat-payload)）。
+所有接受的 Match 按顺序更新 State。两次 flush 之间，同一 Context 的重复更新合批发布。kind 和 id 相同时，Context 保持原有 key；传给 Definition 的 Context 快照仍为独立对象。fallback 只处理其目标上没有普通 Definition 匹配的输入。Definition 可以从 `match()` 返回 `exclusive: true`，在其目标上认领一个事件：该目标的其他 Definition 收不到这个事件，该目标的 fallback 也不运行（语义）。
 
 Location 查询按 Turn 和 Step 编号索引 Step，因此非边界 append 不扫描 Turn 的 Step 数组。每个输入的数值坐标与解析出的 Location 共用一条私有索引记录；已发布的 Location 值保持不可变。边界更新、完整替换和向前补页使这些索引与当前时间线保持一致。
 
 shell 选择解析出 target 或 target source 收到首个 subscriber 时，该 target 进入 active 状态。assembler 从当前 Context 对它执行一次 replace，并使它参与后续增量 flush；创建 source 不会激活 target，取消订阅也不会停用 target。
 
-`UiConversation.groups` 为每个已注册目标注册一个可选的业务 Group Definition。它在节点物化后消费投影后的节点变化、变化轮次及已索引的目标位置，覆盖首次激活，并拥有全部分段规则与组数据。按索引读取 Turn 时保留相邻 Node 造成的分隔，使业务更新可以限制在受影响轮次和组内。assembler 先校验并安装根引用和按键索引的组快照，再发布 Node、Group 和 Location 数据来源。未分组目标保持原有路径。[分组](../../../docs/subsystems/conversation.zh.md#group-definitions)定义输入有效期、类型化注册、原子更新及渲染器职责。
+`UiConversation.groups` 为每个已注册目标注册一个可选的业务 Group Definition。它在节点物化后消费投影后的节点变化、变化轮次及已索引的目标位置，覆盖首次激活，并拥有全部分段规则与组数据。按索引读取 Turn 时保留相邻 Node 造成的分隔，使业务更新可以限制在受影响轮次和组内。assembler 先校验并安装根引用和按键索引的组快照，再发布 Node、Group 和 Location 数据来源。未分组目标保持原有路径。分组定义输入有效期、类型化注册、原子更新及渲染器职责。
 
 Group 注册时缺少 View 目标会报错。已注册的 View Definition 被移除后，其分组计算暂停并清空已发布结果，但保留 Group Definition；重新注册该 View 后，沿现有替换流程从当前已加载时间线重建。切换 View 页签不会移除 View Definition。
 
@@ -76,7 +76,7 @@ Queue 预览启用空白折叠和文档边缘 trim，保留 emoji，并使用 CS
 
 控件组的尺寸、内容、可见性或字体加载状态变化后，composer 测量展开状态下的控件组。若无法排在同一行，控制栏为模型位设置 `--dsh-composer-model-text-display: none` 和 `--dsh-composer-model-icon-display: block`；两者默认值分别为 `block` 和 `none`。模型位按内容宽度（最多 360px）参与测量，而不是按行宽比例，因此长模型名在测量中保持可见。若连图标也放不下，仍允许换行。
 
-上下文占用率入口遵循[统计控件圆角规则](../../../docs/ui-radius.zh.md#radius-scale)。
+上下文占用率入口遵循统计控件圆角规则。
 
 composer 在挂载、切换 Session 和解除锁定时使用共享的[文字输入框聚焦策略](../ui-primitives/README.zh.md#use-this-package)。识别出的手机和平板需要点击输入框；桌面设备保留自动聚焦。在这些移动设备上，提交清空正在聚焦的草稿后，焦点移到不接受文字输入的 composer 卡片，收起键盘并保留键盘导航位置。被拒绝的提交、保留的新草稿文字，以及已经聚焦的其他控件均保留原有焦点。移动端键盘平移页面时，[Lexical 补丁](../../../patches/lexical@0.49.0.patch)让光标滚动计算与 DOM 几何使用同一坐标系。
 

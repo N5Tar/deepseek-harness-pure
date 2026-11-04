@@ -50,7 +50,7 @@ Profile 覆盖会替换条目的完整配置。外观和语言偏好通过 profi
 <a id="further-exploration"></a>
 ## 进一步探索
 
-- [应用组合](../../../docs/architecture.zh.md)——profile 与有序 bundle 层。
+- 应用组合——profile 与有序 bundle 层。
 - [纯净桌面计划](../../../docs/experiments/pure-desktop-base/PLAN.zh.md)——实施范围与验收条件。
 
 <a id="model-experience"></a>

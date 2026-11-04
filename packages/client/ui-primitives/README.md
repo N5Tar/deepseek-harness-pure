@@ -140,13 +140,13 @@ The atoms cannot read the application locale, so every piece of user-facing copy
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
 
-`Button` uses H36/R12 for `md` and H28/R8 for `sm`, including outlined controls. The `outline` variant preserves a transparent 0.5px layout border and paints its stroke with an inset shadow. The stroke reads ui-theme's DPR-aware `--dsh-hairline-width`, with a 0.5px fallback outside the theme. Feature classes customize its color through `--dsh-button-outline-color` and preserve the border width, transparent border color, and box-shadow. Menus and cards follow the [shared radius rules](../../../docs/web-styling.md#corner-radii-and-settings-cards); feature classes preserve control geometry.
+`Button` uses H36/R12 for `md` and H28/R8 for `sm`, including outlined controls. The `outline` variant preserves a transparent 0.5px layout border and paints its stroke with an inset shadow. The stroke reads ui-theme's DPR-aware `--dsh-hairline-width`, with a 0.5px fallback outside the theme. Feature classes customize its color through `--dsh-button-outline-color` and preserve the border width, transparent border color, and box-shadow. Menus and cards follow the shared radius rules; feature classes preserve control geometry.
 
 Portalled menus close when their anchor becomes inert or hidden; contextual menus use the original control supplied by `returnFocus`. While open, a contextual menu adds its ID to that control's `aria-controls` and restores the previous value on close. Their owner’s retained content stays mounted.
 
 `Menu.listClassName` styles the menu card independently of the anchor wrapper, including in portal mode. Leading icons use the `--dsw-alias-menu-icon` color; destructive icons retain their error color.
 
-`Menu` delegates its card material to `MenuSurface`; custom menus use the same component. `MenuSurface` forwards div props and refs, uses translucent fill and blur, and accepts `compact` for the smaller radius. Its default relative positioning contains the material layer; caller classes can supply fixed or absolute placement. On macOS, its non-interactive backing follows the card through CSS anchors and unmounts with it; the backing requires the Web shell’s isolated body. Feature classes control layout and elevation, while the component owns material and outer radius ([menu rules](../../../docs/web-styling.md#component-rules)). Modal masks retain their dark translucent fill without background blur.
+`Menu` delegates its card material to `MenuSurface`; custom menus use the same component. `MenuSurface` forwards div props and refs, uses translucent fill and blur, and accepts `compact` for the smaller radius. Its default relative positioning contains the material layer; caller classes can supply fixed or absolute placement. On macOS, its non-interactive backing follows the card through CSS anchors and unmounts with it; the backing requires the Web shell’s isolated body. Feature classes control layout and elevation, while the component owns material and outer radius (menu rules). Modal masks retain their dark translucent fill without background blur.
 
 `MenuGroup` renders a `role="group"` section named by its localized heading, with an instance-owned heading id. It shares heading typography, spacing, and sticky positioning between custom menus and listboxes. Headings are transparent at rest; only `data-stuck` enables the theme's 94%-opaque group-header fill in either palette. Outside `data-platform="darwin"`, headings use `--dsw-radius-md` corners; the enclosing menu keeps its translucent material.
 
@@ -201,7 +201,7 @@ These pages place the atoms in the client stack and the design system.
 - [ui-tool](../ui-tool/README.md) — the tool-call presentation layer that composes these output cards.
 - [ui-conversation](../ui-conversation/README.md) — the chat surface that renders markdown replies and tool cards.
 - [ui-theme](../ui-theme/README.md) — the `--dsw-*` token system these atoms style through.
-- [Web styling](../../../docs/web-styling.md) — the authoritative styling rules for web client components.
+- Web styling — the authoritative styling rules for web client components.
 
 -----
 

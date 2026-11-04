@@ -48,7 +48,7 @@ Every session the server creates uses the provider and model configured here. Bo
 | `model` | — | Model for every session's agent |
 | `sessionListPageSize` | `100` | Maximum summaries returned in one `session/list` page |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-acp) is the exhaustive source for every accepted field and its JSDoc.
+The generated configuration catalog is the exhaustive source for every accepted field and its JSDoc.
 
 ### Start a server
 
@@ -129,7 +129,7 @@ Read these pages when the package-level contract is not enough. They move from t
 - [dsh-subagent-acp](../../subagent/subagent-acp/README.md) — the out-of-process ACP client that spawns and drives this server.
 - [ACP as an automation-only protocol](../../../.agents/notes/implemented/simplification/2026-07-23-acp-automation-only-protocol.md) — the design record for the automation contract and its wire boundaries.
 - [Multiplex concurrent ACP sessions over one connection](../../../.agents/notes/archived/feature/2026-06-14-acp-multi-session.md) — per-session isolation, ownership, and teardown decisions.
-- [Extension cookbook](../../../docs/cookbook/extension-cookbook.md) — this package as the automation-only worked example for extension authors.
+- Extension cookbook — this package as the automation-only worked example for extension authors.
 
 -----
 

@@ -50,7 +50,7 @@ kind: "package-reference"
 
 实时事件的写入批处理不是配置：批处理窗口是该 seam 在每个写句柄内部的调度策略。
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-session-persistence-jsonl)是每个受支持字段及其 JSDoc 的穷尽式真源。
+生成的配置目录是每个受支持字段及其 JSDoc 的穷尽式真源。
 
 ### 磁盘布局
 
@@ -131,7 +131,7 @@ kind: "package-reference"
 
 当包级约定不够用时阅读以下页面。它们从共享持久化模型逐步进入同级后端与物理格式决策。
 
-- [会话持久化子系统](../../../docs/subsystems/persistence.zh.md)——后端无关的服务语义与提供方关系。
+- 会话持久化子系统——后端无关的服务语义与提供方关系。
 - [会话持久化 seam](../session-persistence/README.zh.md)——本后端实现的服务约定。
 - [已发布 Session 格式迁移](../../../.agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.zh.md)——不可变 generation、相邻迁移边与发布规则。
 

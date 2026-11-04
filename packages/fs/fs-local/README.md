@@ -46,7 +46,7 @@ Load the backend with a base directory; relative paths resolve against it, and a
 | `cwd` | `process.cwd()` | Base directory for relative paths |
 | `diffBasisMaxBytes` | `10 MiB` | UTF-8 byte limit per overwrite-diff side; larger overwrites return `before: null` |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-fs-local) is the exhaustive source for every accepted field and its JSDoc.
+The generated configuration catalog is the exhaustive source for every accepted field and its JSDoc.
 
 ### What you can do
 
@@ -105,7 +105,7 @@ Raw I/O is Cordis-free and independently unit-tested in `src/fsio.ts`; `src/inde
 
 Read these pages when the package-level contract is not enough. They move from the contract to the adjacent backends, tools, and policies.
 
-- [Filesystem subsystem](../../../docs/subsystems/filesystem.md) — exhaustive provider contract, policy events, and error taxonomy.
+- Filesystem subsystem — exhaustive provider contract, policy events, and error taxonomy.
 - [dsh-fs](../fs/README.md) — the `ctx.fs` contract this backend implements.
 - [fs-sandbox](../fs-sandbox/README.md) — the sandbox-enforcing backend that extends this one.
 - [tool-fs](../tool-fs/README.md) — the model-facing tools that consume `ctx.fs`.

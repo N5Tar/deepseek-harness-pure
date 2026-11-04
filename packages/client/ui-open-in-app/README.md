@@ -70,7 +70,7 @@ The directory and file adapters supply application metadata and operations to [`
 - [dsh-session-log-export](../../session-query/session-log-export/README.md) — the sibling Session-header action.
 - [ui-sidebar-documentpreview](../ui-sidebar-documentpreview/README.md) — the document preview declaring the header and empty-state child slots the file controls occupy.
 - [ui-deliverables](../ui-deliverables/README.md) — the delivery cards, which still open declared files through their own routes.
-- [Web client architecture](../../../docs/subsystems/web-client.md) — how browser plugin rows load and register slots.
+- Web client architecture — how browser plugin rows load and register slots.
 
 -----
 

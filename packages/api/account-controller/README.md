@@ -36,7 +36,7 @@ The controller forwards operations to the account service and maintains no indep
 <a id="further-exploration"></a>
 ## Further Exploration
 
-The [credentials subsystem](../../../docs/subsystems/credentials.md) owns storage APIs; the [architecture](../../../docs/architecture.md) explains application composition.
+The credentials subsystem owns storage APIs; the architecture explains application composition.
 
 <a id="model-experience"></a>
 ## Model Experience

@@ -104,11 +104,11 @@ Promotion requires a named product role, documented public behavior and limitati
 ## Related documentation
 
 - [Experimental publication reference](../../scripts/experimental-package-policy.ts) — public defaults and private exceptions.
-- [Worktrees](../../docs/subsystems/worktrees.md) — explicit branch and checkout creation.
-- [Forges](../../docs/subsystems/forge.md) — change request providers, status polling, Session bindings, and the panel.
-- [Computer use](../../docs/subsystems/computer-use.md) — desktop provider choices.
-- [Browser use](../../docs/subsystems/browser-use.md) — browser provider choices and Session ownership.
-- [Agent Teams subsystem](../../docs/subsystems/agent-team.md) — durable Team types and the `ctx.agentTeams` service API.
+- Worktrees — explicit branch and checkout creation.
+- Forges — change request providers, status polling, Session bindings, and the panel.
+- Computer use — desktop provider choices.
+- Browser use — browser provider choices and Session ownership.
+- Agent Teams subsystem — durable Team types and the `ctx.agentTeams` service API.
 - [Experimental subtree rules](AGENTS.md) — what experimental status does and does not relax.
 
 -----

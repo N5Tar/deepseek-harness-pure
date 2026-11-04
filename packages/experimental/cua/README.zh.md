@@ -94,7 +94,7 @@ Computer Use 详情页的权限卡片、组件列表和来源信息使用 l3 边
 
 - [macOS 提供方](../cua-macos/README.zh.md)
 - [对象接口](src/types.ts)
-- [授权存储迁移](../../../docs/upgrade-guide/v0.2.1-rc.2/cua-consent-storage/guide.zh.md)
+- 授权存储迁移
 
 -----
 

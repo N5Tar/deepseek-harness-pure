@@ -46,7 +46,7 @@ Load the sandbox service and mount the provider; the defaults below are the sele
 | `runnerFailureSignatures` | `[]` | Case-insensitive stderr substrings identifying the custom runner's own failure dialect; required with `runnerCommand` |
 | `probeTimeoutMs` | `5,000` | Timeout for each functional probe of a competing runner candidate |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-sandbox-local) is the exhaustive source for every accepted field and its JSDoc.
+The generated configuration catalog is the exhaustive source for every accepted field and its JSDoc.
 
 ### Confined execution and enforcement
 
@@ -106,7 +106,7 @@ Each runner's kernel speaks its own denial dialect, carried on every wrap as `de
 
 Start with the subsystem reference for the shared vocabulary, then the seam contract, the consumers, and the win32 rung.
 
-- [Process sandbox subsystem](../../../docs/subsystems/sandbox.md) — modes, per-call policy, and classification dialects.
+- Process sandbox subsystem — modes, per-call policy, and classification dialects.
 - [Sandbox seam package](../sandbox/README.md) — the service contract this provider implements.
 - [Bash sandbox executor](../../shell/bash-sandbox/README.md) — the confined bash consumer.
 - [Windows ACL restricted-token rung](../sandbox-windows-acl/README.md) — the win32 backend this provider mounts.

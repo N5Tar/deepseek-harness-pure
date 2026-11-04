@@ -52,7 +52,7 @@ kind: "package-reference"
 | `agents[].sessionId` | — | 确切身份：首次使用创建，重新挂载时恢复已实体化的历史 |
 | `agents[].resumeSessionId` | — | 加载这个持久化会话而不是创建新会话；与 `sessionId` 互斥 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-agent-loop) 列出所有接受的字段。`maxParallelToolCalls` 仍是 volatile 正整数 Config 字段，默认值为 `10`；`1` 表示串行执行。循环在每个批次调用 `execute()` 时传入当前值，其优先级高于执行器配置。实时修改从下一个批次生效；`agents` 仍是启动配置。
+生成的配置目录 列出所有接受的字段。`maxParallelToolCalls` 仍是 volatile 正整数 Config 字段，默认值为 `10`；`1` 表示串行执行。循环在每个批次调用 `execute()` 时传入当前值，其优先级高于执行器配置。实时修改从下一个批次生效；`agents` 仍是启动配置。
 
 配置式恢复会在发布前将声明的路由记录为 Session 选择。程序化恢复保留 Session 选择，除非其 setup 显式记录另一条路由；仅传入初始 `agentOptions` 不会覆盖已有历史。
 
@@ -139,9 +139,9 @@ loop 在发布工厂前等待必需的注册完成。它对模型选择和 inbox
 包级约定对大多数消费方已经足够；需要周边领域与设计原理时再阅读以下页面。
 
 - [agent 包](../agent/README.zh.md)——本循环实现的 `Agent` 句柄、注册表与 `agent/*` 事件。
-- [Core 子系统](../../../docs/subsystems/core.zh.md)——轮次流与拦截决策。
-- [会话子系统](../../../docs/subsystems/session.zh.md)——循环写入并据此派生的持久日志。
-- [工具子系统](../../../docs/subsystems/tools.zh.md)——循环分发所经过的流水线。
+- Core 子系统——轮次流与拦截决策。
+- 会话子系统——循环写入并据此派生的持久日志。
+- 工具子系统——循环分发所经过的流水线。
 - [core 分组地图](../README.zh.md)——core 各包如何组合。
 
 -----

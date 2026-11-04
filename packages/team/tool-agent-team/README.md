@@ -42,7 +42,7 @@ The plugin takes no configuration; mount it beside the Team domain as in the [ag
   name: '@deepseek-ai/dsh-tool-agent-team'
 ```
 
-A row that sets `interrupt`, `freshProvider`, or `forkProvider` does not activate, and dsh names the key in its startup warning. The [upgrade guide](../../../docs/upgrade-guide/v0.2.1-rc.2/agent-team-subagents/guide.md) maps the removed tools and keys to their replacements, and the generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-tool-agent-team) records the empty configuration.
+A row that sets `interrupt`, `freshProvider`, or `forkProvider` does not activate, and dsh names the key in its startup warning. The upgrade guide maps the removed tools and keys to their replacements, and the generated configuration catalog records the empty configuration.
 
 Ask the Lead to start a subagent to review the diff, add a review task, and wait for its result. The `description` explains the subagent’s work; the returned id addresses it.
 
@@ -105,9 +105,9 @@ Tool `when` conditions resolve at step preparation, including the first step of 
 Read these pages when the package-level contract is not enough. They move from the domain service to the exact schemas and the decisions behind the design.
 
 - [agent-team package](../agent-team/README.md) — the `ctx.agentTeams` domain service behind these tools.
-- [Agent Teams subsystem](../../../docs/subsystems/agent-team.md) — durable Team types and service API.
+- Agent Teams subsystem — durable Team types and service API.
 - [Subagent control tools](../../subagent/tool-subagent-control/README.md) — messaging, listing, interruption, and inbox waiting.
-- [Generated tool catalog](../../../docs/tool-catalog.md#deepseek-aidsh-tool-agent-team) — every tool schema the model receives.
+- Generated tool catalog — every tool schema the model receives.
 - [Subagent teammates Agent Note](../../../.agents/notes/implemented/architecture/2026-10-15-agent-teams-as-subagents.md) — model-facing, scoping, and tool-family decisions.
 
 -----
@@ -145,7 +145,7 @@ The text is identical for the Lead and every descendant and does not change whil
 
 #### What the model sees
 
-Every member receives the same four task schemas in the [generated tool catalog](../../../docs/tool-catalog.md#deepseek-aidsh-tool-agent-team). Results are compact JSON task views or pages. Root-only reassignment is enforced at execution, not through different schemas.
+Every member receives the same four task schemas in the generated tool catalog. Results are compact JSON task views or pages. Root-only reassignment is enforced at execution, not through different schemas.
 
 #### Token effect
 

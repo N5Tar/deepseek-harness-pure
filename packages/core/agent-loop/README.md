@@ -52,7 +52,7 @@ Agents declared in config start automatically when the plugin loads. Each entry 
 | `agents[].sessionId` | — | Exact identity: first use creates, a remount resumes materialized history |
 | `agents[].resumeSessionId` | — | Load this persisted session instead of creating one; mutually exclusive with `sessionId` |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-agent-loop) lists every accepted field. `maxParallelToolCalls` remains a volatile positive-integer Config field with default `10`; `1` selects serial execution. The loop passes its current value to each batch's `execute()` call, taking precedence over executor configuration. Live edits apply to the next batch; `agents` remains startup configuration.
+The generated configuration catalog lists every accepted field. `maxParallelToolCalls` remains a volatile positive-integer Config field with default `10`; `1` selects serial execution. The loop passes its current value to each batch's `execute()` call, taking precedence over executor configuration. Live edits apply to the next batch; `agents` remains startup configuration.
 
 A configured resume records the declared route as the Session selection before publication. Programmatic resume preserves the Session choice unless its setup explicitly records another route; initial `agentOptions` alone do not override saved history.
 
@@ -139,9 +139,9 @@ Before closing a failed step, the driver records an error result for each unansw
 The package-level contract is enough for most consumers; read these when you need the surrounding domain and the design rationale.
 
 - [agent package](../agent/README.md) — the `Agent` handle, registry, and `agent/*` events this loop implements.
-- [Core subsystem](../../../docs/subsystems/core.md) — the turn flow and interception decisions.
-- [Session subsystem](../../../docs/subsystems/session.md) — the durable log the loop writes and derives from.
-- [Tools subsystem](../../../docs/subsystems/tools.md) — the pipeline the loop dispatches through.
+- Core subsystem — the turn flow and interception decisions.
+- Session subsystem — the durable log the loop writes and derives from.
+- Tools subsystem — the pipeline the loop dispatches through.
 - [Core group map](../README.md) — how the core packages compose.
 
 -----

@@ -107,7 +107,7 @@ A backend subclasses `SpillStore` and loads as a plugin, registering as `ctx.spi
 
 Read these pages when the package-level contract is not enough. They move from the shared vocabulary to the shipped backend, the policy, and the design rationale.
 
-- [Spill subsystem](../../../docs/subsystems/spill.md) — the exhaustive vocabulary, ownership, and backend relationships.
+- Spill subsystem — the exhaustive vocabulary, ownership, and backend relationships.
 - [Spill package map](../README.md) — the three-package family and each role.
 - [dsh-spill-local](../spill-local/README.md) — the shipped local filesystem backend.
 - [dsh-spill-policy](../spill-policy/README.md) — the policy that decides when a final result is too large.

@@ -149,7 +149,7 @@ Targets without a saved preset use the host composition and retain their histori
 
 Read these pages when the package-level contract is not enough. They move from the shared seam to the backends, the model-facing tools, and the design decisions.
 
-- [Subagent subsystem](../../../docs/subsystems/subagent.md) — the service contract, provider contract, and terminal result semantics.
+- Subagent subsystem — the service contract, provider contract, and terminal result semantics.
 - [historical Subagent capability seam](../../../.agents/notes/archived/feature/2026-06-21-subagent-capability-seam.md) — the design record for the delegation capability family.
 - [Continuable subagents](../../../.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md) — durable children that accept follow-up turns.
 - [In-process spawn backend](../subagent-spawn-in-process/README.md) — the simplest provider to compose.

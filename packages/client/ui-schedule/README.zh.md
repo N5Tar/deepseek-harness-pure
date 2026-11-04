@@ -50,7 +50,7 @@ kind: "package-reference"
 <a id="understand-the-implementation"></a>
 ## 理解实现
 
-任务菜单使用[标准菜单几何](../../../docs/ui-radius.zh.md#nested-hover)，包含键盘高亮行。使用 portal 的任务菜单和日期、时间选择器通过 `useAnchoredPosition`，在浏览器缩放、滚动和尺寸变化时跟随触发器，并保留视口边距和桌面标题栏避让。视觉视口过窄时，任务菜单文案和时间值以省略号截断。时间列随面板缩窄，并在可用高度内纵向滚动；任务菜单通过纵向滚动到达每个选项。会话页头弹层遵循同样的视口限制，并在首次定位完成前保持隐藏。
+任务菜单使用标准菜单几何，包含键盘高亮行。使用 portal 的任务菜单和日期、时间选择器通过 `useAnchoredPosition`，在浏览器缩放、滚动和尺寸变化时跟随触发器，并保留视口边距和桌面标题栏避让。视觉视口过窄时，任务菜单文案和时间值以省略号截断。时间列随面板缩窄，并在可用高度内纵向滚动；任务菜单通过纵向滚动到达每个选项。会话页头弹层遵循同样的视口限制，并在首次定位完成前保持隐藏。
 
 <details>
 <summary>实现内部细节 — 点击展开</summary>
@@ -69,7 +69,7 @@ Peer 可读取 `schedule/catalog` 时，插件注册现有 `schedules` 主面板
 ## 延伸阅读
 
 - [Schedule](../../schedule/schedule/README.zh.md) 拥有持久化、执行目标、生命周期和投递语义。
-- [槽位](../../../docs/subsystems/slots.zh.md) 定义框架读取器和面板贡献。
+- 槽位 定义框架读取器和面板贡献。
 
 <a id="model-experience"></a>
 ## 模型体验

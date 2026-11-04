@@ -76,7 +76,7 @@ The readonly `timeout` descriptor exposes numeric `{ defaultMs, maxMs }` for con
 
 `resolve(request)` owns supported option validation and deployment defaulting. `run(spec)` executes the complete inputs and resolves program outcomes after cleanup. Language and substrate descriptors guide presentation; `sandboxMode` indicates whether the consumer can pass a resolved file policy. Neither descriptors nor a successful program result substitute for the backend's reported enforcement facts.
 
-The exhaustive semantics live in the [PTC runtime subsystem reference](../../../docs/subsystems/ptc-runtime.md); the exact signatures are in [`src/index.ts`](src/index.ts).
+The exhaustive semantics live in the PTC runtime subsystem reference; the exact signatures are in [`src/index.ts`](src/index.ts).
 
 ### Vocabulary
 
@@ -105,7 +105,7 @@ Read these when the package-level contract is not enough. They move from the PTC
 - [PTC mode Agent Note](../../../.agents/notes/implemented/feature/2026-06-15-ptc.md) — how the tool registry consumes `ctx.ptcRuntime` and presents `run_code` to the model.
 - [Node process backend](../ptc-runtime-node/README.md) — the shipped TypeScript execution backend.
 - [Experimental Python backend](../../experimental/ptc-runtime-python/README.md) — the private CPython subprocess provider and its fd-3 protocol.
-- [PTC runtime subsystem reference](../../../docs/subsystems/ptc-runtime.md) — request/result vocabulary, bindings, and the `ctx.ptcRuntime` cordis surface.
+- PTC runtime subsystem reference — request/result vocabulary, bindings, and the `ctx.ptcRuntime` cordis surface.
 - [Capability seams](../../../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md) — the Service Definition / Service Provider / Consumer split.
 
 -----

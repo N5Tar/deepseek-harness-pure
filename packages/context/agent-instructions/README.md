@@ -67,7 +67,7 @@ export interface Config {
 | `instructionFileCandidates` | `['AGENTS.md', 'CLAUDE.md']` | Base file names loaded in each project directory |
 | `localInstructionFileCandidates` | `['AGENTS.local.md', 'CLAUDE.local.md']` | Local overlay file names loaded after the base files |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-agent-instructions) is the exhaustive source for every accepted field and its JSDoc.
+The generated configuration catalog is the exhaustive source for every accepted field and its JSDoc.
 
 ### Observing the budget
 
@@ -117,10 +117,10 @@ Every injected message carries a typed source with its change list; a complete b
 
 Read these pages when the package-level contract is not enough. They move from the instruction-file format to the design decision and the exhaustive configuration.
 
-- [Documentation standard](../../../docs/AGENTS.md) — what `AGENTS.md` instruction files contain and how they are maintained.
+- Documentation standard — what `AGENTS.md` instruction files contain and how they are maintained.
 - [Workspace-context decision record](../../../.agents/notes/archived/feature/2026-06-24-workspace-context.md) — per-agent/session isolation and lifecycle rationale.
 - [Context group map](../README.md) — sibling request-context packages.
-- [Generated configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-agent-instructions) — every accepted config field and its source declaration.
+- Generated configuration catalog — every accepted config field and its source declaration.
 
 -----
 

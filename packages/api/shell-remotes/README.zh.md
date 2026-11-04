@@ -48,7 +48,7 @@ Client 入口需要 `remote` 服务。Host 标记不执行业务工作；模块�
 
 - [Gateway](../gateway/README.zh.md)——方法分发与认证流。
 - [设置控制器](../settings-controller/README.zh.md)——配置读写。
-- [Web Client](../../../docs/subsystems/web-client.zh.md)——模块发现与激活。
+- Web Client——模块发现与激活。
 
 <a id="model-experience"></a>
 ## 模型体验

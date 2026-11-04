@@ -70,7 +70,7 @@ kind: "package-reference"
 - [dsh-session-log-export](../../session-query/session-log-export/README.zh.md)——会话头部的姊妹动作。
 - [ui-sidebar-documentpreview](../ui-sidebar-documentpreview/README.zh.md)——声明文件控件所占头部与空态子 slot 的文档预览。
 - [ui-deliverables](../ui-deliverables/README.zh.md)——交付卡片，仍通过自己的路由打开声明过的文件。
-- [Web client 架构](../../../docs/subsystems/web-client.zh.md)——浏览器插件行如何加载并注册 slot。
+- Web client 架构——浏览器插件行如何加载并注册 slot。
 
 -----
 

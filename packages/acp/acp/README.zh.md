@@ -48,7 +48,7 @@ kind: "package-reference"
 | `model` | — | 每个会话 agent 的模型 |
 | `sessionListPageSize` | `100` | 单页 `session/list` 返回的最大摘要数量 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-acp)是每个受支持字段及其 JSDoc 的穷尽式真源。
+生成的配置目录是每个受支持字段及其 JSDoc 的穷尽式真源。
 
 ### 启动服务器
 
@@ -129,7 +129,7 @@ kind: "package-reference"
 - [dsh-subagent-acp](../../subagent/subagent-acp/README.zh.md)——spawn 并驱动本服务器的进程外 ACP 客户端。
 - [ACP 作为仅面向自动化的协议](../../../.agents/notes/implemented/simplification/2026-07-23-acp-automation-only-protocol.zh.md)——自动化约定及其协议边界的决策记录。
 - [在单个连接上多路复用并发 ACP 会话](../../../.agents/notes/archived/feature/2026-06-14-acp-multi-session.md)——按会话隔离、归属与清理决策。
-- [扩展实操手册](../../../docs/cookbook/extension-cookbook.zh.md)——本包作为扩展作者的仅自动化完整示例。
+- 扩展实操手册——本包作为扩展作者的仅自动化完整示例。
 
 -----
 

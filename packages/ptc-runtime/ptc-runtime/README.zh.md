@@ -76,7 +76,7 @@ binding-global 与 error-class 名称是语言可移植的：必须匹配 `[A-Za
 
 `resolve(request)` 负责支持选项的验证与部署默认值。`run(spec)` 执行完整输入，并在清理后返回程序结果。语言和执行基底描述符指导呈现；`sandboxMode` 表示消费方能否传入已解析文件策略。描述符与程序成功结果都不能代替后端报告的强制能力事实。
 
-穷尽式语义见[PTC 运行时子系统参考](../../../docs/subsystems/ptc-runtime.zh.md)；确切签名见 [`src/index.ts`](src/index.ts)。
+穷尽式语义见PTC 运行时子系统参考；确切签名见 [`src/index.ts`](src/index.ts)。
 
 ### 词汇
 
@@ -105,7 +105,7 @@ binding-global 与 error-class 名称是语言可移植的：必须匹配标识�
 - [PTC mode Agent Note](../../../.agents/notes/implemented/feature/2026-06-15-ptc.zh.md)——工具注册表如何消费 `ctx.ptcRuntime` 并把 `run_code` 呈现给模型。
 - [Node 进程后端](../ptc-runtime-node/README.zh.md)——已发布的 TypeScript 执行后端。
 - [实验性 Python 后端](../../experimental/ptc-runtime-python/README.zh.md)——私有的 CPython 子进程提供方及其 fd-3 协议。
-- [PTC 运行时子系统参考](../../../docs/subsystems/ptc-runtime.zh.md)——请求／结果词汇、绑定与 `ctx.ptcRuntime` 的 cordis 接口面。
+- PTC 运行时子系统参考——请求／结果词汇、绑定与 `ctx.ptcRuntime` 的 cordis 接口面。
 - [能力 seam](../../../.agents/notes/implemented/architecture/2026-06-13-capability-seams.zh.md)——Service Definition / Service Provider / Consumer 拆分。
 
 -----

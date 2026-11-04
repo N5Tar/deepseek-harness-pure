@@ -44,7 +44,7 @@ Chat 通过 `shell.overlay` 中的宿主把已绑定 Session 的实时欠费交�
 
 账号菜单的“意见反馈”入口在系统浏览器中打开飞书问卷。每次点击都按当时的上下文取值：profile ready 且带 id 时的账号 UID、以 harness_version 表示的构建版本，以及 device_info。device_info 以 screen_resolution=宽x高 包含屏幕物理分辨率，尺寸乘以 devicePixelRatio 后四舍五入；屏幕尺寸不可用时省略此项。所有上下文字段同时设置 hide_*=1，配置的表单 URL 中这些字段的 stale prefill 参数先被清除，uid、device_info 与 harness_version 的隐藏参数不依赖配置 URL 的取值。URL 不携带 os_version、device_brand、app_locale 或独立的 screen_resolution 参数；配置 URL 中这些字段的 prefill 与 hide 参数会被移除。不传 token 或脱敏联系方式；未登录、profile 仍在加载或读取失败时都不填写 prefill_uid。普通浏览器中，或 Desktop 桥接没有 deviceInfo 读取器时，打开的表单以 navigator.userAgent 作为 device_info。Desktop 端暴露可选的 dshDesktop.deviceInfo 读取器，其字段格式由 [Desktop README](../../../apps/desktop/README.zh.md) 负责；该读取器的结果取代 user-agent，读取失败时仍打开表单，device_info 保留可获取的屏幕分辨率，而 device_info 描述的是上报的环境而非硬件型号。可在 ui-settings-account 插件配置 contactFormUrl，切换到另一个 HTTPS 问卷；问卷支持 Harness 来源选项前，contactSource 默认为空。
 
-账号资料与余额卡片共用[设置卡片材质与圆角](../../../docs/web-styling.zh.md#corner-radii-and-settings-cards)。用量与充值链接与标准 Button 尺寸一致；授权操作使用公共 Button。
+账号资料与余额卡片共用设置卡片材质与圆角。用量与充值链接与标准 Button 尺寸一致；授权操作使用公共 Button。
 
 侧边栏账号菜单使用公共 Menu 的表面和背景模糊。已登录菜单沿用公共菜单项排版；未登录菜单使用自己的较宽菜单项。两种菜单的问卷入口均为“意见反馈”。设置菜单项显示外壳传入的有效组合键。关闭设置后，焦点回到侧栏账号入口。
 
@@ -75,7 +75,7 @@ Desktop preload 标记在账号凭证已存储后启用引导。进度属于本�
 <a id="further-exploration"></a>
 ## 深入探索
 
-[凭证子系统](../../../docs/subsystems/credentials.zh.md)定义存储接口；[架构](../../../docs/architecture.zh.md)说明应用组合。
+凭证子系统定义存储接口；架构说明应用组合。
 
 账号登录在模型引导的凭证编辑器之前显示可关闭的弹窗。弹窗底部采用紧凑的右对齐横排操作，主操作位于末尾。侧边栏优先显示昵称，缺少昵称时显示服务端返回的脱敏手机号或邮箱；资料加载期间保持留空。 弹窗文字和侧边栏账号状态文字不可选中，复制登录链接按钮始终可用，并在每次复制成功两秒后恢复原文案。剪贴板失败时，链接原位显示“复制失败”两秒，不中断登录。等待状态提供可复制的授权链接和加载图标；超时和失败均须用户手动重试。弹窗的“复制登录链接”和设置页的“打开”链接会从当前主题快照读取应用生效配色，追加 `theme=light` 或 `theme=dark`，使两条路径都以当前应用主题打开 Platform 页面，且不改变 Platform 已保存的主题偏好。登录失败在该弹窗内呈现；退出登录失败时菜单保持展开以便重试，入口本身不展示失败提示。关闭等待弹窗会取消对应 Host 登录流程。侧边栏通过设置协调器重新打开同一个 API Key 编辑器。
 

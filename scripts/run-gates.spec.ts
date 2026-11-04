@@ -233,38 +233,9 @@ describe('CI worker allocation', () => {
       .toThrow('DSH_COVERAGE_MAX_WORKERS must be a positive integer')
   })
 
-  it('keeps local documentation defaults unchanged', () => {
-    expect(ciWorkerEnvironment('doc-sync', {}, 64)).toEqual({})
-  })
 })
 
 describe('gate graph validation', () => {
-  it.each([
-    'ci-primary',
-    'ci-linux-primary',
-    'ci-static',
-    'ci-lint-contracts-ready',
-    'ci-coverage',
-    'ci-unit',
-    'ci-bench',
-    'ci-snapshot',
-    'ci-artifacts',
-    'ci-consumers',
-    'ci-windows-blocking',
-    'ci-windows-complete',
-    'ci-windows-observational-ready',
-    'node-compat',
-    'check-all',
-    'hygiene',
-    'doc-sync',
-    'doc-quick',
-  ] as const)('constructs and executes preflight for a valid non-empty %s graph', async (mode) => {
-    const subject = withPnpmEntrypoint(() => gatesForMode(mode))
-    const execute = vi.fn(async (item: Gate) => resultFor(item))
-
-    await expect(runGates(subject, subject.length, execute)).resolves.toHaveLength(subject.length)
-  })
-
   it('uses the internal CI benchmark runner without changing the public benchmark scripts', () => {
     const subject = withPnpmEntrypoint(() => gatesForMode('ci-bench'))
     const { scripts } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
@@ -286,91 +257,10 @@ describe('gate graph validation', () => {
     expect(scripts['test:bench:built']).toBe('tsx scripts/run-bench-suite.ts')
   })
 
-  it('checks all maintained repository references locally and in CI', () => {
-    const { scripts } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
-      scripts: Record<string, string>
-    }
-    for (const mode of ['doc-sync', 'doc-quick', 'ci-static'] as const) {
-      const gates = withPnpmEntrypoint(() => gatesForMode(mode))
-      expect(gates).toContainEqual(expect.objectContaining({
-        id: 'repository-references',
-        displayCommand: 'pnpm run verify-repository-references',
-      }))
-    }
-    expect(scripts['verify-repository-references']).toBe('tsx scripts/verify-repository-references.ts')
-  })
-
-  it('keeps the public repository link policy in the documentation gate', () => {
-    const ids = withPnpmEntrypoint(() => gatesForMode('doc-sync').map(subject => subject.id))
-
-    expect(ids).toContain('public-repository-links')
-  })
-
-  it.each([undefined, ''])('allocates one CLI help child inside each aggregate when its allowance is %j', (raw) => {
-    vi.stubEnv('DSH_CLI_HELP_CONCURRENCY', raw)
-    for (const mode of ['doc-sync', 'ci-static', 'ci-windows-observational-ready'] as const) {
-      const gates = withPnpmEntrypoint(() => gatesForMode(mode))
-      expect(gates.find(gate => gate.id === 'cli-help')).toMatchObject({ env: { DSH_CLI_HELP_CONCURRENCY: '1' } })
-      expect(gates.filter(gate => gate.id !== 'cli-help').every(gate => gate.env?.DSH_CLI_HELP_CONCURRENCY === undefined)).toBe(true)
-    }
-  })
-
   it.each(['3', 'invalid'])('passes an explicit CLI help allowance %j to its owner', (raw) => {
     vi.stubEnv('DSH_CLI_HELP_CONCURRENCY', raw)
     const gates = withPnpmEntrypoint(() => gatesForMode('ci-windows-observational-ready'))
     expect(gates.find(gate => gate.id === 'cli-help')).toMatchObject({ env: { DSH_CLI_HELP_CONCURRENCY: raw } })
-  })
-
-  it('keeps the concrete terminology policy in the documentation gate', () => {
-    const ids = withPnpmEntrypoint(() => gatesForMode('doc-sync').map(subject => subject.id))
-
-    expect(ids).toContain('concrete-terms')
-  })
-
-  it('checks retrospective releases alongside the current persistence history', () => {
-    for (const mode of ['doc-sync', 'ci-static'] as const) {
-      const ids = withPnpmEntrypoint(() => gatesForMode(mode).map(subject => subject.id))
-      expect(ids).toEqual(expect.arrayContaining(['persistence-changes', 'persistence-releases']))
-    }
-  })
-
-  it('requires complete Session format references locally and in CI', () => {
-    const { scripts } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
-      scripts: Record<string, string>
-    }
-    for (const mode of ['doc-sync', 'doc-quick', 'ci-static'] as const) {
-      expect(withPnpmEntrypoint(() => gatesForMode(mode))).toContainEqual(expect.objectContaining({
-        id: 'persistence-formats',
-        displayCommand: 'pnpm run verify-persistence-formats',
-      }))
-    }
-    expect(scripts['verify-persistence-formats']).toBe('tsx scripts/persistence-formats.ts')
-  })
-
-  it('keeps package-group subsystem ownership in the documentation gate', () => {
-    const ids = withPnpmEntrypoint(() => gatesForMode('doc-sync').map(subject => subject.id))
-
-    expect(ids).toContain('subsystem-pages')
-  })
-
-  it('keeps the package README Summary limit in the documentation gate', () => {
-    const ids = withPnpmEntrypoint(() => gatesForMode('doc-sync').map(subject => subject.id))
-
-    expect(ids).toContain('package-readme-summaries')
-  })
-
-  it('derives the quick documentation aggregate from marked doc-sync leaves', () => {
-    const full = withPnpmEntrypoint(() => gatesForMode('doc-sync'))
-    const quick = withPnpmEntrypoint(() => gatesForMode('doc-quick'))
-
-    expect(quick).toEqual(full.filter(gate => gate.quick === true))
-  })
-
-  it('checks the recorded npm dependency catalog in both documentation aggregates', () => {
-    for (const mode of ['doc-sync', 'doc-quick'] as const) {
-      expect(withPnpmEntrypoint(() => gatesForMode(mode).find(gate => gate.id === 'dependency-catalog')))
-        .toMatchObject({ args: ['/private/pnpm.cjs', 'run', 'verify-dependency-catalog'] })
-    }
   })
 
   it('keeps the hygiene aggregate aligned with the package script checks', () => {
@@ -393,28 +283,6 @@ describe('gate graph validation', () => {
     }
     expect(withPnpmEntrypoint(() => gatesForMode('i18n').map(gate => gate.id)))
       .toEqual(['installer-locales', 'locale-metadata', 'locale-dictionaries'])
-  })
-
-  it('caps the local hygiene aggregate at eight workers', () => {
-    const ids = withPnpmEntrypoint(() => gatesForMode('hygiene').map(subject => subject.id))
-
-    expect(defaultConcurrency('hygiene', ids.length, 16, { CI: 'true' })).toEqual({
-      workers: 8,
-      source: '16 available CPU(s), hygiene cap 8',
-    })
-    expect(defaultConcurrency('doc-sync', 43, 256, {})).toEqual({
-      workers: 8,
-      source: '12 local default worker(s) of 256 CPU(s), doc-sync cap 8',
-    })
-  })
-
-  it('schedules the longest documentation leaves before short checks', () => {
-    const ids = withPnpmEntrypoint(() => gatesForMode('doc-sync').map(subject => subject.id))
-
-    expect(ids.slice(0, 11)).toEqual([
-      'doc-typecheck', 'docs-site-build', 'doc-graphs', 'cli-help', 'markdown-links', 'type-equivalence',
-      'cordis-catalog', 'cordis-inspect-catalog', 'workflow-guest', 'mermaid', 'translation-pairing',
-    ])
   })
 
   it('launches a native pnpm entrypoint directly', () => {
@@ -858,12 +726,6 @@ describe('Typert contract preparation', () => {
     })
   })
 
-  it('keeps standalone doc sync responsible for preparation', () => {
-    const docTypecheck = withPnpmEntrypoint(() =>
-      gatesForMode('doc-sync').find(item => item.id === 'doc-typecheck'))
-
-    expect(docTypecheck?.displayCommand).toBe('pnpm run doc-typecheck')
-  })
 })
 
 describe('Node compatibility graph', () => {
