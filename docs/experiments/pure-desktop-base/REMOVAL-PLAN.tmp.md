@@ -1,6 +1,6 @@
 # AI 产品剥离：模块分支执行计划（临时）
 
-日期：2026-11-04。状态：第 01 项 pure/settings 已合入并推送；第 02 项 pure/connection 已实施，待审查；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
+日期：2026-11-04。状态：第 01 项 pure/settings、第 02 项 pure/connection 均已合入并推送；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
 
 ## 目标与范围
 
@@ -31,7 +31,7 @@
 | 编号 | 分支 | 工作范围 | 验收条件 | 状态 |
 |---|---|---|---|---|
 | 01 | `pure/settings` | 清理 settings、settings-controller 的 Session / Agent preset 残余依赖和编译引用；设置 UI 改用所属设置类型及必要的 shell 远程声明；替换业务化 fixture | 设置链路不依赖全量业务 API；读写、冲突处理、主题与语言持久化正常 | 已合入 |
-| 02 | `pure/connection` | 移除 Connection 的 Session、LLM 消息等业务类型出口和业务声明；保留通用传输与 Peer 生命周期 | RPC、鉴权、取消、断开与资源清理测试通过；剩余消费者引用已调整 | 待审查 |
+| 02 | `pure/connection` | 移除 Connection 的 Session、LLM 消息等业务类型出口和业务声明；保留通用传输与 Peer 生命周期 | RPC、鉴权、取消、断开与资源清理测试通过；剩余消费者引用已调整 | 已合入 |
 | 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 待开始 |
 | 04 | `pure/web-shell` | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 待开始 |
 | 05 | `pure/desktop-host` | 桌面 Host 脱离全量产品 CLI；直接使用通用启动能力；移除 Agent、任务、账号等 Host 业务集成 | 无密钥、无账号和旧用户目录可启动；Host 启停、就绪和失败报告正常 | 待开始 |
@@ -101,7 +101,9 @@ UI 远程类型与测试依赖可能交叉，每个分支开始前核实。遇�
 
 ## 下一步
 
-第 01 项在 `pure/settings` 完成，基点为 `bb2dbed99f0992fbe1c8570a36cfb91660f69ec8`，实现提交为 `662ad5a3d1`，已按用户授权快进合入本地 master。当前已从 `babab2764becfd190041446c961934ba5e8970f1` 创建 `pure/connection`，第 02 项已完成实现与验证，待审查。第二模块尚未提交、推送或合并；后续项为 pure/ui-test-runtime，未开始。
+第 01 项在 `pure/settings` 完成，基点为 `bb2dbed99f0992fbe1c8570a36cfb91660f69ec8`，实现提交为 `662ad5a3d1`，已快进合入主干。
+
+第 02 项在 `pure/connection` 完成，基点为 `babab2764becfd190041446c961934ba5e8970f1`，实现提交为 `44d90704e4`，已按用户授权快进合入主干。后续项为 `pure/ui-test-runtime`，尚未创建分支或开始实施。
 
 ## 第 01 项执行记录
 
