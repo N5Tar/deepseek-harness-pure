@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Shell configuration API",
+    "description": "Settings and credential-management methods for the standalone shell."
+  }
+}

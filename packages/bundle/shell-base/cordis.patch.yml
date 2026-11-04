@@ -1,0 +1,43 @@
+# Standalone composition: no base or web-app bundle layers.
+- insert:
+    - id: credentials
+      name: '@deepseek-ai/dsh-credentials-local'
+    - id: config-editor
+      name: '@deepseek-ai/dsh-config-editor'
+    - id: settings
+      name: '@deepseek-ai/dsh-settings'
+    - id: typert
+      name: '@deepseek-ai/dsh-typert-registry'
+    - id: typert-loader
+      name: '@deepseek-ai/dsh-typert-loader'
+    - id: remote-access
+      name: '@deepseek-ai/dsh-api-remote-access'
+    - id: typert-gateway
+      name: '@deepseek-ai/dsh-api-gateway'
+    - id: settings-controller
+      name: '@deepseek-ai/dsh-api-settings-controller'
+    - id: webserver
+      name: '@deepseek-ai/dsh-host-webserver'
+      config:
+        host: 127.0.0.1
+        port: 0
+    - id: modules
+      name: '@deepseek-ai/dsh-client-modules'
+    - id: connection
+      name: '@deepseek-ai/dsh-client-connection'
+    - id: shell-remotes
+      name: '@deepseek-ai/dsh-api-shell-remotes'
+    - id: shell-base
+      name: '@deepseek-ai/dsh-shell-base'
+      config:
+        printUrl: true
+    - id: ui-renderer
+      name: '@deepseek-ai/dsh-client-ui-renderer'
+    - id: ui-settings
+      name: '@deepseek-ai/dsh-client-ui-settings'
+    - id: locale
+      name: '@deepseek-ai/dsh-client-locale'
+    - id: ui-theme
+      name: '@deepseek-ai/dsh-client-ui-theme'
+    - id: ui-shell
+      name: '@deepseek-ai/dsh-client-ui-shell'

@@ -28,6 +28,7 @@ import {
 } from 'electron'
 import { resolveDesktopPaths } from './paths.ts'
 import { DesktopProjectManager } from './project-manager.ts'
+import { resolveDesktopLaunchMode, type DesktopLaunchMode } from './launch-mode.ts'
 import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError } from './host-process.ts'
 import { DesktopPlatformView, PLATFORM_IPC, platformBounds } from './platform-view.ts'
 import { installDesktopFileDrag } from './file-drag.ts'
@@ -71,6 +72,7 @@ import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
 
+let desktopMode: DesktopLaunchMode | undefined
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => { await stopOperationReports() }
 let shuttingDown = false
@@ -106,7 +108,8 @@ const recovery = new DesktopFatalRecovery({
   show: options => dialog.showMessageBox(options),
   stop: () => { shuttingDown = true; return stopForRecovery() },
   disablePlugins: async () => {
-    const manager = new DesktopProjectManager(resolveDesktopPaths(), runtimeResources())
+    if (desktopMode === undefined) throw new Error('desktop recovery: launch mode has not been validated')
+    const manager = new DesktopProjectManager(resolveDesktopPaths(), runtimeResources(), desktopMode)
     const backupPath = await manager.disableAllPlugins()
     console.info('Desktop profile recovery completed:', { profilePatchBackup: backupPath ?? null, homePatch: 'unchanged' })
   },
@@ -369,6 +372,15 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 }
 
 async function main(): Promise<void> {
+  const manifest: unknown = JSON.parse(await readFile(join(app.getAppPath(), 'package.json'), 'utf8'))
+  if (typeof manifest !== 'object' || manifest === null) throw new Error('desktop policy: invalid application manifest')
+  const mode = resolveDesktopLaunchMode(app.isPackaged
+    ? ('dshDesktopMode' in manifest ? manifest.dshDesktopMode : undefined)
+    : process.env.DSH_DESKTOP_MODE)
+  desktopMode = mode
+  const requireProduct = (): void => {
+    if (mode !== 'product') throw new Error('desktop: product operation is unavailable in shell mode')
+  }
   const desktopSettings = await readDesktopSettings(app.getPath('userData'))
   void pruneCrashReports(app.getPath('logs'))
   const journalDirectory = process.env.DSH_DESKTOP_UPDATE_JOURNAL_DIR
@@ -376,11 +388,11 @@ async function main(): Promise<void> {
   const resources = runtimeResources()
   const paths = resolveDesktopPaths()
   const development = !app.isPackaged
-  const primaryRuntime = development
+  const primaryRuntime = mode === 'shell' ? undefined : development
     ? developmentPrimaryRuntime()
     : join(process.resourcesPath, 'runtime', 'primary-runtime')
   const activeProject = paths.profile
-  const manager = new DesktopProjectManager(paths, resources)
+  const manager = new DesktopProjectManager(paths, resources, mode)
   // Dock and Finder launches inherit only launchd's environment; every Host shares one login-shell read.
   const loginShellRead = new AbortController()
   // The probe runs in its own process group, which outlives Desktop unless the read is aborted.
@@ -524,7 +536,7 @@ async function main(): Promise<void> {
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
-      hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
+      hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion(), DSH_DESKTOP_MODE: mode }, onFailure,
       primaryRuntime,
       resources, (next) => { platformView.setSession(next) }, (record) => {
         operationJournal ??= new OperationJournal(join(app.getPath('userData'), 'plugin-operations'), {
@@ -542,6 +554,7 @@ async function main(): Promise<void> {
           .catch((error: unknown) => { console.error('desktop: legacy Host cookie cleanup failed', error) })
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
+        if (mode === 'shell') return
         welcomeBackend = connectDesktopWelcome(ready.url, cookie)
         analyticsEnabled = await welcomeBackend.analyticsEnabled().catch(() => false)
         if (!reportedLaunch) { reportedLaunch = true; void track('desktop_app_launch', {}) }
@@ -684,7 +697,6 @@ async function main(): Promise<void> {
     return startup
   }
 
-  const manifest: unknown = JSON.parse(await readFile(join(app.getAppPath(), 'package.json'), 'utf8'))
   const packagedChannel = desktopUpdateChannel(manifest)
   const channelSettings = new DesktopUpdateSettings(app.getPath('userData'), packagedChannel)
   const initialChannel = await channelSettings.load()
@@ -747,7 +759,7 @@ async function main(): Promise<void> {
       }
       return true
     },
-    undefined, undefined, undefined,
+    undefined, mode === 'shell' ? () => false : undefined, undefined,
     (success, reason) => { void track('desktop_upgrade_download_result', { is_success: success, ...reason === undefined ? {} : { error_reason: reason } }) },
     updateChannel,
   )
@@ -877,6 +889,8 @@ async function main(): Promise<void> {
       || new URL(event.senderFrame.url).origin !== new URL(applicationUrl).origin) {
       throw new Error('desktop welcome: rejected locale request from an unowned frame')
     }
+    // The shell's locale client adopts its durable configForms preference after this provisional bootstrap.
+    if (mode === 'shell') return { languages: systemLanguages, preference: null }
     if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
     return { languages: systemLanguages, preference: await welcomeBackend.readLocalePreference() }
   })
@@ -894,11 +908,13 @@ async function main(): Promise<void> {
   })
   ipcMain.handle(DESKTOP_IPC.updatesChannelGet, (event) => {
     assertProductSender(event)
+    requireProduct()
     return channelState
   })
   let channelRequests = 0
   ipcMain.handle(DESKTOP_IPC.updatesChannelSet, async (event, channel: unknown): Promise<DesktopChannelChangeResult> => {
     assertProductSender(event)
+    requireProduct()
     if (!isDesktopUpdateChannel(channel)) throw new Error('desktop update: unsupported channel')
     if (channelState === undefined) throw new Error('desktop update: settings are not initialized')
     channelRequests++
@@ -924,6 +940,7 @@ async function main(): Promise<void> {
   })
   ipcMain.handle(DESKTOP_IPC.updatesStatus, (event) => {
     assertProductSender(event)
+    requireProduct()
     return updatePresentation(updates.state)
   })
   ipcMain.handle(DESKTOP_IPC.deviceInfo, (event) => {
@@ -932,6 +949,7 @@ async function main(): Promise<void> {
   })
   ipcMain.handle(DESKTOP_IPC.onboardingApiKey, async (event) => {
     assertProductSender(event)
+    requireProduct()
     return (await readWelcomeState()).hasApiKey
   })
   ipcMain.on(DESKTOP_IPC.onboardingActive, (event, active: unknown) => {
@@ -947,6 +965,7 @@ async function main(): Promise<void> {
   })
   ipcMain.handle(DESKTOP_IPC.updatesOpen, async (event) => {
     assertProductSender(event)
+    requireProduct()
     await openUpdatePrompt()
   })
 
@@ -993,6 +1012,7 @@ async function main(): Promise<void> {
   let policyAuthenticationQueued = false
   /** Present check results only while their captured channel revision remains current. */
   const openUpdatePrompt = (manual = false): Promise<void> => {
+    requireProduct()
     if (channelState?.error !== undefined) {
       return showConfigurationError()
     }
@@ -1117,6 +1137,7 @@ async function main(): Promise<void> {
   }
 
   const automaticCheck = (): void => {
+    if (mode === 'shell') return
     if (!quitting) void mandatoryPolicy?.check('foreground-or-resume').catch((error: unknown) => { console.error(error) })
     if (!quitting) void updateSchedule.check().catch((error: unknown) => { console.error(error) })
   }
@@ -1157,7 +1178,7 @@ async function main(): Promise<void> {
         click: () => { void showAbout().catch((error: unknown) => { console.error(error) }) } }
       : { label: currentDesktopLocale().messages.aboutMenu, role: 'about' },
     { type: 'separator' },
-    { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
+    ...mode === 'product' ? [{ label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } }] : [],
     ...process.platform === 'darwin' || process.platform === 'win32'
       ? [{ label: currentDesktopLocale().messages.cliCommandMenu, click: () => { void commandManager.show() } }] : [],
     { type: 'separator' },
@@ -1402,6 +1423,7 @@ async function main(): Promise<void> {
   }
   const openInitialWindow = async (): Promise<void> => {
     if (quitting || recovery.active) return
+    if (mode === 'shell') { await enterWorkspace(); return }
     const state = await readWelcomeState()
     if (isQuitting() || backend.state.phase !== 'ready') return
     locale = resolveDesktopStartupLocale(state.localePreference, systemLanguages)
@@ -1432,7 +1454,7 @@ async function main(): Promise<void> {
     window.focus()
   }
 
-  if (app.isPackaged || process.env.DSH_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient('dsh')
+  if (app.isPackaged && mode === 'product') app.setAsDefaultProtocolClient('dsh')
   app.on('open-url', (event, url) => {
     event.preventDefault()
     if (url === 'dsh://open' || url === 'dsh://open/') focusPrimaryWindow()
@@ -1483,7 +1505,7 @@ async function main(): Promise<void> {
     }
     if (quitting) return
     event.preventDefault()
-    if (skipQuitConfirmation || sessionEnding) { finishQuit(); return }
+    if (mode === 'shell' || skipQuitConfirmation || sessionEnding) { finishQuit(); return }
     void quitConfirmation.confirm().then((approved) => {
       if (quitting || shellInstallerOwnsQuit) return
       if (approved) { finishQuit(); return }
@@ -1493,12 +1515,11 @@ async function main(): Promise<void> {
   })
 
   mainWindow = createMainWindow()
-  if (typeof manifest !== 'object' || manifest === null) throw new Error('desktop policy: invalid application manifest')
-  const developmentPolicy = app.isPackaged ? undefined : process.env.DSH_DESKTOP_MANDATORY_UPDATE_CONFIG
+  const developmentPolicy = mode === 'shell' || app.isPackaged ? undefined : process.env.DSH_DESKTOP_MANDATORY_UPDATE_CONFIG
   const policyInput: unknown = app.isPackaged
     ? ('dshMandatoryUpdatePolicy' in manifest ? manifest.dshMandatoryUpdatePolicy : undefined)
     : developmentPolicy === undefined ? undefined : JSON.parse(developmentPolicy) as unknown
-  const policyConfig = resolveDesktopPolicyConfig(policyInput, !app.isPackaged)
+  const policyConfig = mode === 'shell' ? undefined : resolveDesktopPolicyConfig(policyInput, !app.isPackaged)
   if (policyConfig !== undefined) {
     if (policyConfig.authentication === 'feishu-test') {
       policyAuth = new DesktopPolicyTestAuth(policyConfig.origin, policyConfig.allowedAuthOrigins, locale,

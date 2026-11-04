@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/ui-shell/README.md
+/:
+  en: 0dea6dd289e88edc
+  zh: 50684122d98193d1
+/session-free-application-shell:
+  en: ae33e8c214043953
+  zh: 70c0f857315ca287
+/session-free-application-shell/summary:
+  en: d686f5c99675a63a
+  zh: 1856d56e525a9ba9
+/session-free-application-shell/table-of-contents:
+  en: 122f0d41696980b1
+  zh: 5423073f383f055d
+/session-free-application-shell/use-this-package:
+  en: ccc6e98e825fcbc1
+  zh: b11cde71da33b4de
+/session-free-application-shell/understand-the-implementation:
+  en: 37085c543ed00707
+  zh: 9c4d8d65b2c58241
+/session-free-application-shell/model-experience:
+  en: 8d6499a6cdf513e1
+  zh: dc057d101605e1db
+/session-free-application-shell/model-experience/kv-cache-effect:
+  en: 9e09def66f09f318
+  zh: b9e9547861d91587
+/session-free-application-shell/known-limitations-and-deferred-work:
+  en: d483263f6beee3a9
+  zh: ce927403ff92f5b5
+/session-free-application-shell/known-limitations-and-deferred-work/dev-note:
+  en: b836f01bd0bceb4a
+  zh: 8122fa08b2aa95fa

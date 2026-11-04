@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for STATUS.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/experiments/pure-desktop-base/STATUS.md
+/pure-desktop-base-execution-status:
+  en: d64f2a11d29c0f4a
+  zh: 2b2cda085476ed0b
+/pure-desktop-base-execution-status/scope:
+  en: 0e421ccccf50b45c
+  zh: d4a700e2d96a87ee
+/pure-desktop-base-execution-status/progress:
+  en: 6a335629aea2394a
+  zh: b5b33fbb0edc807d
+/pure-desktop-base-execution-status/environment-and-isolation:
+  en: 05a47083777a67e6
+  zh: c09cb232d7b85d6d
+/pure-desktop-base-execution-status/implemented-composition:
+  en: dafec068efa36264
+  zh: cd67ae114ad99bb4
+/pure-desktop-base-execution-status/runtime-evidence:
+  en: 6051b56f29714b8a
+  zh: 5054ad564a7414f3
+/pure-desktop-base-execution-status/checks:
+  en: 3e6921c08c7b13c9
+  zh: ba1af82ad829db88
+/pure-desktop-base-execution-status/next-checkpoint:
+  en: 29b566e31b696938
+  zh: 03287f7ea6bd7850

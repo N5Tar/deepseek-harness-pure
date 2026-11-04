@@ -15,7 +15,7 @@ import { PRODUCT_PACKAGE_POLICY, type ProductPackagePolicy } from './product-pac
 import { collectRuntimeLocalSourceSpecifiers, collectRuntimeSourceSpecifiers } from './verify-client-packages.ts'
 
 const PROFILE_SOURCE = 'packages/util/official-bundles/src/bundles.ts'
-const PROFILES = ['acp', 'web', 'headless', 'sdk', 'sdk-minimal']
+const PROFILES = ['acp', 'web', 'headless', 'sdk', 'sdk-minimal', 'shell']
 const PICKER_SOURCE = 'packages/host/directory-picker-auto/src/index.ts'
 const DYNAMIC_MOUNTS: Readonly<Record<string, readonly string[]>> = {
   [PICKER_SOURCE]: ['BACKEND_PACKAGES', 'SURFACE_PACKAGES'],

@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveDesktopPaths } from '../src/paths.ts'
-import { DesktopProjectManager } from '../src/project-manager.ts'
+import { DesktopProfileModeError, DesktopProjectManager } from '../src/project-manager.ts'
+import type { DesktopLaunchMode } from '../src/launch-mode.ts'
 import { readProfilePlugins } from '@deepseek-ai/dsh-app-boot'
 import { runtimeFixture } from './runtime-fixture.ts'
 
@@ -43,6 +44,50 @@ afterEach(() => {
 })
 
 describe('desktop external plugin profile', () => {
+  it('initializes and recovers the shell without restoring the product bundles', async () => {
+    const { manager: product } = setup()
+    const manager = new DesktopProjectManager(product.paths, product.runtime, 'shell')
+    await manager.applyRelease()
+    seedPlugin(manager)
+    const manifestPath = join(manager.paths.profile, 'package.json')
+    const patch = join(manager.paths.profile, 'cordis.patch.yml')
+    writeFileSync(patch, '- id: ui-shell\n  disabled: true\n')
+    const backup = await manager.disableAllPlugins()
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
+    expect(manifest.dsh.profile.bundles).toEqual(['@deepseek-ai/dsh-shell-base'])
+    expect(backup).toBeDefined()
+    expect(readFileSync(backup!, 'utf8')).toContain('disabled: true')
+    expect(existsSync(patch)).toBe(false)
+    expect(existsSync(join(manager.paths.profile, 'node_modules/plugin/package.json'))).toBe(true)
+    await manager.applyRelease()
+    expect(existsSync(patch)).toBe(true)
+  })
+
+  it.each<DesktopLaunchMode>(['product', 'shell'])('preserves a %s profile when launched or recovered in another mode', async (initial) => {
+    const { manager: product } = setup()
+    const manager = new DesktopProjectManager(product.paths, product.runtime, initial)
+    await manager.applyRelease()
+    const files = ['package.json', 'cordis.patch.yml', 'pnpm-workspace.yaml']
+    const before = files.map(file => readFileSync(join(manager.paths.profile, file), 'utf8'))
+    const other = new DesktopProjectManager(manager.paths, manager.runtime, initial === 'shell' ? 'product' : 'shell')
+    await expect(other.applyRelease()).rejects.toBeInstanceOf(DesktopProfileModeError)
+    await expect(other.disableAllPlugins()).rejects.toBeInstanceOf(DesktopProfileModeError)
+    expect(files.map(file => readFileSync(join(manager.paths.profile, file), 'utf8'))).toEqual(before)
+  })
+
+  it('rejects a shell profile that explicitly includes the product base', async () => {
+    const { manager: product } = setup()
+    const manager = new DesktopProjectManager(product.paths, product.runtime, 'shell')
+    await manager.applyRelease()
+    const manifestPath = join(manager.paths.profile, 'package.json')
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
+    manifest.dsh.profile.bundles.push('@deepseek-ai/dsh-base')
+    const value = JSON.stringify(manifest)
+    writeFileSync(manifestPath, value)
+    await expect(manager.applyRelease()).rejects.toBeInstanceOf(DesktopProfileModeError)
+    expect(readFileSync(manifestPath, 'utf8')).toBe(value)
+  })
+
   it('preserves installed packages, profile state, and the lockfile when preparing a launch', async () => {
     const { manager } = setup()
     await manager.applyRelease()

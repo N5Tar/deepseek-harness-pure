@@ -59,6 +59,7 @@ const harness = await vi.hoisted(async () => {
   let quitCompleted = deferred()
   let policyBlocked = deferred()
   let embeddedPolicy: unknown
+  let embeddedMode: unknown
   let closeWindowsOnQuit = false
   let updateState: DesktopUpdateState = { phase: 'idle' }
   let platformDisposeDeferred: ReturnType<typeof deferred> | undefined
@@ -254,6 +255,9 @@ const harness = await vi.hoisted(async () => {
     get hostStarted() { return hostStarted }, get navigated() { return navigated },
     get dialogShown() { return dialogShown }, get quitCompleted() { return quitCompleted },
     get policyBlocked() { return policyBlocked },
+    projectManager: vi.fn(),
+    get embeddedMode() { return embeddedMode },
+    set embeddedMode(value: unknown) { embeddedMode = value },
     get embeddedPolicy() { return embeddedPolicy },
     set embeddedPolicy(value: unknown) { embeddedPolicy = value },
     nextNavigation() { navigated = deferred(); return navigated.promise },
@@ -287,6 +291,7 @@ const harness = await vi.hoisted(async () => {
       navigated = deferred(); dialogShown = deferred(); quitCompleted = deferred()
       policyBlocked = deferred()
       embeddedPolicy = undefined
+      embeddedMode = undefined
       fileDrag.install.mockReset()
       fileDrag.dispose.mockReset().mockResolvedValue(undefined)
       platformDisposeDeferred = undefined
@@ -338,7 +343,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   const original = await importOriginal<typeof import('node:fs/promises')>()
   return { ...original, readFile: vi.fn((path: Parameters<typeof original.readFile>[0], encoding?: 'utf8') => {
     if (path === join('desktop-test-app', 'package.json')) {
-      return Promise.resolve(JSON.stringify({ dshDesktopAppId: 'com.deepseek.dsh', dshMandatoryUpdatePolicy: harness.embeddedPolicy }))
+      return Promise.resolve(JSON.stringify({ dshDesktopAppId: 'com.deepseek.dsh', dshMandatoryUpdatePolicy: harness.embeddedPolicy, dshDesktopMode: harness.embeddedMode }))
     }
     return encoding === undefined ? original.readFile(path) : original.readFile(path, encoding)
   }) }
@@ -351,6 +356,7 @@ vi.mock('../src/runtime-tree.ts', () => ({ readDesktopRuntime: () => ({ release:
 vi.mock('../src/paths.ts', () => ({ resolveDesktopPaths: () => ({ profile: 'desktop-test-profile' }) }))
 vi.mock('../src/project-manager.ts', () => ({
   DesktopProjectManager: class {
+    constructor(...args: unknown[]) { harness.projectManager(...args) }
     readonly applyRelease = harness.applyRelease
     disableAllPlugins = harness.disableAllPlugins
 
@@ -473,6 +479,7 @@ beforeEach(() => {
   vi.stubEnv('DSH_DESKTOP_DSH_DIR', 'test-runtime')
   vi.stubEnv('DSH_DESKTOP_PRIMARY_RUNTIME_DIR', 'test-primary-runtime')
   vi.stubGlobal('process', { ...process, platform: 'win32', arch: 'x64', resourcesPath: 'desktop-test-resources' })
+  vi.stubEnv('DSH_DESKTOP_MODE', undefined)
   vi.stubEnv('DSH_DESKTOP_HOST_INSPECT_PORT', undefined)
   vi.stubEnv('DSH_DESKTOP_DEV_PROJECT_DIR', undefined)
   vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
@@ -497,6 +504,100 @@ afterEach(async () => {
 })
 
 describe('desktop main startup', () => {
+  it.each([false, true])('opens shell without account, Office, or update requests (packaged=%s)', async (packaged) => {
+    harness.app.isPackaged = packaged
+    harness.embeddedMode = packaged ? 'shell' : undefined
+    vi.stubEnv('DSH_DESKTOP_MODE', packaged ? 'product' : 'shell')
+    vi.stubEnv('DSH_DESKTOP_PRIMARY_RUNTIME_DIR', undefined)
+    vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', '{invalid')
+    harness.embeddedPolicy = { invalid: true }
+    const host = await readyWorkspace()
+    await harness.windows[0]!.shown.promise
+    expect(host.environment?.DSH_DESKTOP_MODE).toBe('shell')
+    expect(harness.app.setAsDefaultProtocolClient).not.toHaveBeenCalled()
+    expect(host.primaryRuntime).toBeUndefined()
+    expect(harness.projectManager.mock.calls[0]?.[2]).toBe('shell')
+    expect(harness.connectWelcome).not.toHaveBeenCalled()
+    expect(host.fetch).not.toHaveBeenCalled()
+    expect(harness.analytics).not.toHaveBeenCalled()
+    expect(harness.windows).toHaveLength(1)
+    expect(applicationMenuItems().some(item => item.label === en.checkUpdatesMenu)).toBe(false)
+    harness.powerMonitor.emit('resume')
+    harness.windows[0]!.emit('focus')
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(harness.updateCheck).not.toHaveBeenCalled()
+    expect(harness.updateDownload).not.toHaveBeenCalled()
+    expect(harness.updateInstall).not.toHaveBeenCalled()
+    expect(() => invoke(DESKTOP_IPC.updatesStatus, 'app')).toThrow('unavailable in shell mode')
+    expect(() => invoke(DESKTOP_IPC.updatesChannelGet, 'app')).toThrow('unavailable in shell mode')
+    await expect(invoke(DESKTOP_IPC.updatesChannelSet, 'app', 'stable')).rejects.toThrow('unavailable in shell mode')
+    await expect(invoke(DESKTOP_IPC.updatesOpen, 'app')).rejects.toThrow('unavailable in shell mode')
+    await expect(invoke(DESKTOP_IPC.onboardingApiKey, 'app')).rejects.toThrow('unavailable in shell mode')
+    harness.app.quit()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(host.inspectQuit).not.toHaveBeenCalled()
+    expect(host.stop).toHaveBeenCalledOnce()
+    host.exited.resolve()
+  })
+
+  it('recovers the shell profile with its validated mode before restarting', async () => {
+    harness.app.isPackaged = false
+    vi.stubEnv('DSH_DESKTOP_MODE', 'shell')
+    harness.dialog.showMessageBox.mockResolvedValue({ response: 2 })
+    const host = await readyWorkspace()
+    await harness.windows[0]!.shown.promise
+    host.onFailure!(new Error('shell backend exited'))
+    await host.stopping.promise
+    expect(harness.disableAllPlugins).not.toHaveBeenCalled()
+    host.exited.resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    await harness.quitCompleted.promise
+    expect(harness.disableAllPlugins).toHaveBeenCalledOnce()
+    expect(harness.projectManager.mock.calls.at(-1)?.[2]).toBe('shell')
+    expect(harness.app.relaunch).toHaveBeenCalledOnce()
+    expect(harness.connectWelcome).not.toHaveBeenCalled()
+    expect(host.inspectQuit).not.toHaveBeenCalled()
+  })
+
+  it('keeps product mode for packaged applications despite a shell environment override', async () => {
+    vi.stubEnv('DSH_DESKTOP_MODE', 'shell')
+    const host = await readyWorkspace()
+    expect(host.environment?.DSH_DESKTOP_MODE).toBe('product')
+    expect(harness.projectManager.mock.calls[0]?.[2]).toBe('product')
+    expect(harness.connectWelcome).toHaveBeenCalledOnce()
+  })
+
+  it('rejects an invalid development mode before touching the profile', async () => {
+    harness.app.isPackaged = false
+    vi.stubEnv('DSH_DESKTOP_MODE', 'typo')
+    await import('../src/main.ts')
+    await harness.dialogShown.promise
+    expect(harness.projectManager).not.toHaveBeenCalled()
+    expect(harness.applyRelease).not.toHaveBeenCalled()
+    expect(harness.hosts).toHaveLength(0)
+  })
+
+  it('bootstraps shell language provisionally and accepts the durable client preference', async () => {
+    harness.app.isPackaged = false
+    vi.stubEnv('DSH_DESKTOP_MODE', 'shell')
+    await readyWorkspace()
+    const window = harness.windows[0]!
+    await window.shown.promise
+    await expect(invoke(DESKTOP_IPC.localeBootstrap, 'app')).resolves.toEqual({ languages: ['en-US'], preference: null })
+    const listener = harness.ipcOn.mock.calls.find(([channel]) => channel === DESKTOP_IPC.localeChanged)![1]
+    listener({ sender: window.webContents, senderFrame: window.webContents.mainFrame }, 'zh')
+    expect(readFileSync(join(harness.app.getPath('userData'), 'desktop', 'locale-cache'), 'utf8')).toContain('zh')
+    expect(harness.connectWelcome).not.toHaveBeenCalled()
+  })
+
+  it.each([true, false])('registers the public URL scheme only for packaged applications (packaged=%s)', async (packaged) => {
+    harness.app.isPackaged = packaged
+    vi.stubEnv('DSH_DESKTOP_DEV_APP', '1')
+    await readyForUpdate()
+    if (packaged) expect(harness.app.setAsDefaultProtocolClient).toHaveBeenCalledExactlyOnceWith('dsh')
+    else expect(harness.app.setAsDefaultProtocolClient).not.toHaveBeenCalled()
+  })
+
   it.each([true, false])('selects the package manager before Host startup (packaged=%s)', async (packaged) => {
     harness.app.isPackaged = packaged
     await readyForUpdate()

@@ -209,6 +209,13 @@ Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开�
 
 安装工作区依赖不会自动运行锁定版本 Electron 提供的独立二进制安装程序。直接运行 [Windows 控制台信号测试](tests/windows-cli-signals.spec.ts)前，在仓库根目录执行 `pnpm --filter @deepseek-ai/dsh-desktop exec install-electron`，准备锁定版本的 Electron 二进制。通过代理下载时，为该安装进程启用 `ELECTRON_GET_USE_PROXY=1`。Windows 覆盖率检查要求安装成功后，才启动带覆盖率插桩的单元测试集。
 
+<a id="shell-development"></a>
+### 不依赖会话的 Shell 开发
+
+为未打包的开发启动设置 `DSH_DESKTOP_MODE=shell`，即可选择独立 shell 组合。启动器使用 `.desktop-build/shell-development` 保存生成的项目和默认数据目录，调试端口默认为 Main 9329、Renderer 9322、Host 9330。现有 home、userData、runtime 目录和调试环境覆盖值仍显式生效。macOS 的 `Harness Shell Dev.app` 使用独立 bundle 身份，并记录模式和 runtime 路径供冷启动使用。Shell 启动跳过 primary-runtime 准备，无需 Office 或 Python 载荷；首次使用时，Electron 本身可能需要下载二进制。
+
+Shell 不经过 Welcome、账户查询、模型凭证、分析上报或更新检查，直接进入应用窗口。原生更新和 onboarding 请求不可用，正常退出不依赖 Agent 任务服务。设置仍通过 shell Host 持久化。初始化和原生恢复都选择 shell 基础组合；来自另一模式的 profile 会被拒绝且不被改写，因此切换模式时请使用独立 `DSH_HOME`。打包应用仅从自身 manifest 的 `dshDesktopMode` 选择模式，不接受环境覆盖；缺省保留产品桌面。Shell 发行包还必须在打包元数据中移除产品 URL 协议。
+
 ### 启动引导
 
 API Key 输入框初始为空，并通过 `autocomplete="new-password"` 请求 Chromium 不要自动填入已保存的登录密码。
@@ -384,7 +391,7 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 
 仅向应用提供的 `dshOnboarding.hasApiKey()` preload 方法返回欢迎后端当前的 API Key 存在状态布尔值；原生登录与引导共用凭证发现逻辑，且只有受管理的应用主 frame 可以调用。
 
-登录会在系统浏览器中打开配置的平台页面。Host 负责 PKCE 和临时本机回调，在进入工作区前保存凭证，再将浏览器跳转到平台完成页。打开和复制的授权链接通过 `theme=light` 或 `theme=dark` 携带当前生效的 Desktop 主题；`system` 在执行操作时解析。即使平台页面随后批准，取消仍会撤销本地尝试。设置中的账号页面提供退出；没有独立 API Key 时，退出后返回欢迎窗。浏览器登录成功后，Welcome 切换到工作区但不激活应用；完成页的 dsh://open 链接负责将客户端置前。打包应用注册 dsh://open，只显示窗口而不传递凭证。macOS 开发启动器在 `.desktop-build/development` 下准备经临时签名的 `Harness Dev.app`，在 Info.plist 中声明 `dsh` 并注册到 Launch Services。它加载当前工作区，并记录选定的开发 home、浏览器数据路径和调试设置，以供冷启动使用。启动此应用会将其设为 `dsh://` 默认处理程序；启动打包应用会重新注册打包版处理程序。生成的应用包不包含账号 token，依赖工作区和已准备的运行环境继续存在。
+登录会在系统浏览器中打开配置的平台页面。Host 负责 PKCE 和临时本机回调，在进入工作区前保存凭证，再将浏览器跳转到平台完成页。打开和复制的授权链接通过 `theme=light` 或 `theme=dark` 携带当前生效的 Desktop 主题；`system` 在执行操作时解析。即使平台页面随后批准，取消仍会撤销本地尝试。设置中的账号页面提供退出；没有独立 API Key 时，退出后返回欢迎窗。浏览器登录成功后，Welcome 切换到工作区但不激活应用；完成页的 dsh://open 链接负责将客户端置前。打包应用注册 dsh://open，只显示窗口而不传递凭证。macOS 开发启动器在 `.desktop-build/development` 下准备经临时签名的 `Harness Dev.app`，不声明 URL 处理程序，也不显式注册到 Launch Services。它加载当前工作区，并记录选定的开发 home、浏览器数据路径和调试设置。开发启动不会接管 `dsh://`；浏览器登录完成后，请手动将开发窗口置前。启动打包应用会注册打包版处理程序。生成的应用包不包含账号 token，依赖工作区和已准备的运行环境继续存在。
 
 账号失效并返回 Welcome 时，主进程保留一次性通知，直到渲染器通过所属窗口的 IPC 领取。重新加载 Welcome 不会重复提示；主动退登和冷启动不会生成该通知。
 

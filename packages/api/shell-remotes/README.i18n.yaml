@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/api/shell-remotes/README.md
+/:
+  en: 0555b58e858616b0
+  zh: 90f8dbb3b0d96ca2
+/deepseek-ai-dsh-api-shell-remotes:
+  en: e76d532f782ae307
+  zh: 8f9b3c787de8d41c
+/deepseek-ai-dsh-api-shell-remotes/summary:
+  en: a139208d7d0fd77b
+  zh: 0a0ce3435399445b
+/deepseek-ai-dsh-api-shell-remotes/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: c3eda0928b5a4ec9
+/deepseek-ai-dsh-api-shell-remotes/use-this-package:
+  en: 019c29cf18366448
+  zh: c56517cdf9c9e74f
+/deepseek-ai-dsh-api-shell-remotes/understand-the-implementation:
+  en: 426f3c8ae4b6f1ba
+  zh: 532c37fbc3439413
+/deepseek-ai-dsh-api-shell-remotes/further-exploration:
+  en: f655d2e14cdb2c86
+  zh: 0ceb6ee28d218298
+/deepseek-ai-dsh-api-shell-remotes/model-experience:
+  en: b3fba4c3d143e2c9
+  zh: 7fe7c27f03619be5
+/deepseek-ai-dsh-api-shell-remotes/known-limitations-and-deferred-work:
+  en: a2bf87f8722b6731
+  zh: 5183efb3bec28732
+/deepseek-ai-dsh-api-shell-remotes/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: bd8a8936229e035e
