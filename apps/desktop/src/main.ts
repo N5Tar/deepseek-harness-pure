@@ -7,29 +7,22 @@ import {
   type IpcMainInvokeEvent, type MenuItemConstructorOptions,
 } from 'electron'
 import { resolveDesktopPaths } from './paths.ts'
-import { DesktopProjectManager } from './project-manager.ts'
-import { DesktopHostFatalError, DesktopHostProcess } from './host-process.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
-import { DesktopBackendController } from './backend-controller.ts'
 import { DESKTOP_IPC, SCHEME, assertDesktopSender } from './ipc.ts'
 import { resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
 import { claimDesktopSingleInstance } from './single-instance.ts'
 import { DesktopCommandManager } from './command-management.ts'
-import { desktopClientVersion } from './client-metadata.ts'
 import { readDesktopTheme, writeDesktopTheme } from './theme-default.ts'
-import { serveWebDocument, authenticateWebHost, forwardWebRequest, removeLegacyHostCookies } from './web-document.ts'
+import { forwardWebRequest } from './web-document.ts'
 import { DesktopFatalRecovery } from './fatal-recovery.ts'
 import { pruneCrashReports, RendererConsoleTail, writeCrashReport, type CrashReportSource } from './crash-report.ts'
-import { OperationJournal } from './operation-journal.ts'
-import { runOperationReportJob, type OperationReportJobResult } from './operation-report-job.ts'
-import { readDesktopLoginShellEnvironment, resolveDesktopLoginShellConfig } from './login-shell-environment.ts'
 import { readDesktopLocaleCache, writeDesktopLocaleCache } from './locale-cache.ts'
 import { installDesktopShortcuts } from './keyboard.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
 
 let focusPrimaryWindow = (): void => {}
-let stopForRecovery = async (): Promise<void> => { await stopOperationReports() }
+const stopForRecovery = async (): Promise<void> => {}
 let shuttingDown = false
 let windowsLanguage: string | undefined = readDesktopLocaleCache(app.getPath('userData'))
 let backendReady = false
@@ -44,48 +37,18 @@ const recovery = new DesktopFatalRecovery({
   messages: () => currentDesktopLocale().messages,
   show: options => dialog.showMessageBox(options),
   stop: () => { shuttingDown = true; return stopForRecovery() },
-  disablePlugins: async () => {
-    const manager = new DesktopProjectManager(resolveDesktopPaths(), runtimeResources())
-    const backupPath = await manager.disableAllPlugins()
-    console.info('Desktop profile recovery completed:', { profilePatchBackup: backupPath ?? null, homePatch: 'unchanged' })
-  },
+  disablePlugins: () => { console.info('Desktop runs the Cordis kernel; no product profile patches to disable'); return Promise.resolve() },
   exit: () => { app.quit() },
   restart: () => { app.relaunch(); app.quit() },
   writeReport: (error, source) => persistCrashReport(error, source),
   revealReport: async (path) => { await access(path); shell.showItemInFolder(path) },
 })
 
-let operationJournal: OperationJournal | undefined
-let operationReportJob: Promise<OperationReportJobResult> | undefined
-let operationReportAbort: AbortController | undefined
-let operationReportsStopping = false
-let operationReportStop: Promise<void> | undefined
-
-/** Bound cleanup waiting without claiming an unresponsive report Worker has exited. */
-function stopOperationReports(): Promise<void> {
-  operationReportStop ??= waitForOperationReports()
-  return operationReportStop
-}
-
-async function waitForOperationReports(): Promise<void> {
-  operationReportsStopping = true
-  operationReportAbort?.abort()
-  const job = operationReportJob
-  if (job === undefined) return
-  let timer: ReturnType<typeof setTimeout> | undefined
-  try {
-    const exited = await Promise.race([job.then(() => true), new Promise<false>((resolve) => {
-      timer = setTimeout(() => { resolve(false) }, 500)
-    })])
-    if (!exited) console.error('dsh desktop: operation report Worker has not exited; continuing shutdown')
-  } finally { clearTimeout(timer) }
-}
 
 function persistCrashReport(error: unknown, source: CrashReportSource): Promise<string | undefined> {
   const report = writeCrashReport(app.getPath('logs'), {
-    operationHistoryPlanned: !shuttingDown && !operationReportsStopping,
+    operationHistoryPlanned: false,
     source, phase: backendReady ? 'running' : 'startup', error,
-    ...(error instanceof DesktopHostFatalError && error.diagnostic !== undefined ? { hostDiagnostic: error.diagnostic } : {}),
     rendererConsole: rendererConsole.snapshot(),
     app: {
       name: app.name, version: app.getVersion(), platform: process.platform, arch: process.arch,
@@ -93,26 +56,15 @@ function persistCrashReport(error: unknown, source: CrashReportSource): Promise<
     },
     time: new Date(),
   })
-  void report.then((path) => {
-    if (path !== undefined && operationReportJob === undefined && !shuttingDown && !operationReportsStopping) {
-      operationReportAbort = new AbortController()
-      operationReportJob = runOperationReportJob({ reportPath: path, directory: join(app.getPath('userData'), 'plugin-operations'),
-        limits: { bytes: 64 * 1024, recordBytes: 4096, records: 100, outputBytes: 64 * 1024 },
-        journal: operationJournal?.status() ?? null,
-      }, { timeoutMs: 500, cancellationGraceMs: 100 }, operationReportAbort.signal)
-      void operationReportJob.finally(() => { operationReportJob = undefined; operationReportAbort = undefined })
-    }
-  }).catch((_error: unknown) => { /* Fatal recovery reports failure to persist the basic crash report. */ })
   return report
 }
 
 function reportFatal(error: unknown, source: CrashReportSource): void {
   console.error(error)
   if (shuttingDown) { void persistCrashReport(error, source); return }
-  void recovery.report(error, source).catch(async (failure: unknown) => {
+  void recovery.report(error, source).catch((failure: unknown) => {
     console.error(failure)
     shuttingDown = true
-    await stopOperationReports()
     app.exit(1)
   })
 }
@@ -121,35 +73,6 @@ protocol.registerSchemesAsPrivileged([{
   scheme: SCHEME,
   privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true, codeCache: true },
 }])
-
-interface RuntimeResources {
-  readonly nodeBin: string
-  readonly node: string
-  readonly pnpm: string
-  readonly dsh: string
-}
-
-function runtimeResources(): RuntimeResources {
-  const development = !app.isPackaged
-  const node = process.execPath
-  const nodeBin = development ? join(app.getAppPath(), 'scripts', 'node-bin') : join(process.resourcesPath, 'runtime', 'bin')
-  const pnpm = (development ? process.env.DSH_DESKTOP_PNPM_ENTRY : undefined)
-    ?? (development ? join(app.getAppPath(), 'node_modules', 'pnpm', 'bin', 'pnpm.mjs')
-      : join(process.resourcesPath, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs'))
-  const dsh = (development ? process.env.DSH_DESKTOP_DSH_DIR : undefined)
-    ?? (development ? join(app.getAppPath(), '.desktop-build', 'shell-development', 'project') : join(app.getAppPath(), 'dsh'))
-  return { node, nodeBin, pnpm, dsh }
-}
-
-function developmentHostInspectPort(enabled: boolean): number | undefined {
-  const configured = process.env.DSH_DESKTOP_HOST_INSPECT_PORT
-  if (!enabled || configured === undefined || configured === '') return undefined
-  const port = Number(configured)
-  if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
-    throw new Error('dsh desktop: DSH_DESKTOP_HOST_INSPECT_PORT must be an integer from 1 through 65535')
-  }
-  return port
-}
 
 /** @returns Opaque native chrome fill before the renderer publishes its palette. */
 function chromeFallbackFill(): string {
@@ -230,32 +153,12 @@ function createWindow(preload: string): BrowserWindow {
 }
 
 /** Kernel mode has no packaged runtime tree; the Host only needs an existing working directory. */
-function kernelModeResources(resources: RuntimeResources): RuntimeResources {
-  return process.env.DSH_DESKTOP_KERNEL !== '0'
-    ? { ...resources, dsh: app.getPath('userData') }
-    : resources
-}
-
 async function main(): Promise<void> {
   void pruneCrashReports(app.getPath('logs'))
-  const resources = kernelModeResources(runtimeResources())
   const paths = resolveDesktopPaths()
   // The recorded appearance paints the first frame, before Host settings reach the renderer.
   nativeTheme.themeSource = readDesktopTheme(paths.home) ?? 'system'
   const development = !app.isPackaged
-  // The Cordis kernel is the default shell; DSH_DESKTOP_KERNEL=0 keeps the retired product profile reachable for diagnosis.
-  const kernelMode = process.env.DSH_DESKTOP_KERNEL !== '0'
-  const manager = new DesktopProjectManager(paths, resources)
-  const loginShellRead = new AbortController()
-  app.on('will-quit', () => { loginShellRead.abort() })
-  const loginShell = readDesktopLoginShellEnvironment(process.env, resolveDesktopLoginShellConfig(process.env), {
-    signal: loginShellRead.signal,
-  }).then((result) => {
-    for (const failure of result.failures) console.warn(`desktop login shell: ${failure.shell} failed (${failure.reason})`)
-    return result.environment
-  })
-  let hostEnvironment: NodeJS.ProcessEnv = process.env
-  const prepareHostEnvironment = async (): Promise<void> => { hostEnvironment = await loginShell }
   let quitting = false
   const isQuitting = (): boolean => quitting
   let startup: Promise<void> | undefined
@@ -294,38 +197,6 @@ async function main(): Promise<void> {
     navigation = next
     return next.promise
   }
-  const backend = new DesktopBackendController((onFailure) => {
-    const host = new DesktopHostProcess(resources.node, resources.dsh, paths.profile,
-      developmentHostInspectPort(development), { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion() },
-      onFailure, resources, (record) => {
-        operationJournal ??= new OperationJournal(join(app.getPath('userData'), 'plugin-operations'), {
-          segmentBytes: 256 * 1024, recordBytes: 4096, queuedBytes: 64 * 1024,
-        })
-        operationJournal.enqueue(JSON.stringify(record))
-      })
-    return {
-      start: async () => {
-        const ready = await host.start()
-        const cookie = await authenticateWebHost(ready.url)
-        if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
-        hostCookie = cookie
-        hostUrl = ready.url
-        injections = ready.injections
-        void removeLegacyHostCookies(session.defaultSession.cookies, ready.url)
-          .catch((error: unknown) => { console.error('desktop: legacy Host cookie cleanup failed', error) })
-      },
-      stop: () => host.stop(),
-    }
-  }, (state) => {
-    if (state.phase === 'error') reportFatal(state.failure, 'host')
-    else if (!shuttingDown) backendReady = state.phase === 'ready'
-  })
-  stopForRecovery = async () => {
-    const reports = stopOperationReports()
-    loginShellRead.abort()
-    try { await backend.close() }
-    finally { await Promise.all([operationJournal?.drain(500), reports]) }
-  }
   const showMain = async (): Promise<void> => {
     const window = mainWindow
     if (hostCookie === '' && hostUrl !== undefined && window !== undefined && !window.isDestroyed()) {
@@ -334,27 +205,21 @@ async function main(): Promise<void> {
     } else {
       await navigateMain()
     }
-    if (quitting || recovery.active || mainWindow === undefined || mainWindow.isDestroyed() || backend.host === undefined) return
+    if (quitting || recovery.active || mainWindow === undefined || mainWindow.isDestroyed()) return
     mainWindow.show()
   }
   let kernelHandle: { url: string; stop(): Promise<void> } | undefined
   const reconcileBackend = (): Promise<void> => {
     startup ??= (async () => {
-      if (kernelMode) {
-        // Kernel mode runs the Cordis kernel in this process: no child Host and no product profile.
-        const { bootKernel } = await import('@deepseek-ai/dsh-kernel')
-        const modulesDirectory = join(app.getAppPath(), 'node_modules', '@deepseek-ai', 'dsh-kernel', 'assets', 'ui')
-        const kernel = await bootKernel({ home: app.getPath('userData'), port: 0, modulesDirectory })
-        kernelHandle = kernel
-        hostUrl = kernel.url
-        hostCookie = ''
-        injections = []
-        backendReady = true
-        await showMain()
-        return
-      }
-      await navigateMain()
-      await backend.start(async () => { await Promise.all([manager.applyRelease(), prepareHostEnvironment()]) })
+      // The Cordis kernel runs in this process: one page, settings, and Loader plugins.
+      const { bootKernel } = await import('@deepseek-ai/dsh-kernel')
+      const modulesDirectory = join(app.getAppPath(), 'node_modules', '@deepseek-ai', 'dsh-kernel', 'assets', 'ui')
+      const kernel = await bootKernel({ home: app.getPath('userData'), port: 0, modulesDirectory })
+      kernelHandle = kernel
+      hostUrl = kernel.url
+      hostCookie = ''
+      injections = []
+      backendReady = true
       await showMain()
     })().catch((error: unknown) => { reportFatal(error, 'main'); throw error })
       .finally(() => { startup = undefined })
@@ -363,15 +228,8 @@ async function main(): Promise<void> {
 
   protocol.handle(SCHEME, (request) => {
     const url = new URL(request.url)
-    if (url.hostname !== 'app') return Promise.resolve(new Response(null, { status: 404 }))
-    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.startsWith('/assets/')
-      || ['/favicon.svg', '/manifest.webmanifest'].includes(url.pathname)) {
-      return serveWebDocument(request, join(resources.dsh, 'node_modules', '@deepseek-ai', 'dsh-web-frontend', 'dist'))
-    }
-    if (backend.host === undefined || hostUrl === undefined || hostCookie === undefined) {
-      return Promise.resolve(new Response(null, { status: 503 }))
-    }
-    return forwardWebRequest(request, hostUrl, hostCookie)
+    if (url.hostname !== 'app' || hostUrl === undefined) return Promise.resolve(new Response(null, { status: 404 }))
+    return forwardWebRequest(request, hostUrl, '')
   })
   installDesktopDirectoryPicker(() => mainWindow)
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => { callback(false) })
@@ -384,7 +242,7 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.boot, async (event) => {
     assertApplicationSender(event)
     await startup
-    if (backend.host === undefined || hostUrl === undefined) throw new Error('Desktop Host is unavailable')
+    if (hostUrl === undefined) throw new Error('Desktop kernel is unavailable')
     return { injections, streamBaseUrl: new URL(hostUrl).origin }
   })
   ipcMain.handle(DESKTOP_IPC.bootFailed, (event, message: unknown) => {
@@ -566,10 +424,10 @@ async function main(): Promise<void> {
     const window = mainWindow
     if (window === undefined || window.isDestroyed()) {
       try { createMainWindow() } catch (error) { reportFatal(error, 'main'); return }
-      void (backend.state.phase === 'ready' ? showMain() : navigateMain()).catch((error: unknown) => { reportFatal(error, 'main') })
+      void showMain().catch((error: unknown) => { reportFatal(error, 'main') })
       return
     }
-    if (backend.state.phase !== 'ready') return
+    if (!backendReady) return
     if (window.isMinimized()) window.restore()
     window.show()
     window.focus()
@@ -602,9 +460,8 @@ if (ownsDesktopInstance) void app.whenReady().then(main).catch(async (error: unk
     await writeFile(diagnosticFile, `${error instanceof Error ? error.stack ?? error.message : String(error)}\n`).catch(() => undefined)
   }
   reportFatal(error, 'main')
-}).catch(async (error: unknown) => {
+}).catch((error: unknown) => {
   console.error(error)
   shuttingDown = true
-  await stopOperationReports()
   app.exit(1)
 })
