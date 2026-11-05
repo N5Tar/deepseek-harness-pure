@@ -142,7 +142,7 @@ export function createElectronBuilderConfig(
     },
     files: [
       'lib/main.js',
-      'lib/operation-report-worker.js',
+
       'lib/preload-app.cjs',
       'package.json',
       '!node_modules/**/*.{js,cjs,mjs,ts,cts,mts,css}.map',

@@ -6,7 +6,7 @@ import { readInstalledUpdateRun } from './installed-update-qualification.ts'
 
 interface ApplicationFile { readonly path: string; readonly sha256: string }
 
-const APPLICATION_MODULES = ['lib/main.js', 'lib/preload-app.cjs', 'lib/operation-report-worker.js', 'lib/command-manager-entry.js']
+const APPLICATION_MODULES = ['lib/main.js', 'lib/preload-app.cjs', 'lib/command-manager-entry.js']
 const BOOTSTRAP_MODULES = ['qualification-bootstrap.mjs', 'installed-update-identity.mjs']
 const APPLICATION_FILES = [...APPLICATION_MODULES, ...BOOTSTRAP_MODULES]
 
