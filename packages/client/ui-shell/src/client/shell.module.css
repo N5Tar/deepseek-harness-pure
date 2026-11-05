@@ -7,7 +7,6 @@
   background: var(--dsw-alias-bg-base);
 }
 .header {
-  -webkit-app-region: drag;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -35,7 +34,7 @@
   cursor: pointer;
 }
 .settingsButton:focus-visible, .closeButton:focus-visible, .language:focus-visible, .themeChoice input:focus-visible {
-  outline: 2px solid var(--dsw-alias-label-primary);
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
   outline-offset: 2px;
 }
 @media (hover: hover) {
@@ -81,6 +80,8 @@
   backdrop-filter: var(--dsw-mask-blur);
 }
 .dialog {
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
   position: relative;
   box-sizing: border-box;
   width: min(440px, 100%);
@@ -132,7 +133,7 @@
 .language {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--dsw-alias-border-l4);
+  border: 0.5px solid var(--dsw-alias-border-l4);
   border-radius: var(--dsw-radius-xl);
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-bg-base);

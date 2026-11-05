@@ -1,6 +1,6 @@
 # AI 产品剥离：模块分支执行计划（临时）
 
-日期：2026-11-04。状态：第 01 项、第 02 项已合入并推送；第 03 项 pure/ui-test-runtime 实施中；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
+日期：2026-11-05。状态：第 01–03 项已合入并推送（master `7d2b72aef9`）；第 04 项 Web Shell 去业务化已完成本地验收，尚未提交，按用户指示沿用 `pure/ui-test-runtime`，不新建分支；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
 
 ## 目标与范围
 
@@ -32,8 +32,8 @@
 |---|---|---|---|---|
 | 01 | `pure/settings` | 清理 settings、settings-controller 的 Session / Agent preset 残余依赖和编译引用；设置 UI 改用所属设置类型及必要的 shell 远程声明；替换业务化 fixture | 设置链路不依赖全量业务 API；读写、冲突处理、主题与语言持久化正常 | 已合入 |
 | 02 | `pure/connection` | 移除 Connection 的 Session、LLM 消息等业务类型出口和业务声明；保留通用传输与 Peer 生命周期 | RPC、鉴权、取消、断开与资源清理测试通过；剩余消费者引用已调整 | 已合入 |
-| 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 进行中 |
-| 04 | `pure/web-shell` | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 待开始 |
+| 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 已合入 |
+| 04 | `pure/ui-test-runtime`（沿用当前分支） | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 已验收，未提交 |
 | 05 | `pure/desktop-host` | 桌面 Host 脱离全量产品 CLI；直接使用通用启动能力；移除 Agent、任务、账号等 Host 业务集成 | 无密钥、无账号和旧用户目录可启动；Host 启停、就绪和失败报告正常 | 待开始 |
 | 06 | `pure/desktop-shell` | 纯桌面成为唯一模式；删除双模式、账号 Welcome、产品专属 IPC 和构建入口 | 不设置模式变量也启动底座；窗口、菜单、设置、退出与子进程清理正常 | 待开始 |
 
@@ -177,3 +177,17 @@ Gateway 不再注入 `remoteAccess`：分发入口统一要求存活的 owner Pe
 提交阶段发现 pre-commit 与 pre-merge-commit 仍调用已删除的 `scripts/verify-translation-pairing.ts`。经用户确认，移除这两处失效 hook；归档、staged lint、空白、provider metadata、vendor guard 与 pre-push typecheck 保留。
 
 归档验证器通过，新增封存 9 个文件、既有封存哈希不变；归档聚焦测试 17 项通过。`doc-sync`、`test:docs` 与 `verify-translation-pairing` 入口已随文档工具链退役，未恢复；active 两组双语记录使用现存 pairing helper 重算。
+
+## 第 04 项执行记录
+
+执行分支沿用 `pure/ui-test-runtime`，基于已合入的 `7d2b72aef9`，没有新建分支。此项只解耦静态 Web 外壳，不提前删除后续阶段负责的产品包及其通用测试设施。
+
+Web 构建只保留 Host 驱动的 `index.html`。移除 Worker preview 入口、页面生成插件、独占浏览器验收与 golden、`build:preview` / `serve:preview` 命令，以及 Web manifest 中的消息引用、Worker runtime / packer 和 `http-server` 依赖。`fflate` 仍有 Office / 交付等存量产品测试消费者，保留到对应模块退役。原 Cloudflare preview 工作流保留不可变安装、缓存和完整构建检查，删除镜像打包、上传、部署凭据和 PR 评论步骤。
+
+Web 构建输入检查在原有实验包隔离之外，要求实际静态模块、CSS、资源和 worker 的 DSH 包归属落在明确的底座库清单中；消息引用、Session 和聊天包均有构建拒绝测试。React、Cordis、Zod、通用 UI 库及其必要工具仍保留；动态插件由 Host graph 加载，不编进 Vite 静态入口。启动必须成功的名单保留 modules、renderer、layout 和 ui-shell，移除 Session Controller、Session UI、chat 与 sidebar 的产品专属要求；可选插件失败仍报告警告，底座必需插件失败仍显示启动错误。
+
+4 个既有样式失败均定位到 `ui-shell` 并修复：标题带使用共享 `data-window-drag` 标记，维持各桌面平台拖拽并在 inert 时复位；语言选择器使用 0.5px 中性边框；焦点环使用共享颜色、宽度与指针模式抑制；设置面板按抬升层重绑滚动条颜色。不放宽原有样式检查，只补充真实新增的 chrome 行及共享选择器。
+
+真实浏览器验收使用独立临时 profile、随机监听端口及真实 Loader / Client bundles；不使用旧用户目录、模型或账号。复用的 Host 夹具改用生产 `mountRootInclude` 与 profile patch 读取链路，从而覆盖配置保存与重新组合，而不仅验证 HTTP 页面可读。Chromium 已验证底座启动、深浅主题切换、语言切换、刷新后持久化、Escape 关闭与焦点恢复。浏览器验收位于 Web lane，不给原 Host-only e2e 增加浏览器运行依赖。
+
+最终本地验证：`DSH_GATE_CONCURRENCY=2 pnpm run build:artifacts` 8/8 通过；最终配置下 `pnpm run build:web` 通过；`DSH_GATE_CONCURRENCY=1 pnpm run build:check` Host / Client 两项通过。单 worker 的 Web 内核、ui-shell、四组样式回归、实际 Vite 输入隔离、Web 构建入口、CI 工作流与 workspace constraints 聚焦测试全部通过。Host composition e2e 与 Web lane 的 Chromium e2e 均通过；最终产物中没有 preview 文件。变更 TypeScript 文件的完整规则 lint（2 threads）为 0 warnings / 0 errors，双语记录一致，`git diff --check` 通过。未重跑已知有无关失败的仓库全量 lint，也未在 Windows 或真实 Electron 窗口复验此次 CSS。本轮未提交、未推送、未合并。

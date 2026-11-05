@@ -65,6 +65,22 @@ function fixture() {
 }
 
 describe('default Web bundle input isolation', () => {
+  it.each(['@deepseek-ai/dsh-message-quotes', '@deepseek-ai/dsh-session', '@deepseek-ai/dsh-client-ui-chat'])('rejects non-shell package %s even outside the experimental group', async (name) => {
+    const test = fixture()
+    test.write('packages/product/feature/package.json', JSON.stringify({ name, type: 'module' }))
+    test.write('packages/product/feature/index.js', 'globalThis.productDependency = true')
+    test.write('apps/web/src/main.js', 'import "../../../packages/product/feature/index.js"')
+    await expect(test.run()).rejects.toThrow(/belongs to non-shell package/)
+  })
+
+  it('accepts generic static UI libraries', async () => {
+    const test = fixture()
+    test.write('packages/client/ui-primitives/package.json', JSON.stringify({ name: '@deepseek-ai/dsh-client-ui-primitives', type: 'module' }))
+    test.write('packages/client/ui-primitives/index.js', 'globalThis.controls = true')
+    test.write('apps/web/src/main.js', 'import "../../../packages/client/ui-primitives/index.js"')
+    await expect(test.run()).resolves.toBeDefined()
+  })
+
   it('requires explicit analysis intent before allowing externalized inputs in a non-writing build', async () => {
     const test = fixture()
     test.write('apps/web/src/main.js', 'import "external-lib"; globalThis.product = true')

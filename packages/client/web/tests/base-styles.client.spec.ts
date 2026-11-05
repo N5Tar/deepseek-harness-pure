@@ -55,7 +55,7 @@ describe('web shell base.css', () => {
     // has to declare drag per row. The ui-theme app-region gate holds the other
     // half — that this is the only darwin drag rule in the package tree.
     expect(normalizedCss).toContain(
-      "html[data-platform='darwin'] [data-window-drag] { -webkit-app-region: drag; }",
+      "html[data-platform='darwin'] [data-window-drag], [data-shell-root] [data-window-drag] { -webkit-app-region: drag; }",
     )
   })
 

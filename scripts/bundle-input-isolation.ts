@@ -10,10 +10,12 @@ export class BundleInputIsolation {
   private readonly packages = new Map<string, string | undefined>()
   private readonly repository: string
   private readonly label: string
+  private readonly allowedHarnessPackages: ReadonlySet<string> | undefined
 
-  constructor(repository: string, label: string) {
+  constructor(repository: string, label: string, allowedHarnessPackages?: ReadonlySet<string>) {
     this.repository = repository
     this.label = label
+    this.allowedHarnessPackages = allowedHarnessPackages
   }
 
   /** Discard package metadata before a new build or watch rebuild. */
@@ -57,6 +59,9 @@ export class BundleInputIsolation {
     const name = this.packageName(dirname(canonical))
     if (name !== undefined && isExperimentalPackageName(name)) {
       throw new Error(`${this.label}: ${id} belongs to experimental package ${name}`)
+    }
+    if (name?.startsWith('@deepseek-ai/dsh-') && this.allowedHarnessPackages !== undefined && !this.allowedHarnessPackages.has(name)) {
+      throw new Error(`${this.label}: ${id} belongs to non-shell package ${name}`)
     }
   }
 

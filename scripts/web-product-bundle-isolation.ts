@@ -3,6 +3,21 @@
 import { basename, resolve } from 'node:path'
 import { BundleInputIsolation, physicalBundleInput } from './bundle-input-isolation.ts'
 
+/** Static boot libraries and their generic utilities; dynamic plugins are loaded by the Host graph. */
+const WEB_SHELL_PACKAGES: ReadonlySet<string> = new Set([
+  '@deepseek-ai/dsh-web-frontend',
+  '@deepseek-ai/dsh-client-web',
+  '@deepseek-ai/dsh-client-store',
+  '@deepseek-ai/dsh-client-ui-slots',
+  '@deepseek-ai/dsh-client-ui-primitives',
+  '@deepseek-ai/dsh-client-ui-dockkit',
+  '@deepseek-ai/dsh-client-ui-theme',
+  '@deepseek-ai/dsh-brand',
+  '@deepseek-ai/dsh-util-code-language',
+  '@deepseek-ai/dsh-util-file-drag',
+  '@deepseek-ai/dsh-util-workspace-path',
+])
+
 /** The emitted chunk fields used to follow the product's actual output graph. */
 export interface WebOutputChunk {
   type: 'chunk'
@@ -53,7 +68,7 @@ export class WebProductBundleIsolation {
 
   constructor(repository: string, webRoot: string) {
     this.webRoot = webRoot
-    this.inputs = new BundleInputIsolation(repository, 'Web product isolation')
+    this.inputs = new BundleInputIsolation(repository, 'Web product isolation', WEB_SHELL_PACKAGES)
   }
 
   /** Discard output graphs and package metadata before a build or watch rebuild. */

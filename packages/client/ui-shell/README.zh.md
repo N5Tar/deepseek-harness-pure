@@ -24,7 +24,7 @@ kind: package-reference
 
 组合时用 `@deepseek-ai/dsh-client-ui-shell` 替代 `ui-layout`，并提供 `slots`、`locale` 和 `theme` 服务。插件没有配置字段或 Host 行为。它占据内建 `root`，并声明 root 作用域的列表 `shell.content`。内容插件通过 `ctx.slots.inject('shell.content', ...)` 注册唯一的列表 id。移除根节点会移除其子插槽声明和贡献。卸载唯一占用者之前，应停止渲染或替换根节点。
 
-框架提供中英文文案、带有 160px 水平原生控件避让的 56px 可拖拽标题带、可滚动的主区域，以及 Desktop 原生菜单适配器所需的 `data-shell-overlay` 标记。不要激活另一个声明相同子插槽的根节点所有者。
+框架提供中英文文案、带有 160px 水平原生控件避让的 56px 可拖拽标题带、可滚动的主区域，以及 Desktop 原生菜单适配器所需的 `data-shell-overlay` 标记。标题带使用共享的 `data-window-drag` 规则；inert 背景不贡献拖拽区域。控件使用中性细线边框和共享焦点环 token，抬升的设置面板同时重绑两种滚动条颜色。不要激活另一个声明相同子插槽的根节点所有者。
 
 设置按钮打开模态面板，提供跟随系统、浅色和深色主题偏好，以及 locale 服务注册的语言。变更调用 `theme.setTheme` 和 `locale.setLocale`；这些服务通过 Host settings 负责持久化。底座不创建设置命名空间、Remote 端点或 local-storage 偏好。可通过按钮、Escape 或遮罩关闭；焦点返回打开面板的按钮，面板打开期间背景保持 inert。
 

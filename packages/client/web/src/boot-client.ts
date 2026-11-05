@@ -17,19 +17,15 @@ export type EntryStateLabel = (typeof STATE_LABELS)[keyof typeof STATE_LABELS] |
  *
  * The list is global rather than page or profile metadata. A name absent from
  * the boot manifest does not affect startup; a listed entry that is present
- * must activate. The list covers the module system, Session control, the
- * renderer and application frame, and the Session view with its sidebar. It is
- * the minimum fatal set: an entry that a listed entry waits on leaves it
+ * must activate. The list covers the module system, renderer, layout, and
+ * desktop shell. It is the minimum fatal set: an entry that a listed entry waits on leaves it
  * inactive, so that entry's failure also rejects startup.
  */
 const requiredClientEntryNames = new Set<string>([
   '@deepseek-ai/dsh-client-modules',
-  '@deepseek-ai/dsh-api-session-controller',
   '@deepseek-ai/dsh-client-ui-renderer',
   '@deepseek-ai/dsh-client-ui-layout',
-  '@deepseek-ai/dsh-client-ui-session',
-  '@deepseek-ai/dsh-client-ui-chat',
-  '@deepseek-ai/dsh-client-ui-sidebar',
+  '@deepseek-ai/dsh-client-ui-shell',
 ])
 
 /** Inputs of {@link bootClient}. */

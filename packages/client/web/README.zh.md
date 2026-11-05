@@ -44,6 +44,8 @@ Web 和 Desktop 的数学公式渲染要求支持 WOFF2。[Web 构建](../../../
 <a id="the-shared-module-table"></a>
 ### 共享模块表
 
+Web 构建只产出依赖 Host 的 `index.html`，没有 Worker preview 入口或业务 VFS 镜像。静态模块、样式表、资源与 worker 输入必须属于 [`web-product-bundle-isolation.ts`](../../../scripts/web-product-bundle-isolation.ts) 中明确列出的底座库，或第三方依赖。Session、消息引用、聊天及其他产品包不能进入这一静态图。动态插件仍由 Host 图提供，不成为 Vite 输入。
+
 `PLATFORM_MODULES`（位于 `src/platform.ts`）列出外壳预置的共享模块——React、Cordis、Zod（`zod`）、TanStack Virtual（`@tanstack/react-virtual`）与静态 UI 库——并与 `PRELOADED_CLIENT_EXTERNALS`（parser 预载的运行时行）一起定义每个动态 bundle 解析所依据的隐式 external 基座。`dsh.client.external` 只添加基座之外的精确请求；参见[共享模块与模块图](../AGENTS.md#shared-modules-and-the-module-graph)。
 
 同一页面中的内置浏览器插件和已安装的浏览器插件获得相同的模块实例。外壳提供本包 `package.json` 声明的依赖版本，模块表不会为每个插件协商版本。使用这些模块的外部插件必须以提供所需模块标识符和 API 的宿主为目标，并在构建客户端 bundle 时将相应导入保留为 external。内联依赖仍归各自 bundle 私有；Host 代码与 Worker 单独解析其依赖。
@@ -70,7 +72,7 @@ Web 和 Desktop 的数学公式渲染要求支持 WOFF2。[Web 构建](../../../
 
 ### 两阶段启动
 
-`run()` 调用 Host 安装的 `window.__ModuleLoader__.create({ boot, staticModules, ...seams })`；facade 接纳 parser 已加载的 bootstrap 批次后返回构造好的模块系统与已解析 manifest（元数据清单）。模块阶段通过一个共享的 application 批次 URL 预取 `immediately` 层级。插件阶段挂载 Loader、把 `loader.internal` 赋为 `modules`、统一创建全部图 entry、等待完全停稳，然后按与 [Host 启动严格性](../../../.agents/notes/implemented/architecture/2026-09-09-consumer-owned-startup-strictness.zh.md)相同的策略审计激活：导入失败、因缺失服务而 pending，或落入其他非 active 状态的 entry 视为未激活。未激活 entry 在 [`src/boot-client.ts`](src/boot-client.ts) 的全局必需名单（模块系统、Session 控制、渲染器、应用框架、Session 视图与侧栏）中时，审计抛出一个聚合错误，点名每个未激活 entry 并标出必需项；否则写一条控制台警告，应用照常挂载。图中不存在的必需名称不产生影响。必需 entry 所等待的 entry 失败时，必需 entry 保持 pending，因此同样会拒绝启动。Loader 未能创建的 entry（模块导入失败或未导出插件）没有 fiber，按导入失败报告，与 Host 审计报告 `failed to import` 相同；原始错误在控制台日志中。
+`run()` 调用 Host 安装的 `window.__ModuleLoader__.create({ boot, staticModules, ...seams })`；facade 接纳 parser 已加载的 bootstrap 批次后返回构造好的模块系统与已解析 manifest（元数据清单）。模块阶段通过一个共享的 application 批次 URL 预取 `immediately` 层级。插件阶段挂载 Loader、把 `loader.internal` 赋为 `modules`、统一创建全部图 entry、等待完全停稳，然后按与 [Host 启动严格性](../../../.agents/notes/implemented/architecture/2026-09-09-consumer-owned-startup-strictness.zh.md)相同的策略审计激活：导入失败、因缺失服务而 pending，或落入其他非 active 状态的 entry 视为未激活。未激活 entry 在 [`src/boot-client.ts`](src/boot-client.ts) 的全局必需名单（模块系统、渲染器、布局与无 Session 的底座外壳）中时，审计抛出一个聚合错误，点名每个未激活 entry 并标出必需项；否则写一条控制台警告，应用照常挂载。图中不存在的必需名称不产生影响。必需 entry 所等待的 entry 失败时，必需 entry 保持 pending，因此同样会拒绝启动。Loader 未能创建的 entry（模块导入失败或未导出插件）没有 fiber，按导入失败报告，与 Host 审计报告 `failed to import` 相同；原始错误在控制台日志中。
 
 ### 启动页机制
 

@@ -1,10 +1,10 @@
-# PR preview runner sizing
+# PR build runner sizing
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-The [preview workflow](../workflows/build-preview-cloudflare.yml) builds pull-request previews on standard GitHub-hosted `ubuntu-24.04`. Runner sizing compares complete job cost, not price per minute or core count alone.
+The [Web shell workflow](../workflows/build-preview-cloudflare.yml) builds artifacts and checks aggregate programs on pull requests. It selects Blacksmith or GitHub-hosted Ubuntu through `DSH_CI_FAILOVER_LINUX`. Runner sizing compares complete job cost, not price per minute or core count alone.
 
 ## Table of Contents
 
@@ -16,17 +16,17 @@ The [preview workflow](../workflows/build-preview-cloudflare.yml) builds pull-re
 
 ## Comparison requirements
 
-A sizing experiment holds checkout SHA, lockfile, Node and pnpm versions, workspace build, and preview/VFS packing commands constant. Each runner starts without build outputs. Cold installs do not restore dependency caches; pnpm bootstrap files may already exist. Warm installs restore the same exact cache without prefix fallback. Record the actual runner image, CPU, RAM, disk, cache outcome, phase duration, exit status, and peak memory. GNU time maximum RSS reports a process maximum, not simultaneous aggregate memory across the build process tree.
+A sizing experiment holds checkout SHA, lockfile, Node and pnpm versions, workspace build, and aggregate-check commands constant. Each runner starts without build outputs. Cold installs do not restore dependency caches; pnpm bootstrap files may already exist. Warm installs restore the same exact cache without prefix fallback. Record the actual runner image, CPU, RAM, disk, cache outcome, phase duration, exit status, and peak memory. GNU time maximum RSS reports a process maximum, not simultaneous aggregate memory across the build process tree.
 
 Calculate estimated gross compute as the sum of each completed job’s elapsed minutes rounded upward, multiplied by that runner’s rate. Include setup, cache restoration, cleanup, failures, and measurement-upload overhead. Report seed jobs separately. Queue delay is a latency observation, not executed job time. These estimates are not invoice totals; standard-runner included minutes and storage are separate.
 
-A build-only benchmark does not deploy, access Cloudflare credentials, or post pull-request comments. Its cost does not establish complete preview publication cost. Confirm the selected runner through the actual preview workflow before treating deployment latency and protected-image delivery as verified.
+The workflow does not pack a VFS image, deploy a preview, access Cloudflare credentials, or post pull-request comments. Historical preview measurements include work that is absent from the shell build and are not current cost estimates.
 
 <a id="publication-semantics"></a>
 
 ## Publication semantics
 
-Runner selection does not alter pull-request events, per-PR cancellation, immutable installation, restore-only dependency caching, full workspace build, preview packing, sourcemap removal, or the preview page copied to the deployment root. Cloudflare uploads only the built site to the PR branch alias. The protected-image check requires HTTP 200, no transport content encoding, and gzip magic bytes; the URL comment remains idempotent. Dependabot and other PR authors remain on GitHub-hosted machines.
+Runner selection preserves pull-request events, per-PR cancellation, immutable installation, restore-only dependency caching, and the full workspace build. The job has read-only repository permissions; build failures fail the check. There is no deployment or publication step.
 
 <a id="dev-note"></a>
 

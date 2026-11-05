@@ -34,7 +34,7 @@ export function Shell({ t, renderSlot, useTheme, useLocale, setTheme, setLocale 
 
   return <>
     <div className={css.frame} data-shell-root {...{ inert: open ? '' : undefined }}>
-      <header className={css.header}>
+      <header className={css.header} data-window-drag>
         <span className={css.brand}>{t('title')}</span>
         <button type="button" className={css.settingsButton} data-shell-settings-trigger
           aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true) }}>

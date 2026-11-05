@@ -67,6 +67,12 @@ interface ChromeRow {
 
 const CHROME_ROWS: readonly ChromeRow[] = [
   {
+    file: 'client/ui-shell/src/client/shell.module.css',
+    selector: '.header',
+    markup: 'client/ui-shell/src/client/Shell.tsx',
+    height: ['flex', '0 0 56px'],
+  },
+  {
     file: 'client/ui-settings-account/src/client/OnboardingSurface.module.css',
     selector: '.dragBand',
     markup: 'client/ui-settings-account/src/client/OnboardingSurface.tsx',
@@ -245,7 +251,7 @@ describe('window drag-region ownership', () => {
     // declaration, a per-sheet row rule, or a darwin band on the frame fails here.
     expect(dragOwners()).toEqual([
       { file: WINDOWS_CAPTION, selectors: [WINDOWS_CAPTION_SELECTOR] },
-      { file: SHELL_SHEET, selectors: [SHELL_DRAG_SELECTOR] },
+      { file: SHELL_SHEET, selectors: [`${SHELL_DRAG_SELECTOR}, [data-shell-root] [data-window-drag]`] },
     ])
   })
 

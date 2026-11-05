@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppWebEntry } from '../src/boot.ts'
 
 const MODULES_ID = '@deepseek-ai/dsh-client-modules'
-const REQUIRED_ID = '@deepseek-ai/dsh-client-ui-chat'
+const REQUIRED_ID = '@deepseek-ai/dsh-client-ui-shell'
 const PROVIDER_CLIENT_ID = 'provider/client'
 const RUNTIME_CLIENT_ID = 'runtime/client'
 const win = globalThis as DshWindow

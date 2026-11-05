@@ -52,7 +52,8 @@ html[data-platform='darwin'] body {
    otherwise drag the window instead of receiving clicks; every covering overlay
    portals to document.body beside #root, which also puts it after every drag row
    in document order, and one rule subtracts them all. */
-html[data-platform='darwin'] [data-window-drag] {
+html[data-platform='darwin'] [data-window-drag],
+[data-shell-root] [data-window-drag] {
   -webkit-app-region: drag;
 }
 
@@ -92,7 +93,9 @@ html[data-platform='darwin'] :is(
 /* Reset both native region types for inert content. Chromium treats the explicit
    `none` keyword as `no-drag`, which would erase foreground drag rows. */
 html[data-platform='darwin'] [inert],
-html[data-platform='darwin'] [inert] * {
+html[data-platform='darwin'] [inert] *,
+[data-shell-root][inert],
+[data-shell-root][inert] * {
   -webkit-app-region: initial;
 }
 

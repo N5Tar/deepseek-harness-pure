@@ -9,7 +9,7 @@ import { assertEntriesActive, bootClient, type EntryStateLabel } from '../src/bo
 import { FIBER_STATE } from '../src/loader-status.ts'
 
 const BOOTSTRAP_ID = '@deepseek-ai/dsh-client-modules'
-const REQUIRED_ID = '@deepseek-ai/dsh-client-ui-chat'
+const REQUIRED_ID = '@deepseek-ai/dsh-client-ui-shell'
 const OTHER_REQUIRED_ID = '@deepseek-ai/dsh-client-ui-layout'
 
 function graphOf(ids: readonly string[]): WebBootGraph {
@@ -49,6 +49,24 @@ function stateSink(): { states: Map<string, EntryStateLabel[]>; onEntryState: (n
 }
 
 describe('bootClient', () => {
+  it.each([
+    '@deepseek-ai/dsh-api-session-controller',
+    '@deepseek-ai/dsh-client-ui-session',
+    '@deepseek-ai/dsh-client-ui-chat',
+    '@deepseek-ai/dsh-client-ui-sidebar',
+  ])('does not make optional product entry %s a shell startup requirement', async (id) => {
+    const { modules } = modulesOf(graphOf([REQUIRED_ID, id]), {
+      [REQUIRED_ID]: { apply: () => {} },
+      [id]: { inject: ['absent-product-service'], apply: () => {} },
+    })
+    const ctx = new Context()
+    onTestFinished(() => ctx.fiber.dispose())
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => { warn.mockRestore() })
+    await bootClient({ ctx, modules, manifest: modules.manifest })
+    expect(warn).toHaveBeenCalledExactlyOnceWith(expect.stringContaining(`${id}: pending`))
+  })
+
   it('activates every seeded row without touching the bundle transport', async () => {
     const graph = graphOf(['provider', 'consumer'])
     const { modules, loaded } = modulesOf(graph, {
