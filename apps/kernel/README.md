@@ -81,4 +81,4 @@ The suite boots a kernel in a temporary home, asserts the page and default setti
 
 - No authentication, plugins, or client bundle loading yet: the page is static markup served by the kernel.
 - Settings are one flat document; there is no schema, migration, or namespace isolation.
-- The kernel is reachable from the Electron shell and from `apps/desktop-host` under `DSH_DESKTOP_KERNEL=1`, but the default launch still boots the product profile.
+- `apps/desktop` boots this kernel in process by default; `DSH_DESKTOP_KERNEL=0` keeps the retired product profile reachable for diagnosis.

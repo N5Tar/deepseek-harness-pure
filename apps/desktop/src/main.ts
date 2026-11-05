@@ -231,7 +231,7 @@ function createWindow(preload: string): BrowserWindow {
 
 /** Kernel mode has no packaged runtime tree; the Host only needs an existing working directory. */
 function kernelModeResources(resources: RuntimeResources): RuntimeResources {
-  return process.env.DSH_DESKTOP_KERNEL === '1'
+  return process.env.DSH_DESKTOP_KERNEL !== '0'
     ? { ...resources, dsh: app.getPath('userData') }
     : resources
 }
@@ -243,8 +243,8 @@ async function main(): Promise<void> {
   // The recorded appearance paints the first frame, before Host settings reach the renderer.
   nativeTheme.themeSource = readDesktopTheme(paths.home) ?? 'system'
   const development = !app.isPackaged
-  // Kernel mode boots the Cordis kernel Host instead of a product profile tree.
-  const kernelMode = process.env.DSH_DESKTOP_KERNEL === '1'
+  // The Cordis kernel is the default shell; DSH_DESKTOP_KERNEL=0 keeps the retired product profile reachable for diagnosis.
+  const kernelMode = process.env.DSH_DESKTOP_KERNEL !== '0'
   const manager = new DesktopProjectManager(paths, resources)
   const loginShellRead = new AbortController()
   app.on('will-quit', () => { loginShellRead.abort() })

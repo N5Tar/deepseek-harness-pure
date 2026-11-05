@@ -81,4 +81,4 @@ node node_modules/vitest/vitest.mjs run apps/kernel/tests/kernel.spec.ts --maxWo
 
 - 尚无鉴权、插件加载与客户端 bundle：页面由内核直接提供的静态标记。
 - 设置是单一扁平文档，没有 schema、迁移或命名空间隔离。
-- 内核可在 `DSH_DESKTOP_KERNEL=1` 下由 Electron 壳与 `apps/desktop-host` 启动，但默认启动仍走产品 profile。
+- `apps/desktop` 默认在进程内启动该内核；`DSH_DESKTOP_KERNEL=0` 保留已退役的产品 profile 供诊断。
