@@ -16,5 +16,10 @@
     "@types/node": "^22.20.1",
     "tsx": "^4.20.6",
     "vitest": "^4.1.11"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
   }
 }

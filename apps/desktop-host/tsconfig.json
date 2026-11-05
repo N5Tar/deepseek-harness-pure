@@ -8,10 +8,23 @@
     "src"
   ],
   "references": [
-    { "path": "../../vendor/cordis" },
-    { "path": "../../packages/boot/app-boot" },
-    { "path": "../../packages/client/connection/tsconfig.host.json" },
-    { "path": "../../packages/host/webserver" },
-    { "path": "../../packages/boot/plugin-manager" }
+    {
+      "path": "../../vendor/cordis"
+    },
+    {
+      "path": "../../packages/boot/app-boot"
+    },
+    {
+      "path": "../../packages/client/connection/tsconfig.host.json"
+    },
+    {
+      "path": "../../packages/host/webserver"
+    },
+    {
+      "path": "../../packages/boot/plugin-manager"
+    },
+    {
+      "path": "../kernel"
+    }
   ]
 }

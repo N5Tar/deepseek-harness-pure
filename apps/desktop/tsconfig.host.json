@@ -25,6 +25,9 @@
     },
     {
       "path": "../../packages/boot/plugin-manager"
+    },
+    {
+      "path": "../kernel"
     }
   ]
 }

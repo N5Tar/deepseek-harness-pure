@@ -44,6 +44,8 @@ export async function authenticateWebHost(url: string): Promise<string> {
   const response = await fetch(url, { redirect: 'manual' })
   const cookie = response.headers.get('set-cookie')
   await response.body?.cancel()
+  // A kernel Host publishes no authentication challenge, so it also carries no cookie.
+  if (response.status === 200 && cookie === null) return ''
   if (response.status !== 303 || cookie === null) throw new Error('Desktop Host authentication failed')
   const end = cookie.indexOf(';')
   return end < 0 ? cookie : cookie.slice(0, end)
@@ -103,7 +105,7 @@ export async function forwardWebRequest(request: Request, host: string, cookie: 
   target.search = source.search
   const headers = new Headers(request.headers)
   for (const name of ['host', 'origin', 'cookie', 'sec-fetch-site']) headers.delete(name)
-  headers.set('cookie', cookie)
+  if (cookie !== '') headers.set('cookie', cookie)
   const init = { method: request.method, headers, body: request.body, signal: request.signal, duplex: 'half', redirect: 'manual' as const }
   const response = await fetch(target, init)
   const outgoing = new Headers(response.headers)

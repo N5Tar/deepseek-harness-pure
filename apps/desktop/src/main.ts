@@ -229,13 +229,22 @@ function createWindow(preload: string): BrowserWindow {
   return window
 }
 
+/** Kernel mode has no packaged runtime tree; the Host only needs an existing working directory. */
+function kernelModeResources(resources: RuntimeResources): RuntimeResources {
+  return process.env.DSH_DESKTOP_KERNEL === '1'
+    ? { ...resources, dsh: app.getPath('userData') }
+    : resources
+}
+
 async function main(): Promise<void> {
   void pruneCrashReports(app.getPath('logs'))
-  const resources = runtimeResources()
+  const resources = kernelModeResources(runtimeResources())
   const paths = resolveDesktopPaths()
   // The recorded appearance paints the first frame, before Host settings reach the renderer.
   nativeTheme.themeSource = readDesktopTheme(paths.home) ?? 'system'
   const development = !app.isPackaged
+  // Kernel mode boots the Cordis kernel Host instead of a product profile tree.
+  const kernelMode = process.env.DSH_DESKTOP_KERNEL === '1'
   const manager = new DesktopProjectManager(paths, resources)
   const loginShellRead = new AbortController()
   app.on('will-quit', () => { loginShellRead.abort() })
@@ -318,12 +327,31 @@ async function main(): Promise<void> {
     finally { await Promise.all([operationJournal?.drain(500), reports]) }
   }
   const showMain = async (): Promise<void> => {
-    await navigateMain()
+    const window = mainWindow
+    if (hostCookie === '' && hostUrl !== undefined && window !== undefined && !window.isDestroyed()) {
+      // A kernel Host serves its own page and carries no authentication challenge.
+      await window.loadURL(hostUrl)
+    } else {
+      await navigateMain()
+    }
     if (quitting || recovery.active || mainWindow === undefined || mainWindow.isDestroyed() || backend.host === undefined) return
     mainWindow.show()
   }
+  let kernelHandle: { url: string; stop(): Promise<void> } | undefined
   const reconcileBackend = (): Promise<void> => {
     startup ??= (async () => {
+      if (kernelMode) {
+        // Kernel mode runs the Cordis kernel in this process: no child Host and no product profile.
+        const { bootKernel } = await import('@deepseek-ai/dsh-kernel')
+        const kernel = await bootKernel({ home: app.getPath('userData'), port: 0 })
+        kernelHandle = kernel
+        hostUrl = kernel.url
+        hostCookie = ''
+        injections = []
+        backendReady = true
+        await showMain()
+        return
+      }
       await navigateMain()
       await backend.start(async () => { await Promise.all([manager.applyRelease(), prepareHostEnvironment()]) })
       await showMain()
@@ -351,6 +379,7 @@ async function main(): Promise<void> {
     process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux',
     () => { refreshApplicationMenu() }, () => ({ revision: 0, blocked: false }))
   app.on('will-quit', () => { shortcuts.dispose() })
+  app.on('will-quit', () => { void kernelHandle?.stop() })
   ipcMain.handle(DESKTOP_IPC.boot, async (event) => {
     assertApplicationSender(event)
     await startup
