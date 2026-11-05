@@ -395,9 +395,6 @@
     # this entry to draw credentials as written.
     # Background jobs: the session-header roster with on-demand streaming
     # record panels over the session job-output service.
-    - id: ui-jobs
-      name: '@deepseek-ai/dsh-client-ui-jobs'
-
     # Task management and Session reminder catalog over the Host Schedule
     # service mounted above.
     - id: ui-schedule
