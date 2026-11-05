@@ -27,9 +27,6 @@
       "path": "../../packages/boot/cmdline"
     },
     {
-      "path": "../../packages/bundle/web-app"
-    },
-    {
       "path": "../../packages/host/webserver"
     },
     {

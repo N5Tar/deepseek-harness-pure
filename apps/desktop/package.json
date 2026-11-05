@@ -77,7 +77,6 @@
     "@deepseek-ai/dsh-atomic-write": "workspace:*",
     "@deepseek-ai/dsh-plugin-manager": "workspace:*",
     "zod": "4.4.3",
-    "tencentcloud-sdk-nodejs-teo": "4.1.330",
-    "@deepseek-ai/dsh-kernel": "workspace:*"
+    "tencentcloud-sdk-nodejs-teo": "4.1.330"
   }
 }

@@ -13,7 +13,6 @@ import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import { z as zod } from 'zod'
 import type {} from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-web-app'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-session-projection'
 import type { AssembleContext } from '@deepseek-ai/dsh-system-prompt'
@@ -22,7 +21,7 @@ import type { AssembleContext } from '@deepseek-ai/dsh-system-prompt'
 export const name = 'harness-dev-context'
 
 /** Prompt registries, the projection registry, and the Web GUI whose URL the model learns. */
-export const inject = ['systemPrompt', 'sessionProjections', 'webApp']
+export const inject = ['systemPrompt', 'sessionProjections']
 
 /** This installation's root, four directories above this package's source or built entry. */
 const SOURCE_ROOT = fileURLToPath(new URL('../../../..', import.meta.url))
@@ -148,11 +147,5 @@ export async function apply(ctx: Context): Promise<void> {
     order: ctx.systemPrompt.getSectionOrder('WEB_SURFACE'),
     interpolate: false,
     text: context => admitted(context).web ?? WEB_SURFACE_PROMPT,
-  })
-  ctx.systemPrompt.context({
-    name: WEB_SURFACE,
-    order: ctx.systemPrompt.getContextOrder('WEB_SURFACE'),
-    interpolate: false,
-    text: () => `Current DeepSeek Harness Web GUI URL: ${JSON.stringify(ctx.webApp.getAdvertisedUrl())}.`,
   })
 }
