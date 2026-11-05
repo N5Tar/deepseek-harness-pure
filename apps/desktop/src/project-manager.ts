@@ -23,42 +23,31 @@ import type { DesktopPaths } from './paths.ts'
 import type { DesktopRelease } from './release.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
 import { initProfile, readProfileManifest, removeLinkProjections, sanitizeProfile } from '@deepseek-ai/dsh-app-boot'
-import type { DesktopLaunchMode } from './launch-mode.ts'
 import { PROFILE_TEMPLATES, type ProfileTemplate } from '@deepseek-ai/dsh-official-bundles'
 
 const PROJECT_NAME = '@deepseek-ai/dsh-desktop-runtime'
 const DSH_PACKAGE = '@deepseek-ai/dsh'
 const CORE_BUILD_PACKAGE = '@deepseek-ai/dsh-subprocess-local'
-const WEB_PROFILE = PROFILE_TEMPLATES.web as ProfileTemplate
 const SHELL_PROFILE = PROFILE_TEMPLATES.shell as ProfileTemplate
 
-function desktopBundles(mode: DesktopLaunchMode): readonly string[] {
-  return (mode === 'shell' ? SHELL_PROFILE : WEB_PROFILE).bundles
-}
+/** An existing profile is incompatible with the desktop foundation and remains unchanged. */
+export class DesktopProfileCompatibilityError extends Error {
+  /** Stable failure category; incompatible profiles require a separate home. */
+  readonly code = 'desktop-profile-incompatible'
 
-/** An existing profile belongs to a different desktop mode and remains unchanged. */
-export class DesktopProfileModeError extends Error {
-  /** Stable failure category; changing modes requires a different profile home. */
-  readonly code = 'desktop-profile-mode-mismatch'
-
-  /** @param mode - Requested desktop mode. @param profileDir - Existing profile that cannot be reused. */
-  constructor(readonly mode: DesktopLaunchMode, readonly profileDir: string) {
-    super(`desktop profile: ${profileDir} is not compatible with ${mode} mode; select a separate DSH_HOME`)
-    this.name = 'DesktopProfileModeError'
+  /** @param profileDir - Existing profile that cannot be reused. */
+  constructor(readonly profileDir: string) {
+    super(`desktop profile: ${profileDir} is not compatible with the desktop foundation; select a separate DSH_HOME`)
+    this.name = 'DesktopProfileCompatibilityError'
   }
 }
 
-function assertProfileMode(profileDir: string, mode: DesktopLaunchMode): void {
+function assertProfileCompatibility(profileDir: string): void {
   if (!existsSync(join(profileDir, 'package.json'))) return
   const bundles: unknown = readProfileManifest('dsh', profileDir).dsh?.profile?.bundles
-  const shellBundle = '@deepseek-ai/dsh-shell-base'
-  if (mode === 'shell') {
-    if (!Array.isArray(bundles) || bundles[0] !== shellBundle
-      || bundles.includes('@deepseek-ai/dsh-base') || bundles.includes('@deepseek-ai/dsh-web-app')) {
-      throw new DesktopProfileModeError(mode, profileDir)
-    }
-  } else if (Array.isArray(bundles) && bundles.includes(shellBundle)) {
-    throw new DesktopProfileModeError(mode, profileDir)
+  if (!Array.isArray(bundles) || bundles[0] !== '@deepseek-ai/dsh-shell-base'
+    || bundles.includes('@deepseek-ai/dsh-base') || bundles.includes('@deepseek-ai/dsh-web-app')) {
+    throw new DesktopProfileCompatibilityError(profileDir)
   }
 }
 
@@ -94,12 +83,10 @@ export class DesktopProjectManager {
   /**
    * @param paths - Electron-owned package state and reserved desktop profile paths.
    * @param runtime - location of the bundled application runtime.
-   * @param mode - Composition initialized and restored; defaults to the product desktop.
    */
   constructor(
     readonly paths: DesktopPaths,
     readonly runtime: { readonly dsh: string },
-    readonly mode: DesktopLaunchMode = 'product',
   ) {}
 
   /**
@@ -109,8 +96,8 @@ export class DesktopProjectManager {
    */
   async disableAllPlugins(): Promise<string | undefined> {
     return this.withLock(() => {
-      assertProfileMode(this.paths.profile, this.mode)
-      return sanitizeProfile('dsh', this.paths.profile, desktopBundles(this.mode))
+      assertProfileCompatibility(this.paths.profile)
+      return sanitizeProfile('dsh', this.paths.profile, SHELL_PROFILE.bundles)
     })
   }
 
@@ -121,7 +108,7 @@ export class DesktopProjectManager {
     await this.withLock(() => {
       // Validation only: an unreadable or mismatched runtime descriptor stops preparation before the Host starts.
       readDesktopRuntime(this.runtime.dsh)
-      createPluginProfile(this.paths.profile, this.mode)
+      createPluginProfile(this.paths.profile)
       migrateProfileSettings(this.paths.profile)
       removeLinkProjections(this.paths.profile)
     })
@@ -176,7 +163,7 @@ export function createRuntimeProjectMetadata(projectDir: string, release: Deskto
     private: true,
     version: '0.0.0',
     dependencies: desktopCorePackageOverrides(packageSet),
-    dsh: { profile: { bundles: [...WEB_PROFILE.bundles] } },
+    dsh: { profile: { bundles: [...SHELL_PROFILE.bundles] } },
   }
   writeJson(join(projectDir, 'package.json'), manifest)
   writeFileSync(
@@ -190,9 +177,8 @@ export function createRuntimeProjectMetadata(projectDir: string, release: Deskto
  * Create metadata for the unpackaged development project that links the current workspace.
  * @param projectDir - Disposable development profile directory.
  * @param release - Release identity shared by the linked CLI package and Electron shell.
- * @param mode - Development composition; defaults to the product desktop.
  */
-export function createDevelopmentProjectMetadata(projectDir: string, release: DesktopRelease, mode: DesktopLaunchMode = 'product'): void {
+export function createDevelopmentProjectMetadata(projectDir: string, release: DesktopRelease): void {
   mkdirSync(projectDir, { recursive: true, mode: 0o700 })
   const manifest = {
     name: PROJECT_NAME,
@@ -202,7 +188,7 @@ export function createDevelopmentProjectMetadata(projectDir: string, release: De
       [DSH_PACKAGE]: release.version,
       [DESKTOP_HOST_PACKAGE]: release.version,
     },
-    dsh: { profile: { bundles: [...desktopBundles(mode)] } },
+    dsh: { profile: { bundles: [...SHELL_PROFILE.bundles] } },
   }
   writeJson(join(projectDir, 'package.json'), manifest)
   writeFileSync(join(projectDir, 'pnpm-workspace.yaml'), workspaceFile(), { mode: 0o600 })
@@ -211,9 +197,8 @@ export function createDevelopmentProjectMetadata(projectDir: string, release: De
 /**
  * Create the first external plugin profile without running a package manager.
  * @param projectDir - Reserved desktop profile directory.
- * @param mode - Composition to initialize; defaults to the product desktop.
  */
-export function createPluginProfile(projectDir: string, mode: DesktopLaunchMode = 'product'): void {
-  assertProfileMode(projectDir, mode)
-  initProfile(projectDir, desktopBundles(mode))
+export function createPluginProfile(projectDir: string): void {
+  assertProfileCompatibility(projectDir)
+  initProfile(projectDir, SHELL_PROFILE.bundles)
 }

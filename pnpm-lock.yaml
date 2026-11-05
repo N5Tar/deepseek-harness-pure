@@ -718,9 +718,6 @@ importers:
       '@deepseek-ai/cordis':
         specifier: workspace:~
         version: link:../../vendor/cordis
-      '@deepseek-ai/dsh-api-gateway':
-        specifier: workspace:*
-        version: link:../../packages/api/gateway
       electron-updater:
         specifier: ^6.8.9
         version: 6.8.9(supports-color@9.4.0)
@@ -737,27 +734,9 @@ importers:
       '@deepseek-ai/dsh-atomic-write':
         specifier: workspace:*
         version: link:../../packages/util/atomic-write
-      '@deepseek-ai/dsh-client-product-analytics':
-        specifier: workspace:*
-        version: link:../../packages/client/product-analytics
       '@deepseek-ai/dsh-client-shortcuts':
         specifier: workspace:*
         version: link:../../packages/client/shortcuts
-      '@deepseek-ai/dsh-client-ui-primitives':
-        specifier: workspace:*
-        version: link:../../packages/client/ui-primitives
-      '@deepseek-ai/dsh-client-ui-settings-general':
-        specifier: workspace:*
-        version: link:../../packages/client/ui-settings-general
-      '@deepseek-ai/dsh-client-ui-sidebar-browser':
-        specifier: workspace:*
-        version: link:../../packages/client/ui-sidebar-browser
-      '@deepseek-ai/dsh-client-ui-theme':
-        specifier: workspace:*
-        version: link:../../packages/client/ui-theme
-      '@deepseek-ai/dsh-deepseek-account':
-        specifier: workspace:*
-        version: link:../../packages/credentials/deepseek-account
       '@deepseek-ai/dsh-home-paths':
         specifier: workspace:*
         version: link:../../packages/util/home-paths
@@ -767,9 +746,6 @@ importers:
       '@deepseek-ai/dsh-plugin-manager':
         specifier: workspace:*
         version: link:../../packages/boot/plugin-manager
-      '@deepseek-ai/dsh-util-file-drag':
-        specifier: workspace:*
-        version: link:../../packages/util/file-drag
       '@deepseek-ai/node-addon-system':
         specifier: workspace:~
         version: link:../../native/system/packages/entry
@@ -815,12 +791,6 @@ importers:
       pnpm:
         specifier: 11.28.5
         version: 11.28.5
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
       sharp:
         specifier: 0.35.5
         version: 0.35.5(@types/node@22.20.1)
@@ -830,9 +800,6 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
-      vite:
-        specifier: ^6.4.3
-        version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.13)(yaml@2.9.0)
       zod:
         specifier: 4.4.3
         version: 4.4.3

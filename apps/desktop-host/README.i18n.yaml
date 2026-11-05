@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop-host/README.md
 /:
-  en: d949f69084aa7580
-  zh: 9ee375ddc3adcde2
+  en: cba96af7c2d9c338
+  zh: a8237e566981c570
 /desktop-host:
   en: 9ba8ee5116f0c8db
   zh: 5e478423e99779c4
@@ -12,17 +12,17 @@
   en: 4cd9ef93aca974b5
   zh: 7cf58e1f4844db8d
 /desktop-host/table-of-contents:
-  en: e85931afcd25cdad
-  zh: 85a4923f41fdf48f
-/desktop-host/launch-modes:
-  en: 82544cd6601c09c5
-  zh: c40f0998c2e5f350
+  en: d27d4a7487081362
+  zh: 1a8f4bbe99e1516d
+/desktop-host/host-composition:
+  en: f6f0fe1c6cc9b92a
+  zh: 0c90211565b9f649
 /desktop-host/lifecycle-and-control:
-  en: 7b4e73067ed9bce1
-  zh: 7b9d3ab1dd546627
+  en: 41e651a2e5c651c2
+  zh: d26c10b38d781430
 /desktop-host/verification:
-  en: c6b19c5633de29fa
-  zh: 6169e5be70c70926
+  en: f735805ae2137c05
+  zh: 2b060523d27d5426
 /desktop-host/dev-note:
-  en: 7a83f6b567b0731a
-  zh: 3c62f4132c03cdb6
+  en: 800352175c2ea6d4
+  zh: d9a76905131ce0fd

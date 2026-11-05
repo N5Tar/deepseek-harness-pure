@@ -3,7 +3,6 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { DesktopLaunchMode } from '../src/launch-mode.ts'
 
 /** Workspace and runtime settings captured for Launch Services cold starts. */
 export interface DevelopmentAppOptions {
@@ -16,8 +15,6 @@ export interface DevelopmentAppOptions {
   readonly rendererPort: number
   readonly hostPort: number
   readonly openDevtools: string
-  /** Application identity and composition; absence retains product development. */
-  readonly launchMode?: DesktopLaunchMode
   /** Runtime project for cold starts; absence selects directory/project. */
   readonly dshDir?: string
 }
@@ -31,13 +28,13 @@ function quote(value: string): string { return `'${value.replaceAll("'", "'\\''"
  */
 export function prepareDevelopmentApp(options: DevelopmentAppOptions): string {
   const source = dirname(dirname(dirname(options.electron)))
-  const applicationName = options.launchMode === 'shell' ? 'Harness Shell Dev' : 'Harness Dev'
+  const applicationName = 'Harness Shell Dev'
   const bundle = join(options.directory, `${applicationName}.app`)
   const executable = join(bundle, 'Contents', 'MacOS', 'HarnessDev')
   const stamp = join(bundle, 'Contents', 'Resources', 'dsh-development.json')
   const launcher = developmentLauncher(options, bundle)
   const values = {
-    CFBundleIdentifier: `com.deepseek.harness.${options.launchMode === 'shell' ? 'shell.' : ''}dev.${createHash('sha256').update(options.appRoot).digest('hex').slice(0, 12)}`,
+    CFBundleIdentifier: `com.deepseek.harness.shell.dev.${createHash('sha256').update(options.appRoot).digest('hex').slice(0, 12)}`,
     CFBundleName: applicationName,
     CFBundleDisplayName: applicationName,
     CFBundleExecutable: 'HarnessDev',
@@ -67,7 +64,6 @@ export function prepareDevelopmentApp(options: DevelopmentAppOptions): string {
 export function developmentLauncher(options: DevelopmentAppOptions, bundle: string): string {
   const environment = {
     DSH_HOME: options.home,
-    DSH_DESKTOP_MODE: options.launchMode ?? 'product',
     DSH_DESKTOP_DSH_DIR: options.dshDir ?? join(options.directory, 'project'),
     DSH_DESKTOP_DEV_APP: '1',
     DSH_DESKTOP_HOST_INSPECT_PORT: String(options.hostPort),

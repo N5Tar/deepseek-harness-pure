@@ -2,30 +2,30 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/tests/README.md
-/desktop-local-verification:
-  en: 5056a9b4d24c1880
-  zh: 4d0c9d8e5f69d153
-/desktop-local-verification/summary:
-  en: 94559f431b0b2151
-  zh: 1a22166a2bc59686
-/desktop-local-verification/table-of-contents:
-  en: fa9e3048995c0e3c
-  zh: ef30232afa4ba125
-/desktop-local-verification/fault-report-verification:
-  en: a418eb04ce93b1ee
-  zh: 1ec04872a66ce1b7
-/desktop-local-verification/update-dialog-themes:
-  en: d086c3b38ce623f1
-  zh: 8327c31092f5f174
-/desktop-local-verification/native-overlay-visibility:
-  en: 6f4de4503748f3e2
-  zh: 648370375f16e463
-/desktop-local-verification/manual-walkthrough:
-  en: 1f333416e5a3fef1
-  zh: fe0f30418db59cb0
-/desktop-local-verification/evidence:
-  en: dcb2473264c825d4
-  zh: cebb2832efa15974
-/desktop-local-verification/open-verification:
-  en: 20e9ea47acb1ff50
-  zh: acce24b56d57e12c
+/:
+  en: e1b885b2d9285985
+  zh: a2e3b8333a2d4ce6
+/desktop-foundation-verification:
+  en: f4957ef5d916551f
+  zh: fc7119590912ceb0
+/desktop-foundation-verification/summary:
+  en: f9681819f69c50b8
+  zh: ea0dd6a781159299
+/desktop-foundation-verification/table-of-contents:
+  en: c661cc03513338a5
+  zh: 372d275afd98ea5e
+/desktop-foundation-verification/source-level-coverage:
+  en: 3ca2906702bcb20d
+  zh: 805d30f43452fd4e
+/desktop-foundation-verification/built-host-acceptance:
+  en: b0620d586bc6bb0e
+  zh: eaad913c442048e3
+/desktop-foundation-verification/focused-checks:
+  en: 055d9af83b14b019
+  zh: f8e455126fed9ada
+/desktop-foundation-verification/failure-and-recovery-checks:
+  en: 0f13d68ba5710452
+  zh: 7498bf444fb2b348
+/desktop-foundation-verification/evidence-limits:
+  en: 1befb33b3bf52d25
+  zh: 87102cddc42dc672

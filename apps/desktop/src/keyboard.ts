@@ -1,8 +1,7 @@
 /** Product-window preference IPC and native menu interception during physical-key dispatch/recording. */
-import { ipcMain, type BrowserWindow, type IpcMainInvokeEvent, type Input, type MenuItemConstructorOptions, type WebContents } from 'electron'
+import { ipcMain, type BrowserWindow, type IpcMainInvokeEvent, type Input, type MenuItemConstructorOptions } from 'electron'
 import { bindingKey, effectiveShortcuts, presentBinding, parseShortcutDefinitions, parseShortcutEdit } from '@deepseek-ai/dsh-client-shortcuts/protocol'
 import type { NormalizedBinding, ShortcutConfigSnapshot, ShortcutDefinition, ShortcutPlatform, ShortcutRevision } from '@deepseek-ai/dsh-client-shortcuts/protocol'
-import type { DesktopBrowserLeaseId } from '@deepseek-ai/dsh-client-ui-sidebar-browser/types'
 import { desktopKeybindings } from './keybindings.ts'
 import { DESKTOP_IPC, assertDesktopSender } from './ipc.ts'
 
@@ -27,14 +26,6 @@ export function installDesktopShortcuts(
    */
   sendEditingKey(keyCode: string, modifiers: Array<'control'>): void
   attach(window: BrowserWindow): void
-  /**
-   * Intercept an approved browser guest's keys until its lease ends.
-   * @param window - owning product window.
-   * @param guest - approved browser contents.
-   * @param name - main-issued lease used as the webview element name.
-   * @returns idempotent listener disposer.
-   */
-  attachGuest(window: BrowserWindow, guest: WebContents, name: DesktopBrowserLeaseId): () => void
   dispose(): void
 } {
   let definitions: readonly ShortcutDefinition[] = []
@@ -44,7 +35,6 @@ export function installDesktopShortcuts(
   let editingInput: BrowserWindow['webContents'] | undefined
   const scopedDesktop = platform === 'windows' || platform === 'macos'
   const disposers = new Set<() => void>()
-  const guestInputs = new Map<WebContents, { window: BrowserWindow; reset(): void }>()
   const closeAccelerator = (): string | undefined => presentBinding(closeBinding, platform).aria
     ?.replace('Meta+', 'Command+').replace(/Arrow(Up|Down|Left|Right)$/u, '$1')
   const sendMenuClose = (): void => {
@@ -100,7 +90,8 @@ export function installDesktopShortcuts(
       || overlayInput(window).blocked) return
     window.close()
   })
-  function attachInput(window: BrowserWindow, contents: WebContents, guestName?: DesktopBrowserLeaseId): () => void {
+  function attachInput(window: BrowserWindow): void {
+    const contents = window.webContents
     let deadKey = false
     const held = new Set<string>()
     const consumed = new Map<string, 'press' | 'repeat'>()
@@ -111,14 +102,8 @@ export function installDesktopShortcuts(
       deadKey = false; held.clear(); consumed.clear(); inputFrame = null; inputRevision = undefined
       if (!contents.isDestroyed()) contents.setIgnoreMenuShortcuts(false)
     }
-    if (guestName !== undefined) guestInputs.set(contents, { window, reset: resetInput })
-    const resetWindow = (): void => {
-      resetInput()
-      for (const guest of guestInputs.values()) if (guest.window === window) guest.reset()
-    }
     const clear = (): void => {
       resetInput()
-      if (guestName !== undefined) return
       definitions = []; keys.clear(); recording = false
       persistence.setDefinitions(null)
     }
@@ -136,8 +121,7 @@ export function installDesktopShortcuts(
         contents.setIgnoreMenuShortcuts(true)
         return
       }
-      if (window !== getWindow() || !window.isFocused() || !window.isEnabled() || revision === undefined
-        || (guestName !== undefined && !contents.isFocused())) {
+      if (window !== getWindow() || !window.isFocused() || !window.isEnabled() || revision === undefined) {
         contents.setIgnoreMenuShortcuts(false)
         held.clear()
         consumed.clear()
@@ -177,7 +161,7 @@ export function installDesktopShortcuts(
         priority = keys.has(key)
         if (codes.length === 2 && keys.has(bindingKey(pair))) { binding = pair; priority = true }
       }
-      const main = guestName === undefined && frame === contents.mainFrame
+      const main = frame === contents.mainFrame
       if (!priority && (main || !match)) return
       event.preventDefault()
       if (input.type !== 'keyDown') return
@@ -193,11 +177,11 @@ export function installDesktopShortcuts(
         held.clear()
       }
       let embedding = frame
-      while (guestName === undefined && !main && embedding.parent !== null && embedding.parent !== contents.mainFrame) {
+      while (!main && embedding.parent !== null && embedding.parent !== contents.mainFrame) {
         embedding = embedding.parent
       }
-      window.webContents.send(DESKTOP_IPC.shortcutsInput, { kind: guestName === undefined ? main ? 'keyboard' : 'iframe' : 'webview',
-        revision, frameName: guestName ?? (main ? '' : embedding.name),
+      window.webContents.send(DESKTOP_IPC.shortcutsInput, { kind: main ? 'keyboard' : 'iframe',
+        revision, frameName: main ? '' : embedding.name,
         code: binding.code, ...(binding.secondCode === undefined ? {} : { secondCode: binding.secondCode }),
         repeat: input.isAutoRepeat, control: input.control, alt: input.alt, shift: input.shift, meta: input.meta })
     }
@@ -206,9 +190,9 @@ export function installDesktopShortcuts(
       contents.off('before-input-event', beforeInput)
       contents.off('blur', resetInput)
       contents.off('destroyed', dispose)
-      if (guestName === undefined) { window.off('blur', resetWindow); window.off('closed', closed) }
+      window.off('blur', resetInput)
+      window.off('closed', closed)
       disposers.delete(dispose)
-      guestInputs.delete(contents)
       if (!contents.isDestroyed()) contents.setIgnoreMenuShortcuts(false)
     }
     const closed = (): void => { clear(); dispose() }
@@ -216,17 +200,16 @@ export function installDesktopShortcuts(
     contents.on('before-input-event', beforeInput)
     contents.on('blur', resetInput)
     contents.once('destroyed', dispose)
-    if (guestName === undefined) { window.on('closed', closed); window.on('blur', resetWindow) }
+    window.on('closed', closed)
+    window.on('blur', resetInput)
     disposers.add(dispose)
-    return dispose
   }
 
   return {
     sendEditingKey(keyCode, modifiers) {
       const window = getWindow()
       if (window === undefined || window.isDestroyed() || overlayInput(window).blocked) return
-      const contents = [...guestInputs].find(([guest, owner]) => owner.window === window && !guest.isDestroyed() && guest.isFocused())?.[0]
-        ?? window.webContents
+      const contents = window.webContents
       contents.focus()
       const previous = editingInput
       editingInput = contents
@@ -247,8 +230,7 @@ export function installDesktopShortcuts(
         click: sendMenuClose,
       }] }
     },
-    attach(window) { attachInput(window, window.webContents) },
-    attachGuest: attachInput,
+    attach: attachInput,
     dispose() {
       for (const dispose of disposers) dispose()
       persistence.dispose()

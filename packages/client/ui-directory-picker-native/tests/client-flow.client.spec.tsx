@@ -23,7 +23,6 @@ vi.mock(desktopIpc.electron, () => ({
 vi.mock('../../../../apps/desktop/src/preload-platform.ts', () => ({ markDocumentPlatform: vi.fn(), syncWindowFullscreen: vi.fn() }))
 vi.mock('../../../../apps/desktop/src/preload-theme.ts', () => ({ syncNativeTheme: vi.fn() }))
 vi.mock('../../../../apps/desktop/src/preload-windows.ts', () => ({ syncWindowsAppearance: vi.fn() }))
-vi.mock('../../../../apps/desktop/src/preload-mandatory-overlay.ts', () => ({ installMandatoryUpdateOverlay: vi.fn() }))
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); desktopIpc.invoke.mockReset(); desktopIpc.on.mockReset() })
 
@@ -169,6 +168,7 @@ describe('directory-picker-native client half', () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
     vi.resetModules()
     vi.stubGlobal('location', new URL('dsh-app://app/'))
+    vi.stubGlobal('process', { ...process, isMainFrame: true })
     // Desktop's preload is typechecked by its own compiler program.
     const preload = '../../../../apps/desktop/src/preload-app.ts'
     await import(/* @vite-ignore */ preload)

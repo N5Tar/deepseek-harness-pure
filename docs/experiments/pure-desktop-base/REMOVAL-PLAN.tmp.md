@@ -1,6 +1,6 @@
 # AI 产品剥离：模块分支执行计划（临时）
 
-日期：2026-11-05。状态：第 01–04 项已合入本地 master，第 04 项提交为 `4f36847664`，完整托管 CI 清理提交为 `6c49d13bb2`；第 05 项按用户指示直接提交至现有 master，不新建分支；后续模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
+日期：2026-11-05。状态：第 01–05 项已合入 master，第 05 项提交为 `580b762c0a`；第 06 项按用户指示在现有 master 完成实现与本地验收，不新建分支、不推送；第 07–16 项未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
 
 ## 目标与范围
 
@@ -35,7 +35,7 @@
 | 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 已合入 |
 | 04 | `pure/ui-test-runtime`（沿用当时分支） | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 已合入 |
 | 05 | `master`（按用户指示不新建分支） | 桌面 Host 脱离全量产品 CLI；直接使用通用启动能力；移除 Agent、任务、账号等 Host 业务集成 | 无密钥、无账号和旧用户目录可启动；Host 启停、就绪和失败报告正常 | 已合入 |
-| 06 | `pure/desktop-shell` | 纯桌面成为唯一模式；删除双模式、账号 Welcome、产品专属 IPC 和构建入口 | 不设置模式变量也启动底座；窗口、菜单、设置、退出与子进程清理正常 | 待开始 |
+| 06 | `master`（按用户指示不新建分支） | 纯桌面成为唯一模式；删除双模式、账号 Welcome、产品专属 IPC 和构建入口 | 不设置模式变量也启动底座；窗口、菜单、设置、退出与子进程清理正常 | 已完成（本地） |
 
 UI 远程类型与测试依赖可能交叉，每个分支开始前核实。遇到必须同时修改的消费者，仅纳入使当前模块独立所必需的改动，不提前清理无关功能。
 
@@ -205,3 +205,20 @@ Web 构建输入检查在原有实验包隔离之外，要求实际静态模块�
 真实浏览器验收使用独立临时 profile、随机监听端口及真实 Loader / Client bundles；不使用旧用户目录、模型或账号。复用的 Host 夹具改用生产 `mountRootInclude` 与 profile patch 读取链路，从而覆盖配置保存与重新组合，而不仅验证 HTTP 页面可读。Chromium 已验证底座启动、深浅主题切换、语言切换、刷新后持久化、Escape 关闭与焦点恢复。浏览器验收位于 Web lane，不给原 Host-only e2e 增加浏览器运行依赖。
 
 最终本地验证：`DSH_GATE_CONCURRENCY=2 pnpm run build:artifacts` 8/8 通过；最终配置下 `pnpm run build:web` 通过；`DSH_GATE_CONCURRENCY=1 pnpm run build:check` Host / Client 两项通过。单 worker 的 Web 内核、ui-shell、四组样式回归、实际 Vite 输入隔离、Web 构建入口、CI 工作流与 workspace constraints 聚焦测试全部通过。Host composition e2e 与 Web lane 的 Chromium e2e 均通过；最终产物中没有 preview 文件。变更 TypeScript 文件的完整规则 lint（2 threads）为 0 warnings / 0 errors，双语记录一致，`git diff --check` 通过。未重跑已知有无关失败的仓库全量 lint，也未在 Windows 或真实 Electron 窗口复验此次 CSS。本轮未提交、未推送、未合并。
+
+
+## 第 06 项执行记录
+
+Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。profile 初始化、恢复和开发启动仅使用 `shell-base`；开发目录沿用隔离的 `shell-development`，不准备 primary-runtime。已有产品 profile 由 `DesktopProfileCompatibilityError` 拒绝，恢复也不得改写其 manifest、patch、包管理配置或 lockfile；用户须选择独立 `DSH_HOME`，不自动迁移旧用户数据。
+
+删除 Welcome 与账号引导、Platform 内嵌页、浏览器 guest、Session 文件拖拽、麦克风特许、任务退出检查、应用更新界面及其私有 IPC、preload、renderer、构建入口、测试和专属快照。Host 协议升至 5，只保留启动身份、认证就绪、致命诊断、插件操作记录、关闭与确认。Electron 默认拒绝权限请求和 webview 附加，应用 IPC 验证归属窗口和主 frame；`dshDesktop` 仅提供协议版本、keyboard 和 shortcuts。
+
+保留窗口、菜单、目录选择、语言与主题、WebSocket 鉴权、故障恢复、通用命令管理和有界进程清理。普通退出不访问 Agent 或计划任务。桌面 manifest 与编译引用移除账号、analytics、sidebar-browser、file-drag、产品设置 UI 和 Welcome React/Vite 依赖；应用打包及冻结输入不再收录旧 renderer/preload，并以四个明确构建入口排除磁盘上的旧产物。
+
+范围边界：CLI 产品入口、运行时包集合与 Office/Python 等发行资源属于 07、14、16；本项不声称安装包依赖闭包已经纯净。发行校验仍使用的 updater 库、签名下载检查、纯政策配置解析和日志工具暂留至 16，但不进入 main 的更新控制或产品 IPC。保留源码消费者都已同步；不保留 unsupported 产品协议占位。
+
+本地验收：最终 `DSH_GATE_CONCURRENCY=2 pnpm run build` 10/10 通过。单 worker 主进程回归 23 项通过；Host/preload/诊断/隔离 48 项通过；profile/dev 45 项通过、1 项 Windows 专用跳过；保留更新工具库与键盘/settings-file 148 项通过；locale/恢复/菜单/目录选择等 135 项通过，命令管理流程另 8 项通过。产物冻结/ASAR 输入 59 项通过；workspace constraints、打包与依赖隔离的组合检查 199 项通过（包含上述部分重叠项，不相加为总数）。最后的产物清单归并另复跑 11 项通过。
+
+真实产物验收：built Desktop Host 与 shell-base composition e2e 2/2 通过，覆盖无产品 CLI 链接启动、真实业务服务缺席、认证 settings RPC、持久化、正常重启和无效配置诊断。另用本地 Electron 与现有 Playwright，在新建临时 home/project/userData 下实际打开单窗口，检查无 Welcome/Platform 桥、无更新菜单、中文及深色主题设置，关闭后再次冷启动确认持久化；两次正常退出，进程检查未发现遗留的测试 Electron/Host。首次验收脚本误把浅色 radio 当成深色导致等待超时，改按 `value=dark` 选择后通过；不是产品故障。
+
+变更源码完整规则 lint 0 warnings / 0 errors（主进程及其测试单独覆盖，其余变更文件按 2 threads 覆盖）；双语 README 与配对记录同步，`git diff --check` 通过。未运行仓库全量 lint/coverage，未在 Windows/Linux 启动真实窗口，未验证签名发行包或安装升级。执行中没有修改已安装应用、旧用户目录或凭证，没有推送远端。

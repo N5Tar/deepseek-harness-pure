@@ -1,44 +1,58 @@
 [
   {
-    "label": "About DeepSeek Harness",
-    "role": "about"
+    "label": "Desktop base test",
+    "submenu": [
+      {
+        "label": "About DeepSeek Harness",
+        "role": "about"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Manage dsh Command…"
+      },
+      {
+        "role": "toggleDevTools",
+        "label": "Developer tools"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "role": "hide",
+        "label": "Hide DeepSeek Harness"
+      },
+      {
+        "role": "hideOthers",
+        "label": "Hide Others"
+      },
+      {
+        "role": "unhide",
+        "label": "Show All"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "role": "quit",
+        "label": "Quit DeepSeek Harness"
+      },
+      {
+        "role": "toggleDevTools",
+        "visible": false,
+        "accelerator": "F12"
+      }
+    ]
   },
   {
-    "type": "separator"
+    "label": "File",
+    "submenu": []
   },
   {
-    "label": "Check for Updates…"
+    "role": "editMenu"
   },
   {
-    "label": "Manage dsh Command…"
-  },
-  {
-    "type": "separator"
-  },
-  {
-    "role": "toggleDevTools",
-    "label": "Developer tools"
-  },
-  {
-    "type": "separator"
-  },
-  {
-    "role": "hide",
-    "label": "Hide DeepSeek Harness"
-  },
-  {
-    "role": "hideOthers",
-    "label": "Hide Others"
-  },
-  {
-    "role": "unhide",
-    "label": "Show All"
-  },
-  {
-    "type": "separator"
-  },
-  {
-    "role": "quit",
-    "label": "Quit DeepSeek Harness"
+    "role": "windowMenu"
   }
 ]

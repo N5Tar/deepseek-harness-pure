@@ -15,7 +15,6 @@ import {
 import { dirname, join } from 'node:path'
 import { createDevelopmentProjectMetadata } from '../src/project-manager.ts'
 import type { DesktopRelease } from '../src/release.ts'
-import type { DesktopLaunchMode } from '../src/launch-mode.ts'
 import { DESKTOP_RUNTIME_FILE, type DesktopRuntimeDescriptor } from '../src/runtime-tree.ts'
 import type { DesktopAutoUpdateTarget } from './desktop-auto-update-environment.mjs'
 import { desktopTargetPlatform } from './desktop-build-paths.mjs'
@@ -40,8 +39,6 @@ export interface DevelopmentProjectOptions {
   readonly release: DesktopRelease
   /** Build target whose prepared payload the disposable project runs against. */
   readonly target: DesktopAutoUpdateTarget
-  /** Development composition; absence retains the product desktop. */
-  readonly launchMode?: DesktopLaunchMode
 }
 
 function readManifest(path: string): PackageManifest {
@@ -148,7 +145,7 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
   }
 
   removeOwnedPath(options.projectDir)
-  createDevelopmentProjectMetadata(options.projectDir, options.release, options.launchMode)
+  createDevelopmentProjectMetadata(options.projectDir, options.release)
   const destinationModules = join(options.projectDir, 'node_modules')
   mkdirSync(destinationModules, { recursive: true })
   const names = [

@@ -25,7 +25,7 @@ function hostEnvironment(home: string): NodeJS.ProcessEnv {
   for (const [key, value] of Object.entries(process.env)) {
     if (!/KEY|TOKEN|SECRET|PASSWORD/u.test(key)) environment[key] = value
   }
-  return { ...environment, DSH_HOME: home, DSH_DESKTOP_MODE: 'shell', DSH_TELEMETRY_MODE: 'DISABLED' }
+  return { ...environment, DSH_HOME: home, DSH_TELEMETRY_MODE: 'DISABLED' }
 }
 
 /** Query the real settings Remote using the authenticated native carrier. */
@@ -45,7 +45,7 @@ async function settingsRpc(url: string, cookie: string, method: string, args: Re
 }
 
 describe('built shell Desktop Host', () => {
-  it('starts without Office, rejects product operations, persists settings, and gracefully restarts', async () => {
+  it('starts without product services, persists settings, and gracefully restarts', async () => {
     const root = mkdtempSync(join(tmpdir(), 'dsh-shell-host-'))
     let host: DesktopHostProcess | undefined
     onTestFinished(async () => {
@@ -67,10 +67,9 @@ describe('built shell Desktop Host', () => {
         hostProtocolVersion: DESKTOP_HOST_PROTOCOL_VERSION,
       },
       target: 'mac-x64',
-      launchMode: 'shell',
     })
     const paths = resolveDesktopPaths(home)
-    await new DesktopProjectManager(paths, { dsh: project }, 'shell').applyRelease()
+    await new DesktopProjectManager(paths, { dsh: project }).applyRelease()
     // Remove only the fixture's CLI link; Host boot must use its own installation anchor.
     const productCli = join(project, 'node_modules', '@deepseek-ai', 'dsh')
     expect(lstatSync(productCli).isSymbolicLink()).toBe(true)
@@ -87,13 +86,10 @@ export function apply(ctx) {
 }
 `)
     writeFileSync(join(paths.profile, 'cordis.patch.yml'), `- id: shell-base\n  config:\n    printUrl: false\n- insert:\n    - id: shell-test-status\n      name: ${JSON.stringify(probe)}\n`)
-    const missingPrimaryRuntime = join(root, 'absent-primary-runtime')
     const environment = hostEnvironment(home)
-    const platformSessions: unknown[] = []
     const restart = async (): Promise<{ url: string; cookie: string }> => {
       await host?.stop()
-      host = new DesktopHostProcess(process.execPath, project, paths.profile, undefined, environment, undefined,
-        missingPrimaryRuntime, undefined, session => platformSessions.push(session))
+      host = new DesktopHostProcess(process.execPath, project, paths.profile, undefined, environment)
       const ready = await host.start()
       return { url: ready.url, cookie: await authenticateWebHost(ready.url) }
     }
@@ -106,32 +102,18 @@ export function apply(ctx) {
     expect(status.entries).toContain('shell-base')
     expect(status.entries).not.toContain('agent-loop')
     expect(status.entries).not.toContain('session-controller')
-    expect(await host!.inspectQuit()).toEqual({ activeTasks: false, scheduledTasks: false })
-    for (const action of ['inspect', 'lock', 'unlock'] as const) {
-      await expect(host!.updateTasks(action)).rejects.toThrow('unsupported by desktop base')
-    }
-    await expect(host!.resolveDragResource('not-a-session-file')).rejects.toThrow('unsupported by desktop base')
     const initialSettings = await settingsRpc(connection.url, connection.cookie, 'describe', {}) as { namespaces: unknown[] }
     expect(Array.isArray(initialSettings.namespaces)).toBe(true)
     expect(await settingsRpc(connection.url, connection.cookie, 'update', { ns: 'locale', patch: { preference: 'zh' } }))
       .toMatchObject({ ns: 'locale', value: { preference: 'zh' } })
-    expect(existsSync(missingPrimaryRuntime)).toBe(false)
     expect(existsSync(join(home, 'dsh-runtimes', 'dsh-primary-runtime'))).toBe(false)
     connection = await restart()
     const settings = await settingsRpc(connection.url, connection.cookie, 'describe', {}) as { namespaces: Array<{ ns: string; value: unknown }> }
     expect(settings.namespaces.find(namespace => namespace.ns === 'locale')).toMatchObject({ value: { preference: 'zh' } })
-    expect(await host!.inspectQuit()).toEqual({ activeTasks: false, scheduledTasks: false })
     await host!.stop(true)
-    // The parent clears its private account cache on stop and exit, even without a Host publisher.
-    expect(platformSessions.every(session => session === null)).toBe(true)
-    expect(existsSync(missingPrimaryRuntime)).toBe(false)
-    host = new DesktopHostProcess(process.execPath, project, paths.profile, undefined,
-      { ...environment, DSH_DESKTOP_MODE: 'Shell' }, undefined, missingPrimaryRuntime)
-    await expect(host.start()).rejects.toThrow('DSH_DESKTOP_MODE must be product or shell')
-    await host.stop()
     writeFileSync(join(paths.profile, 'cordis.patch.yml'), 'invalid: [yaml')
     host = new DesktopHostProcess(process.execPath, project, paths.profile, undefined,
-      environment, undefined, missingPrimaryRuntime)
+      environment)
     const failure: unknown = await host.start().catch((error: unknown) => error)
     expect(failure).toBeInstanceOf(DesktopHostFatalError)
     if (failure instanceof DesktopHostFatalError) expect(failure.diagnostic).toContain('cordis.patch.yml')

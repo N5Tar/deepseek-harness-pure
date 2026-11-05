@@ -82,7 +82,7 @@ async function fixture(options: {
   ].join('\n'))
   const show = vi.fn<(options: MessageBoxOptions) => Promise<MessageBoxReturnValue>>()
   const manager = new DesktopCommandManager({
-    resources, isPackaged: true, isInstalledLocation: () => true, isInstalling: () => false, isQuitting: () => false,
+    resources, isPackaged: true, isInstalledLocation: () => true, isQuitting: () => false,
     messages: () => options.messages ?? en, show,
   })
   const calls = async (): Promise<Array<{ operation: string; expected?: string }>> =>
@@ -130,7 +130,7 @@ it.skipIf(process.platform !== 'darwin')('keeps a declined worker response throu
   await f.manager.show()
   expect(external.elevations).toBe(1)
   expect(await f.calls()).toEqual([{ operation: 'inspect' }, { operation: 'install', expected: 'a'.repeat(64) }, { operation: 'install', expected: 'a'.repeat(64) }])
-  expect(f.show.mock.lastCall![0]).toMatchObject({ message: en.cliCommandChanged, technicalDetails: 'worker declined' })
+  expect(f.show.mock.lastCall![0]).toMatchObject({ message: en.cliCommandChanged, detail: 'worker declined' })
 })
 
 it.skipIf(process.platform !== 'darwin')('returns without an error dialog when administrator authorization is cancelled', async () => {

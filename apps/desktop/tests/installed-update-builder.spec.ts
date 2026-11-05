@@ -35,13 +35,9 @@ async function fixture<T>(body: (manifest: string, source: string) => Promise<T>
     await prepareInstalledUpdateBootstrap(manifest)
     const source = join(root, 'app')
     await mkdir(join(source, 'lib'), { recursive: true })
-    await mkdir(join(source, 'lib/welcome'), { recursive: true })
-    await writeFile(join(source, 'lib/welcome/design-platform.css'), 'body { --fixture-token: white; }\n')
-    await mkdir(join(source, 'renderer'))
-    for (const file of ['main.js', 'preload-app.cjs', 'preload-mandatory.cjs', 'preload-update-dialog.cjs']) {
+    for (const file of ['main.js', 'preload-app.cjs', 'operation-report-worker.js', 'command-manager-entry.js']) {
       await writeFile(join(source, 'lib', file), '// inert fixture\n')
     }
-    await writeFile(join(source, 'renderer', 'index.html'), '<p>fixture</p>')
     await writeFile(join(source, '.env.windows'), 'must-not-copy')
     for (const version of versions) {
       const dsh = join(run.root, version, 'dsh')
@@ -58,8 +54,8 @@ describe('installed-update application inputs and builder configuration', () => 
       expect(await prepareInstalledUpdateApplication(manifest, source))
         .toMatchObject({ dependenciesFrozen: false, signed: false, bootTested: false })
       const directory = await verifyInstalledUpdateApplication(join(manifest, '..'))
-      expect((await readdir(directory)).sort()).toEqual(['installed-update-identity.mjs', 'lib', 'qualification-bootstrap.mjs', 'renderer'])
-      expect(await readFile(join(directory, 'lib/welcome/design-platform.css'), 'utf8')).toBe('body { --fixture-token: white; }\n')
+      expect((await readdir(directory)).sort()).toEqual(['installed-update-identity.mjs', 'lib', 'qualification-bootstrap.mjs'])
+      expect(await readFile(join(directory, 'lib/preload-app.cjs'), 'utf8')).toBe('// inert fixture\n')
       await writeFile(join(source, 'lib/main.js'), '// later checkout\n')
       expect(await readFile(join(directory, 'lib/main.js'), 'utf8')).toBe('// inert fixture\n')
       await expect(prepareInstalledUpdateApplication(manifest, source)).rejects.toMatchObject({ code: 'EEXIST' })
@@ -68,7 +64,7 @@ describe('installed-update application inputs and builder configuration', () => 
 
   it.each([
     ['modified', 'lib/main.js'], ['added', 'lib/unrecorded.js'], ['missing', 'lib/main.js'],
-    ['modified', 'lib/welcome/design-platform.css'], ['missing', 'lib/welcome/design-platform.css'],
+    ['modified', 'lib/preload-app.cjs'], ['missing', 'lib/preload-app.cjs'],
   ] as const)('rejects %s frozen application bytes in %s', async (failure, file) => {
     await fixture(async (manifest, source) => {
       await prepareInstalledUpdateApplication(manifest, source)

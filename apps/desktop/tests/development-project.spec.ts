@@ -31,7 +31,7 @@ afterEach(() => {
 })
 
 describe('desktop development project', () => {
-  it.each(['product', 'shell'] as const)('includes workspace packages and selects the %s runtime composition', (launchMode) => {
+  it('includes workspace packages and selects only the shell runtime composition', () => {
     const root = temporaryRoot()
     const cli = join(root, 'cli')
     const host = join(root, 'host')
@@ -47,10 +47,9 @@ describe('desktop development project', () => {
     writeFileSync(join(dependency, 'package.json'), JSON.stringify({ name: 'unhoisted', version: '1.2.3' }))
     symlinkSync(dependency, join(cli, 'node_modules/unhoisted'), process.platform === 'win32' ? 'junction' : 'dir')
     const project = prepareDevelopmentProject({ projectDir: join(root, 'runtime'), cliDir: cli, hostDir: host, dependencyDir: hoisted,
-      release: release(), target: 'mac-arm64', launchMode })
+      release: release(), target: 'mac-arm64' })
     const manifest = JSON.parse(readFileSync(join(project, 'package.json'), 'utf8')) as { dsh: { profile: { bundles: string[] } } }
-    expect(manifest.dsh.profile.bundles).toEqual(launchMode === 'shell'
-      ? ['@deepseek-ai/dsh-shell-base'] : ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'])
+    expect(manifest.dsh.profile.bundles).toEqual(['@deepseek-ai/dsh-shell-base'])
     expect(realpathSync(join(project, 'node_modules/unhoisted'))).toBe(realpathSync(dependency))
     const descriptor = JSON.parse(readFileSync(join(project, 'desktop-runtime.json'), 'utf8')) as { platform: string; arch: string; sharedPackages: unknown[] }
     expect(descriptor).toMatchObject({ platform: 'darwin', arch: 'arm64' })

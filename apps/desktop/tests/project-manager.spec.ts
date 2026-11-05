@@ -3,8 +3,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveDesktopPaths } from '../src/paths.ts'
-import { DesktopProfileModeError, DesktopProjectManager } from '../src/project-manager.ts'
-import type { DesktopLaunchMode } from '../src/launch-mode.ts'
+import { DesktopProfileCompatibilityError, DesktopProjectManager } from '../src/project-manager.ts'
 import { readProfilePlugins } from '@deepseek-ai/dsh-app-boot'
 import { runtimeFixture } from './runtime-fixture.ts'
 
@@ -45,8 +44,7 @@ afterEach(() => {
 
 describe('desktop external plugin profile', () => {
   it('initializes and recovers the shell without restoring the product bundles', async () => {
-    const { manager: product } = setup()
-    const manager = new DesktopProjectManager(product.paths, product.runtime, 'shell')
+    const { manager } = setup()
     await manager.applyRelease()
     seedPlugin(manager)
     const manifestPath = join(manager.paths.profile, 'package.json')
@@ -63,28 +61,37 @@ describe('desktop external plugin profile', () => {
     expect(existsSync(patch)).toBe(true)
   })
 
-  it.each<DesktopLaunchMode>(['product', 'shell'])('preserves a %s profile when launched or recovered in another mode', async (initial) => {
-    const { manager: product } = setup()
-    const manager = new DesktopProjectManager(product.paths, product.runtime, initial)
+  it.each([
+    ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'],
+    ['@deepseek-ai/dsh-web-app'],
+    ['custom-bundle', '@deepseek-ai/dsh-shell-base'],
+  ])('preserves incompatible profile bundles %j during launch and recovery', async (...bundles) => {
+    const { manager } = setup()
     await manager.applyRelease()
-    const files = ['package.json', 'cordis.patch.yml', 'pnpm-workspace.yaml']
+    const manifestPath = join(manager.paths.profile, 'package.json')
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
+    manifest.dsh.profile.bundles = bundles
+    writeFileSync(manifestPath, JSON.stringify(manifest))
+    writeFileSync(join(manager.paths.profile, 'pnpm-lock.yaml'), 'lockfileVersion: 9.0\n')
+    const files = ['package.json', 'cordis.patch.yml', 'pnpm-workspace.yaml', 'pnpm-lock.yaml']
     const before = files.map(file => readFileSync(join(manager.paths.profile, file), 'utf8'))
-    const other = new DesktopProjectManager(manager.paths, manager.runtime, initial === 'shell' ? 'product' : 'shell')
-    await expect(other.applyRelease()).rejects.toBeInstanceOf(DesktopProfileModeError)
-    await expect(other.disableAllPlugins()).rejects.toBeInstanceOf(DesktopProfileModeError)
+    await expect(manager.applyRelease()).rejects.toMatchObject({
+      name: 'DesktopProfileCompatibilityError', code: 'desktop-profile-incompatible', profileDir: manager.paths.profile,
+    })
+    await expect(manager.disableAllPlugins()).rejects.toBeInstanceOf(DesktopProfileCompatibilityError)
     expect(files.map(file => readFileSync(join(manager.paths.profile, file), 'utf8'))).toEqual(before)
+    expect(existsSync(manager.paths.lock)).toBe(false)
   })
 
   it('rejects a shell profile that explicitly includes the product base', async () => {
-    const { manager: product } = setup()
-    const manager = new DesktopProjectManager(product.paths, product.runtime, 'shell')
+    const { manager } = setup()
     await manager.applyRelease()
     const manifestPath = join(manager.paths.profile, 'package.json')
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
     manifest.dsh.profile.bundles.push('@deepseek-ai/dsh-base')
     const value = JSON.stringify(manifest)
     writeFileSync(manifestPath, value)
-    await expect(manager.applyRelease()).rejects.toBeInstanceOf(DesktopProfileModeError)
+    await expect(manager.applyRelease()).rejects.toBeInstanceOf(DesktopProfileCompatibilityError)
     expect(readFileSync(manifestPath, 'utf8')).toBe(value)
   })
 
@@ -166,7 +173,7 @@ describe('desktop external plugin profile', () => {
     }
     expect(manifest.dependencies.plugin).toBe('1.0.0')
     expect(manifest.dsh.profile.bundles).not.toContain('plugin')
-    expect(manifest.dsh.profile.bundles).toContain('@deepseek-ai/dsh-web-app')
+    expect(manifest.dsh.profile.bundles).toEqual(['@deepseek-ai/dsh-shell-base'])
     await manager.applyRelease()
     expect(readFileSync(patch, 'utf8')).toContain('[]')
   })

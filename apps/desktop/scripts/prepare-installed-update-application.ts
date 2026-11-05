@@ -1,10 +1,14 @@
-/** Freeze the built main, preload, renderer, and bootstrap files shared by a qualification version pair. */
+/** Freeze the built desktop entrypoints and bootstrap files shared by a qualification version pair. */
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { readInstalledUpdateRun } from './installed-update-qualification.ts'
 
 interface ApplicationFile { readonly path: string; readonly sha256: string }
+
+const APPLICATION_MODULES = ['lib/main.js', 'lib/preload-app.cjs', 'lib/operation-report-worker.js', 'lib/command-manager-entry.js']
+const BOOTSTRAP_MODULES = ['qualification-bootstrap.mjs', 'installed-update-identity.mjs']
+const APPLICATION_FILES = [...APPLICATION_MODULES, ...BOOTSTRAP_MODULES]
 
 async function applicationFiles(root: string, relative = ''): Promise<string[]> {
   const files: string[] = []
@@ -20,7 +24,7 @@ async function applicationFiles(root: string, relative = ''): Promise<string[]> 
 /**
  * Copy only shipped application files and record their hashes; existing output refuses reuse.
  * @param manifest Original run manifest with completed bootstrap preparation.
- * @param source Desktop app directory containing freshly built lib and renderer files.
+ * @param source Desktop app directory containing freshly built entrypoints under lib.
  * @returns Hash record, not dependency, signed-package, or boot qualification evidence.
  */
 export async function prepareInstalledUpdateApplication(manifest: string, source: string): Promise<object> {
@@ -29,16 +33,16 @@ export async function prepareInstalledUpdateApplication(manifest: string, source
   await mkdir(directory)
   await writeFile(join(directory, 'started.json'), `${JSON.stringify({ time: new Date().toISOString() })}\n`, { flag: 'wx', flush: true })
   try {
-    const modules = (await readdir(join(source, 'lib'), { withFileTypes: true }))
-      .filter(entry => /\.(?:js|cjs)$/u.test(entry.name))
-    if (modules.some(entry => !entry.isFile())) throw new Error('installed update: application modules must be regular files')
-    const paths = [...modules.map(entry => `lib/${entry.name}`), ...await applicationFiles(source, 'renderer'), 'lib/welcome/design-platform.css'].sort()
-    for (const required of ['lib/main.js', 'lib/preload-app.cjs', 'lib/preload-mandatory.cjs', 'lib/preload-update-dialog.cjs']) {
-      if (!paths.includes(required)) throw new Error('installed update: rebuild Desktop before freezing application files')
+    const paths = APPLICATION_MODULES
+    const modules = await readdir(join(source, 'lib'), { withFileTypes: true })
+    for (const required of paths) {
+      if (!modules.some(entry => entry.isFile() && `lib/${entry.name}` === required)) {
+        throw new Error('installed update: rebuild Desktop before freezing application files')
+      }
     }
     const files: ApplicationFile[] = []
     const inputs = [...paths.map(path => ({ path, source: join(source, path) })),
-      ...['qualification-bootstrap.mjs', 'installed-update-identity.mjs'].map(path => ({ path, source: join(run.root, 'bootstrap', path) }))]
+      ...BOOTSTRAP_MODULES.map(path => ({ path, source: join(run.root, 'bootstrap', path) }))]
     for (const input of inputs) {
       const bytes = await readFile(input.source)
       const target = join(directory, 'files', input.path)
@@ -76,8 +80,7 @@ export async function verifyInstalledUpdateApplication(root: string): Promise<st
     if (typeof entry !== 'object' || entry === null || !('path' in entry) || !('sha256' in entry)
       || typeof entry.path !== 'string' || typeof entry.sha256 !== 'string'
       || entry.path.includes('\\') || entry.path.includes(':') || entry.path.split('/').some(part => ['', '.', '..'].includes(part))
-      || (entry.path !== 'lib/welcome/design-platform.css'
-        && !/^(?:lib\/[^/]+\.(?:js|cjs)|renderer\/.+|qualification-bootstrap\.mjs|installed-update-identity\.mjs)$/u.test(entry.path))
+      || !APPLICATION_FILES.includes(entry.path)
       || !/^[a-f0-9]{64}$/u.test(entry.sha256) || paths.has(entry.path)) {
       throw new Error('installed update: invalid application file inventory')
     }
@@ -88,7 +91,7 @@ export async function verifyInstalledUpdateApplication(root: string): Promise<st
   }
   const actual = await applicationFiles(join(directory, 'files'))
   if (actual.length !== paths.size || actual.some(path => !paths.has(path))
-    || ['lib/main.js', 'lib/welcome/design-platform.css', 'qualification-bootstrap.mjs', 'installed-update-identity.mjs'].some(path => !paths.has(path))) {
+    || APPLICATION_FILES.some(path => !paths.has(path))) {
     throw new Error('installed update: frozen application inventory has missing or additional files')
   }
   return join(directory, 'files')

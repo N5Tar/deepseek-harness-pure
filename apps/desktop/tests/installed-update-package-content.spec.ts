@@ -55,13 +55,9 @@ async function fixture(body: (context: {
     await prepareInstalledUpdateBootstrap(manifest)
     const source = join(root, 'source')
     await mkdir(join(source, 'lib'), { recursive: true })
-    await mkdir(join(source, 'lib/welcome'), { recursive: true })
-    await writeFile(join(source, 'lib/welcome/design-platform.css'), 'body { --fixture-token: white; }\n')
-    await mkdir(join(source, 'renderer'))
-    for (const name of ['main.js', 'preload-app.cjs', 'preload-mandatory.cjs', 'preload-update-dialog.cjs']) {
+    for (const name of ['main.js', 'preload-app.cjs', 'operation-report-worker.js', 'command-manager-entry.js']) {
       await writeFile(join(source, 'lib', name), '// inert fixture\n')
     }
-    await writeFile(join(source, 'renderer/index.html'), '<p>test</p>')
     await prepareInstalledUpdateApplication(manifest, source)
     await cp(join(run.root, 'application/files'), source, { recursive: true })
     await writeFile(join(source, 'package.json'), JSON.stringify({ name: `dsh-update-test-${run.id}`, version,
@@ -106,7 +102,7 @@ describe('installed update archive contents', () => {
   it.each(versions)('reads real ASAR and runtime inventories for %s without claiming installation', async (version) => {
     await fixture(async ({ manifest, payload }) => {
       expect(await verifyInstalledUpdatePackageContent(manifest, version, payload, publisher)).toMatchObject({
-        version, applicationFiles: 8, dependenciesFrozen: false, installed: false,
+        version, applicationFiles: 6, dependenciesFrozen: false, installed: false,
         resignedExecutables: [join(payload, 'resources/app.asar.unpacked/dsh/tool.exe')],
       })
     }, version)
@@ -130,7 +126,7 @@ describe('installed update archive contents', () => {
       await fixture(async ({ manifest, source, payload, version, seal }) => {
         if (failure === 'missing') await rm(join(source, 'lib/main.js'))
         else await writeFile(join(source, failure === 'changed' ? 'lib/main.js'
-          : failure === 'additional' ? 'renderer/unrecorded.js' : '.env.windows'), 'inert unexpected bytes')
+          : failure === 'additional' ? 'lib/unrecorded.js' : '.env.windows'), 'inert unexpected bytes')
         await seal()
         await expect(verifyInstalledUpdatePackageContent(manifest, version, payload, publisher)).rejects.toThrow()
       })

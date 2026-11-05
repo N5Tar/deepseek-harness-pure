@@ -8,10 +8,8 @@ import { loadLayeredEnv, loadProfileDirectory, reportSkippedBundles, runResolved
 import type {} from '@deepseek-ai/dsh-client-connection'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import { installOperationDiagnostics } from './operation-diagnostics.ts'
-import { parseDesktopHostMode } from './launch-mode.ts'
 
 async function main(): Promise<void> {
-  const mode = parseDesktopHostMode(process.env.DSH_DESKTOP_MODE)
   const runId = randomUUID() as PluginOperationRunId
   if (process.connected) process.send?.({ type: 'starting', runId }, (error) => { if (error !== null) console.error(error) })
   const runtimeDir = process.argv[2] as string
@@ -25,15 +23,15 @@ async function main(): Promise<void> {
     profile,
     installAnchor,
     overlays: [],
-    args: mode === 'shell' ? [] : ['--no-open', '--host', '127.0.0.1', '--port', '0'],
-    ...(process.argv[5] === undefined ? {} : {
+    args: [],
+    ...(process.argv[4] === undefined ? {} : {
       packageManager: {
         command: process.execPath,
-        args: ['--expose-internals', process.argv[5]],
+        args: ['--expose-internals', process.argv[4]],
         env: {
           ELECTRON_RUN_AS_NODE: '1',
           DSH_DESKTOP_NODE_EXECUTABLE: process.execPath,
-          PATH: `${process.argv[6] ?? ''}${delimiter}${process.env.PATH ?? ''}`,
+          PATH: `${process.argv[5] ?? ''}${delimiter}${process.env.PATH ?? ''}`,
         },
       },
     }),
@@ -54,32 +52,6 @@ async function main(): Promise<void> {
   process.on('message', (message: unknown) => {
     if (typeof message !== 'object' || message === null || !('type' in message)) return
     if (message.type === 'shutdown') { void stop(); return }
-    if (!('requestId' in message) || typeof message.requestId !== 'number' || !Number.isSafeInteger(message.requestId)) return
-    const requestId = message.requestId
-    if (message.type === 'quit-inspection') {
-      void (async () => {
-        try {
-          if (stopping !== undefined) throw new Error('desktop quit: Host is unavailable')
-          if (mode !== 'shell') throw new Error('desktop quit: task inspection is unavailable for product profiles')
-          await application
-          await send({ type: 'quit-inspection', requestId, activeTasks: false, scheduledTasks: false })
-        } catch (error) {
-          // The parent treats an unknown state as interruptible work and asks before quitting.
-          await send({ type: 'quit-inspection', requestId, activeTasks: true, scheduledTasks: false,
-            error: error instanceof Error ? error.message : String(error) })
-        }
-      })().catch((error: unknown) => { console.error(error) })
-      return
-    }
-    if (message.type === 'file-drag-resource') {
-      void send({ type: 'file-drag-resource', requestId, resource: null, error: 'desktop file drag: unsupported by desktop base' })
-        .catch((error: unknown) => { console.error(error) })
-      return
-    }
-    if (message.type === 'update-tasks' && 'action' in message && ['inspect', 'lock', 'unlock'].includes(String(message.action))) {
-      void send({ type: 'update-tasks', requestId, active: true, error: 'desktop update: unsupported by desktop base' })
-        .catch((error: unknown) => { console.error(error) })
-    }
   })
   process.once('disconnect', () => { void stop() })
   const { ctx } = await application

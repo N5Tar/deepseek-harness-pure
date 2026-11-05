@@ -143,13 +143,7 @@ export function createElectronBuilderConfig(
     files: [
       'lib/main.js',
       'lib/operation-report-worker.js',
-      'lib/welcome/**/*',
       'lib/preload-app.cjs',
-      'lib/preload-mandatory.cjs',
-      'lib/preload-platform-account.cjs',
-      'lib/preload-update-dialog.cjs',
-      'lib/preload-welcome.cjs',
-      'renderer/**/*',
       'package.json',
       '!node_modules/**/*.{js,cjs,mjs,ts,cts,mts,css}.map',
       '!node_modules/**/*.tsbuildinfo',
@@ -170,7 +164,6 @@ export function createElectronBuilderConfig(
       // macOS matches the application locale against this bundle, not Electron Framework resources.
       extendInfo: {
         CFBundleLocalizations: ['en', 'zh_CN', 'ja', 'es', 'fr', 'de', 'ru', 'pt'],
-        NSMicrophoneUsageDescription: 'DeepSeek Harness uses your microphone to transcribe speech into message drafts.',
       },
       // Ad-hoc signing keeps the modified Electron executable runnable without a Developer ID.
       identity: unsigned ? '-' : macOSSigning?.signingIdentity,

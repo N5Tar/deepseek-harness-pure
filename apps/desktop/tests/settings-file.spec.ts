@@ -6,7 +6,6 @@ import { join, dirname } from 'node:path'
 import { afterEach, expect, it, onTestFinished, vi } from 'vitest'
 import { DesktopSettingsFile, isDesktopUpdateChannel } from '../src/settings-file.ts'
 import { readDesktopSettings } from '../src/settings.ts'
-import { DesktopUpdateSettings } from '../src/update-settings.ts'
 
 vi.mock('node:fs/promises', async original => ({ ...await original<typeof import('node:fs/promises')>() }))
 vi.mock('@deepseek-ai/dsh-atomic-write', async original => ({ ...await original<typeof import('@deepseek-ai/dsh-atomic-write')>() }))
@@ -52,7 +51,6 @@ it('keeps an invalid channel independent from the popup preference and repairs o
     allowTestAuthPopupWindow: { kind: 'valid', value: true },
   } })
   expect((await readDesktopSettings(root)).updates.allowTestAuthPopupWindow).toBe(true)
-  expect(await new DesktopUpdateSettings(root, 'stable').load()).toMatchObject({ kind: 'error' })
   await file.saveUpdates({ channel: 'nightly' })
   expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ other: [1], updates: {
     channel: 'nightly', allowTestAuthPopupWindow: true, future: { x: 2 },
@@ -63,7 +61,6 @@ it('keeps a valid channel usable when the popup preference is invalid', async ()
   const { root, file } = await fixture('{"updates":{"channel":"nightly","allowTestAuthPopupWindow":"bad"}}')
   vi.spyOn(console, 'warn').mockImplementation(() => {})
   expect((await readDesktopSettings(root)).updates.allowTestAuthPopupWindow).toBe(false)
-  expect(await new DesktopUpdateSettings(root, 'stable').load()).toEqual({ kind: 'ready', channel: 'nightly' })
   await file.saveUpdates({ channel: 'stable' })
   expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ updates: { channel: 'stable', allowTestAuthPopupWindow: 'bad' } })
   await file.saveUpdates({ allowTestAuthPopupWindow: true })
@@ -184,39 +181,33 @@ it('rereads fields after acquiring the writer lock instead of saving a stale sna
   expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ updates: { channel: 'nightly', future: 3 }, other: 4 })
 })
 
-it('accepts the new channel and persists a warning after a real write with failed lock removal', async () => {
-  const { root, file } = await fixture('{"updates":{"channel":"nightly"},"keep":true}')
-  const settings = new DesktopUpdateSettings(root, 'nightly')
+it('reports a completed write separately from failed lock removal', async () => {
+  const { file } = await fixture('{"updates":{"channel":"nightly"},"keep":true}')
   const original = fs.rm
   vi.spyOn(fs, 'rm').mockImplementation(async (path, options) => {
     if (path === `${file.path}.lock`) throw new Error('injected lock removal failure')
     return original(path, options)
   })
-  await expect(settings.save('stable')).resolves.toBeUndefined()
+  await expect(file.saveUpdates({ channel: 'stable' })).rejects.toMatchObject({ problem: { effect: 'written' } })
   expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({ updates: { channel: 'stable' }, keep: true })
-  expect(await settings.load()).toEqual({ kind: 'ready', channel: 'stable' })
-  expect(JSON.parse(await readFile(`${file.path}.save.jsonl`, 'utf8'))).toMatchObject({
-    effect: 'written', reason: 'injected lock removal failure',
-  })
+  expect(await file.read()).toMatchObject({ kind: 'ready', fields: { channel: { kind: 'valid', value: 'stable' } } })
   await expect(fs.access(`${file.path}.lock`)).resolves.toBeUndefined()
 })
 
 it.each([false, true])('leaves an uncertain write for explicit recovery, committed=%s', async (committed) => {
-  const { root, file } = await fixture('{"updates":{"channel":"nightly"},"keep":true}')
-  const settings = new DesktopUpdateSettings(root, 'nightly')
+  const { file } = await fixture('{"updates":{"channel":"nightly"},"keep":true}')
   const original = atomic.writeFileAtomic
   const write = vi.spyOn(atomic, 'writeFileAtomic').mockImplementationOnce(async (...args) => {
     if (committed) await original(...args)
     throw new Error('injected uncertain completion')
   })
   const read = vi.spyOn(DesktopSettingsFile.prototype, 'read')
-  await expect(settings.save('stable')).rejects.toMatchObject({ problem: { effect: 'unknown' } })
+  await expect(file.saveUpdates({ channel: 'stable' })).rejects.toMatchObject({ problem: { effect: 'unknown' } })
   expect(write).toHaveBeenCalledTimes(1)
   expect(read).toHaveBeenCalledTimes(1)
   expect(JSON.parse(await readFile(file.path, 'utf8'))).toEqual({
     updates: { channel: committed ? 'stable' : 'nightly' }, keep: true,
   })
-  expect(JSON.parse(await readFile(`${file.path}.save.jsonl`, 'utf8'))).toMatchObject({ effect: 'unknown' })
   await expect(fs.access(`${file.path}.lock`)).rejects.toMatchObject({ code: 'ENOENT' })
-  expect(await settings.load()).toEqual({ kind: 'ready', channel: committed ? 'stable' : 'nightly' })
+  expect(await file.read()).toMatchObject({ kind: 'ready', fields: { channel: { kind: 'valid', value: committed ? 'stable' : 'nightly' } } })
 })

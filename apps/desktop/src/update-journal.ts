@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto'
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
-import type { DesktopUpdateState } from './ipc.ts'
+import type { DesktopUpdateState } from './update-state.ts'
 
 /** User and process milestones that connect update states across application restarts. */
 export type DesktopUpdateJournalAction = 'started' | 'workspace-ready' | 'workspace-failed'

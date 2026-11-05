@@ -42,7 +42,7 @@ describe('Desktop Host isolation', () => {
 
   it('keeps product bridges outside the Host source entrypoints', () => {
     expect(readdirSync(new URL('src/', root)).sort()).toEqual([
-      'fatal-diagnostic.ts', 'index.ts', 'launch-mode.ts', 'operation-diagnostics.ts',
+      'fatal-diagnostic.ts', 'index.ts', 'operation-diagnostics.ts',
     ])
     const entry = readFileSync(new URL('src/index.ts', root), 'utf8')
     expect(entry).toContain('runResolvedProfile')
