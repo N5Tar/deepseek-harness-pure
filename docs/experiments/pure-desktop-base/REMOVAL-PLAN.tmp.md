@@ -292,3 +292,17 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 结论：这条路径机械可行，但必须在一个持续多轮、允许中间态编译红的过程中完成，波及 `apps/web` 测试与夹具、`benchmarks`、`api/remotes`、生成目录，工作量约等于一次独立的大重构。每次试探都必须回退以保持主干可构建，本模块已连续第 4 轮停留在同一决策点。
 
 因此需要明确选择：**(A)** 先做第 10–12 项让这些 UI 与其钩子自然消失，再执行 08；**(B)** 授权一次多轮、允许红灯的 08 整组清理。
+
+### 路线 A 启动：第 10 项的第一手证据
+
+按用户选择，先做第 10–12 项再回到 08。第 10 项第一刀选最小的 `plan` 组（`packages/plan/plan-mode` + `packages/client/ui-plan`），删除包与装配行后，剩余引用揭示出每个编排功能的固定连带面：
+
+1. **命令身份注册表** `packages/interaction/commands/src/builtin.ts`：`BUILTINS` 常量与 `builtinCommandTokens`（中英拼写）都是强类型映射，删一个功能必须同时改这两张表和所有消费方。
+2. **组合层**：`packages/bundle/base/cordis.patch.yml`、`packages/bundle/web-app/cordis.patch.yml` 及其 `presets/{standard,ptc}.patch.yml` 中的行。
+3. **客户端 UI**：`ui-conversation` 的输入区与 `ui-commands` 测试夹具直接引用该命令身份与类型。
+4. **SDK 契约测试**：`packages/sdk/server/tests/commands.spec.ts`、`plan-parity.spec.ts` 固定了内置命令清单。
+5. **应用层**：`apps/cli/package.json` 依赖与 `apps/web/tests` 的 fixture/e2e。
+
+结论：第 10 项的每个功能组都以「命令注册表 + 组合层行 + UI + SDK 契约测试 + 应用层」五件套出现，必须按功能组一次性成组删除；尝试只删包必然中断。实测后已回退，主干保持可构建。
+
+下一步（下一轮）：以 `plan` 为样板完成第一组成组删除（含上述五处），验证 `build:check` 与定向测试后再复制到 `todo`、`goal`、`schedule`、`workflow`、`team`、`subagent` 各组。
