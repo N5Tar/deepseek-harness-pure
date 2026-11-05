@@ -1,6 +1,7 @@
 /** The single shell page and its settings endpoint. */
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@deepseek-ai/cordis'
+import { listClientModules, readClientModule, type ModuleDirectory } from './modules.ts'
 import type { KernelSettings } from './settings.ts'
 
 const PAGE = `<!doctype html>
@@ -27,6 +28,7 @@ button:hover { background:#26262b; }
   <p>One page from the Cordis kernel. Every capability arrives as a plugin.</p>
   <p>Theme: <strong id="theme">…</strong> · Language: <strong id="language">…</strong></p>
   <button id="toggle" type="button">Toggle theme</button>
+  <div id="modules"></div>
 </main>
 <script>
 const theme = document.getElementById('theme')
@@ -44,6 +46,19 @@ document.getElementById('toggle').addEventListener('click', async () => {
   await refresh()
 })
 void refresh()
+
+async function mountModules() {
+  const modules = await fetch('./api/modules').then(r => r.json())
+  for (const module of modules) {
+    await import(module.url)
+  }
+  const registry = window.__DSH_KERNEL_UI__ ?? { modules: [] }
+  const host = document.getElementById('modules')
+  for (const plugin of registry.modules ?? []) {
+    plugin.mount(host)
+  }
+}
+void mountModules()
 </script>
 </body>
 </html>
@@ -71,7 +86,7 @@ async function readPatch(request: IncomingMessage): Promise<Partial<KernelSettin
  * Serve the shell page and its settings API over the kernel server.
  * @param ctx - kernel context; the server and settings services must exist.
  */
-export const registerPages = Object.assign((ctx: Context): void => {
+export const registerPages = Object.assign((ctx: Context, modules: ModuleDirectory): void => {
   ctx.effect(() => ctx.kernelServer.route({
     method: 'GET',
     path: '/',
@@ -85,6 +100,24 @@ export const registerPages = Object.assign((ctx: Context): void => {
     path: '/api/settings',
     handle: async (_request, response) => { json(response, 200, await ctx.kernelSettings.read()) },
   }))
+  ctx.effect(() => ctx.kernelServer.route({
+    method: 'GET',
+    path: '/api/modules',
+    handle: async (_request, response) => { json(response, 200, await listClientModules(modules)) },
+  }))
+  for (const prefix of ['/ui/'] as const) {
+    ctx.effect(() => ctx.kernelServer.route({
+      method: 'GET',
+      path: prefix + ':file',
+      handle: async (request, response) => {
+        const file = decodeURIComponent(new URL(request.url ?? '/', 'http://kernel.local').pathname.slice(prefix.length))
+        const source = await readClientModule(modules, file)
+        if (source === undefined) { response.writeHead(404); response.end(); return }
+        response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'content-length': Buffer.byteLength(source) })
+        response.end(source)
+      },
+    }))
+  }
   ctx.effect(() => ctx.kernelServer.route({
     method: 'POST',
     path: '/api/settings',

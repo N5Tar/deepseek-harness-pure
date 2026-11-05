@@ -72,4 +72,22 @@ describe('kernel', () => {
     writeFileSync(join(home, 'kernel', 'plugins.json'), JSON.stringify({ plugins: 'nope' }))
     await expect(bootKernel({ home })).rejects.toThrow('"plugins" must be an array')
   })
+
+  it('serves the client module table and each module body', async () => {
+    kernel = await bootKernel({ home })
+    const modules = await (await fetch(`${kernel.url}/api/modules`)).json() as Array<{ id: string; url: string }>
+    expect(modules.map(module => module.id)).toContain('hello')
+    const hello = modules.find(module => module.id === 'hello')
+    expect(hello).toBeDefined()
+    const body = await fetch(`${kernel.url}${hello?.url ?? ''}`)
+    expect(body.status).toBe(200)
+    expect(body.headers.get('content-type')).toContain('text/javascript')
+    expect(await body.text()).toContain('kernel-hello')
+  })
+
+  it('rejects a client module path outside the directory', async () => {
+    kernel = await bootKernel({ home })
+    expect((await fetch(`${kernel.url}/ui/..%2Fsecret.js`)).status).toBe(404)
+    expect((await fetch(`${kernel.url}/ui/missing.js`)).status).toBe(404)
+  })
 })

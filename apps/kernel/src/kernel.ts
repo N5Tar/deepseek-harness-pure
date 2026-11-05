@@ -1,4 +1,5 @@
 /** Boot the kernel: one Cordis root, one page, settings, and Loader-mounted plugins. */
+import { fileURLToPath } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import { readManifest, type KernelPluginEntry } from './manifest.ts'
@@ -14,6 +15,8 @@ export interface KernelOptions {
   readonly port?: number
   /** Extra entries mounted after the manifest; used by tests and hosts. */
   readonly plugins?: readonly KernelPluginEntry[]
+  /** Directory holding client module bundles; defaults to the modules shipped with the kernel. */
+  readonly modulesDirectory?: string
 }
 
 /** A running kernel and the handles its host needs. */
@@ -35,7 +38,10 @@ export async function bootKernel(options: KernelOptions): Promise<RunningKernel>
   await ctx.plugin(KernelServer, options.port ?? 0)
   await ctx.plugin(KernelSettingsStore, settingsPath(options.home))
   await ctx.kernelServer.listen()
-  await ctx.plugin(registerPages)
+  // Built-in client modules ship beside the kernel source; a package may pass an installed directory.
+  await ctx.plugin(registerPages, {
+    directory: options.modulesDirectory ?? fileURLToPath(new URL('../assets/ui', import.meta.url)),
+  })
   await ctx.plugin(Loader, { baseUrl: import.meta.url })
   for (const entry of [...await readManifest(options.home), ...options.plugins ?? []]) {
     await ctx.loader.create({

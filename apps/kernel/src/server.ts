@@ -79,16 +79,24 @@ export class KernelServer extends Service {
     })
   }
 
+  private prefixRoute(method: KernelRoute['method'], path: string): KernelRoute['handle'] | undefined {
+    for (const [key, handle] of this.routes) {
+      if (!key.endsWith(':file') || !key.startsWith(`${method} `)) continue
+      if (path.startsWith(key.slice(method.length + 1, -':file'.length))) return handle
+    }
+    return undefined
+  }
+
   private async dispatch(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const path = new URL(request.url ?? '/', 'http://kernel.local').pathname
-    const key = `${request.method === 'POST' ? 'POST' : 'GET'} ${path}`
-    const handle = this.routes.get(key)
+    const method = request.method === 'POST' ? 'POST' : 'GET'
+    const handle = this.routes.get(`${method} ${path}`) ?? this.prefixRoute(method, path)
     if (handle === undefined) { writeText(response, 404, 'text/plain; charset=utf-8', 'not found'); return }
     try {
       await handle(request, response)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      this.ctx.logger.warn('kernel route %s failed: %s', key, message)
+      this.ctx.logger.warn('kernel route %s %s failed: %s', method, path, message)
       if (!response.headersSent) writeText(response, 500, 'text/plain; charset=utf-8', 'internal error')
       else response.end()
     }

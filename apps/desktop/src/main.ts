@@ -343,7 +343,8 @@ async function main(): Promise<void> {
       if (kernelMode) {
         // Kernel mode runs the Cordis kernel in this process: no child Host and no product profile.
         const { bootKernel } = await import('@deepseek-ai/dsh-kernel')
-        const kernel = await bootKernel({ home: app.getPath('userData'), port: 0 })
+        const modulesDirectory = join(app.getAppPath(), 'node_modules', '@deepseek-ai', 'dsh-kernel', 'assets', 'ui')
+        const kernel = await bootKernel({ home: app.getPath('userData'), port: 0, modulesDirectory })
         kernelHandle = kernel
         hostUrl = kernel.url
         hostCookie = ''

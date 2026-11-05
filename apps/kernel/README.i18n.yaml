@@ -9,8 +9,8 @@
   en: a116ef92cbca98e1
   zh: cddc2355c7f88463
 /harness-kernel/table-of-contents:
-  en: 4204cd13b251de80
-  zh: 2d0d41d4c889b7c1
+  en: edf3b42f8a380d04
+  zh: 78056447f86ed4a0
 /harness-kernel/run:
   en: 9cf8922213eeee9d
   zh: bc10cdfa1e6d3cf6
@@ -21,8 +21,11 @@
   en: 7d3c6fc8bc31bc2c
   zh: 0fc7498af3e283cf
 /harness-kernel/plugins:
-  en: 6e16482e4bb974ab
-  zh: 41fae933dd20553f
+  en: ee121caa1be13879
+  zh: 730d7f738fccd3bc
+/harness-kernel/client-modules:
+  en: 4599cfa7caf10104
+  zh: a186acb5c5a73bab
 /harness-kernel/verification:
   en: 69270bb68b1711a6
   zh: 53668c784c897712

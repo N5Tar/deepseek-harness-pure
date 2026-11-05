@@ -12,6 +12,7 @@
 - [启动内容](#what-boots)
 - [设置文档](#settings-document)
 - [插件](#plugins)
+- [客户端模块](#client-modules)
 - [验证](#verification)
 - [已知限制](#known-limitations)
 
@@ -50,6 +51,19 @@ DSH_HOME=/tmp/kernel-home pnpm --filter @deepseek-ai/dsh-kernel start
 每个条目就是一个 Loader 条目（`name`，可选 `config` 与 `disabled`）；它们在页面插件之后启动，因此可以注入 `kernelServer` 与 `kernelSettings`。清单缺失时不挂载任何插件；清单格式错误时启动失败，并指出有问题的字段。
 
 插件就是普通的 Cordis 函数插件：通过 `inject` 声明所读服务，并在 `ctx.effect()` 内注册路由或设置键。不依赖 `packages/` 中的产品服务：内核只依赖 `vendor/cordis`、Loader 与 Node 内置模块，因此每增加一个能力都不会把产品运行时重新拉回来。
+
+<a id="client-modules"></a>
+
+## 客户端模块
+
+页面会导入客户端模块目录下的每个 `*.js`，并对注册的插件依次调用 `mount(container)`：
+
+```js
+window.__DSH_KERNEL_UI__ ??= { modules: [] }
+window.__DSH_KERNEL_UI__.modules.push({ id: 'example', mount(root) { /* draw */ } })
+```
+
+`GET /api/modules` 按文件名顺序返回 `{ id, url }`；`GET /ui/<file>.js` 以 JavaScript 内容类型返回模块正文，并拒绝不属于该目录的普通 `.js` 文件名。目录默认使用内核随附的 `assets/ui`，宿主可在内核被打包时传入 `modulesDirectory`。
 
 <a id="verification"></a>
 
