@@ -13,56 +13,24 @@
 import { existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { FiberState, type Context } from '@deepseek-ai/cordis'
+import type { Context } from '@deepseek-ai/cordis'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
-  boot,
-  readProfilePatches,
-  createRuntimeResolution,
   initProfile,
-  installFailLoud,
   loadOverlayPatches,
   loadProfile,
   reportSkippedBundles,
-  PluginPackages,
   PROFILE_PATCH_FILENAME,
   resolveProfileDir,
   type ProfileContext,
   type Profile,
-  type RuntimeResolution,
+  runResolvedProfile, PROFILE_ROOT_CONFIG, PROFILE_ROOT_FILENAME, type ProcessShutdown,
 } from '@deepseek-ai/dsh-app-boot'
 import { PROFILE_TEMPLATES } from '@deepseek-ai/dsh-official-bundles'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { installProxyFromEnvironment } from '@deepseek-ai/dsh-http-proxy'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
-import { provideCmdline, type AppReady } from '@deepseek-ai/dsh-cmdline'
-import { createProcessShutdown, type ProcessShutdown } from './process-shutdown.ts'
+import type { LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
 
 const NAME = 'dsh'
-
-/** Launcher-owned readiness signal committed only after boot and host setup succeed. */
-function createAppReady(): { service: AppReady; commit(): void } {
-  let ready = false
-  const listeners = new Set<() => void>()
-  return {
-    service: {
-      onReady(listener) {
-        if (ready) {
-          listener()
-          return () => {}
-        }
-        listeners.add(listener)
-        return () => { listeners.delete(listener) }
-      },
-    },
-    commit() {
-      if (ready) return
-      ready = true
-      for (const listener of [...listeners]) listener()
-      listeners.clear()
-    },
-  }
-}
 
 /**
  * The home-level user patch layer (`$DSH_HOME/cordis.patch.yml`), applied
@@ -77,15 +45,7 @@ export function homePatchPath(): string {
 /** Absolute path of this dsh installation's package.json (both anchors: src/ and lib/ sit one level under apps/cli). */
 export const INSTALL_ANCHOR = fileURLToPath(new URL('../package.json', import.meta.url))
 
-/** The empty root entry list every profile tree patches over. */
-const PROFILE_ROOT_CONFIG = `# dsh profile root — an empty entry list. The tree is composed as patches:
-# each bundle in package.json's dsh.profile.bundles, then cordis.patch.yml, then any
-# --patch overlays. Edit cordis.patch.yml, not this file.
-[]
-`
-
-/** Root config filename inside a profile directory. */
-export const PROFILE_ROOT_FILENAME = 'cordis.yml'
+export { PROFILE_ROOT_FILENAME } from '@deepseek-ai/dsh-app-boot'
 
 /**
  * Replace the named custom profile with a fresh copy of one shipped template.
@@ -202,8 +162,6 @@ export function prepareProfile(name: string, userLayer = true, fromDefaultProfil
 /** One profile's patch layers, in application order. */
 interface ComposedProfile {
   profile: Profile
-  /** Immutable runtime resolution computed before any plugin imports. */
-  resolution: RuntimeResolution
   /** Command-line overlay contents, frozen for this invocation. */
   overlays: PatchOptions[]
 }
@@ -221,18 +179,15 @@ interface ComposedProfile {
  * @param resolvedProfile - application-owned profile and installation.
  * @returns the profile and its patch layers.
  */
-async function composeProfile(
+function composeProfile(
   name: string,
   patchFiles: readonly string[],
   fromDefaultProfile?: string,
   resolvedProfile?: ResolvedProfileRuntime,
-): Promise<ComposedProfile> {
+): ComposedProfile {
   const profile = resolvedProfile?.profile ?? prepareProfile(name, true, fromDefaultProfile)
-  if (resolvedProfile !== undefined) writeFileSync(join(profile.dir, PROFILE_ROOT_FILENAME), PROFILE_ROOT_CONFIG)
-  const resolutionOptions = { installAnchor: resolvedProfile?.installAnchor ?? INSTALL_ANCHOR, profile }
-  const resolution = await createRuntimeResolution(resolutionOptions)
   const overlays = patchFiles.flatMap(file => loadOverlayPatches(NAME, resolve(file)))
-  return { profile, resolution, overlays }
+  return { profile, overlays }
 }
 
 /** An application-owned profile and its independent installation fallback. */
@@ -269,85 +224,14 @@ export interface RunProfileOptions {
  * @throws after disposing startup resources; cleanup failures retain the original error.
  */
 export async function runProfile(options: RunProfileOptions): Promise<{ ctx: Context; shutdown: ProcessShutdown }> {
-  // Before the first plugin mounts and before anything can issue a request: Node's fetch ignores the
-  // proxy environment on its own, so every profile would otherwise connect directly. Resolving from
-  // the launcher's snapshot — not `process.env` — is what lets a proxy declared in a `.env` layer
-  // work, which the NODE_USE_ENV_PROXY flag cannot do because Node samples the environment at start.
-  const disposeProxy = await installProxyFromEnvironment(
-    options.environment,
-    (message) => { process.stderr.write(`${NAME}: ${message}\n`) },
-  )
-
-  const app: { current?: Context } = {}
-  let disposal: Promise<void> | undefined
-  const dispose = (): Promise<void> => disposal ??= (async () => {
-    const failures: unknown[] = []
-    for (const release of [() => app.current?.fiber.dispose(), disposeProxy]) {
-      try { await release() } catch (error) { failures.push(error) }
-    }
-    if (failures.length === 1) throw failures[0]
-    if (failures.length > 1) throw new AggregateError(failures, 'dsh: profile cleanup failed')
-  })()
-  try {
-    const composed = await composeProfile(
-      options.profile, options.patchFiles, options.fromDefaultProfile, options.resolvedProfile,
-    )
-    const appReady = createAppReady()
-    const shutdown = createProcessShutdown(dispose)
-    const signalShutdown = new AbortController()
-    const interrupt = (code: number): void => {
-      signalShutdown.abort()
-      shutdown.interrupt(code)
-    }
-    // Signals own teardown throughout the startup window, not only after boot()
-    // settles: an inserted provider can publish before sibling rows finish mounting.
-    // SIGTERM is a supervisor's ordinary stop request and exits 0 on every
-    // surface — the launcher does not know whether the app considered its work
-    // complete; SIGINT is a user interrupt and reports 130.
-    process.on('SIGTERM', () => { interrupt(0) })
-    process.on('SIGINT', () => { interrupt(130) })
-    installFailLoud(NAME, process, async () => {
-      await app.current?.fiber.dispose()
-    })
-
-    const rootConfig = join(composed.profile.dir, PROFILE_ROOT_FILENAME)
-    const profileContext: ProfileContext = {
-      name: options.profile,
-      ...(options.packageManager === undefined ? {} : { packageManager: options.packageManager }),
-      dir: composed.profile.dir, patchPath: composed.profile.patchPath,
-      installAnchor: options.resolvedProfile?.installAnchor ?? INSTALL_ANCHOR,
-      startedBundles: composed.profile.layers.map(layer => layer.packageName),
-      cwd: process.cwd(), home: resolveDshHome(),
-      overlays: composed.overlays, telemetryDisabledEnv: process.env.DSH_TELEMETRY_DISABLED,
-    }
-    const ctx = await boot(NAME, rootConfig, readProfilePatches(NAME, profileContext, composed.profile), async (hostCtx) => {
-      app.current = hostCtx
-      hostCtx.provide('profileContext', profileContext)
-      // Before any config-tree entry mounts, so plugins resolve all launch-time
-      // environment values from the same immutable launch snapshot.
-      hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, options.environment)
-      await hostCtx.plugin(PluginPackages, {
-        resolution: composed.resolution,
-      })
-      // The command line and bounded exit request are launcher facts available
-      // to every app plugin that injects the argument snapshot.
-      provideCmdline(hostCtx, {
-        args: options.args,
-        exit: code => void shutdown.shutdown(code),
-        ready: appReady.service,
-      })
-    })
-    app.current = ctx
-    if (!signalShutdown.signal.aborted
-      && ctx.fiber.state === FiberState.ACTIVE
-      && ctx.get('loader') !== undefined) {
-      appReady.commit()
-    }
-    return { ctx, shutdown }
-  } catch (error) {
-    try { await dispose() } catch (cleanupError) {
-      throw new AggregateError([error, cleanupError], 'dsh: profile startup and cleanup failed')
-    }
-    throw error
-  }
+  const composed = composeProfile(options.profile, options.patchFiles, options.fromDefaultProfile, options.resolvedProfile)
+  return runResolvedProfile({
+    name: options.profile,
+    profile: composed.profile,
+    installAnchor: options.resolvedProfile?.installAnchor ?? INSTALL_ANCHOR,
+    environment: options.environment,
+    args: options.args,
+    overlays: composed.overlays,
+    ...(options.packageManager === undefined ? {} : { packageManager: options.packageManager }),
+  })
 }

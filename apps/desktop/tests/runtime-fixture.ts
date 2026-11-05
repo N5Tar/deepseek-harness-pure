@@ -39,6 +39,10 @@ export function runtimeFixture(root: string, version = '1.0.0', nodeVersion = '2
       ...(bundle ? { dsh: { bundle: { patch: './bundle.yml' } } } : {}),
     })
     if (bundle) writeFileSync(join(path, 'bundle.yml'), '[]\n')
+    if (name === '@deepseek-ai/dsh') {
+      mkdirSync(join(path, 'lib'), { recursive: true })
+      writeFileSync(join(path, 'lib/desktop-cli.js'), '')
+    }
   }
   for (const file of DESKTOP_HOST_RUNTIME_FILES) {
     const path = join(root, 'node_modules', '@deepseek-ai/dsh-desktop-host', file)

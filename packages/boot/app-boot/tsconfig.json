@@ -8,6 +8,8 @@
     "src"
   ],
   "references": [
+    { "path": "../cmdline" },
+    { "path": "../../util/http-proxy" },
     {
       "path": "../../../vendor/cordis"
     },

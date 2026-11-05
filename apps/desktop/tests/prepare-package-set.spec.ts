@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { DESKTOP_HOST_RUNTIME_FILES, DESKTOP_PACKAGES_DIR } from '../src/core-package-set.ts'
 import {
   assertDesktopHostPackageFiles,
+  assertDesktopCliPackageFiles,
   prepareDesktopPackageSet,
   selectDesktopPackageClosure,
   type PackedDesktopPackage,
@@ -84,19 +85,13 @@ describe('desktop package-set selection', () => {
     ])
   })
 
-  it('requires both Desktop Host and public CLI entries', () => {
-    const files = [
-      'package/lib/index.js',
-      'package/lib/cli.js',
-    ]
-    expect(() => {
-      assertDesktopHostPackageFiles(files)
-    }).not.toThrow()
-    expect(() => {
-      assertDesktopHostPackageFiles(files.slice(1))
-    }).toThrow(/lib\/index\.js/u)
-    expect(() => { assertDesktopHostPackageFiles(files.slice(0, 1)) }).toThrow(/lib\/cli\.js/u)
+  it('requires the Host entry independently from the CLI bridge', () => {
+    expect(() => { assertDesktopHostPackageFiles(['package/lib/index.js']) }).not.toThrow()
+    expect(() => { assertDesktopHostPackageFiles([]) }).toThrow(/lib\/index\.js/u)
+    expect(() => { assertDesktopCliPackageFiles(['package/lib/desktop-cli.js']) }).not.toThrow()
+    expect(() => { assertDesktopCliPackageFiles(['package/lib/bin.js']) }).toThrow(/lib\/desktop-cli\.js/u)
   })
+
 })
 
 const macProvider = '@deepseek-ai/dsh-experimental-cua-macos'
@@ -152,6 +147,10 @@ it('copies no macOS tarball into the Windows package set', () => {
         mkdirSync(join(folder, file, '..'), { recursive: true })
         writeFileSync(join(folder, file), '')
       }
+    }
+    if (name === '@deepseek-ai/dsh') {
+      mkdirSync(join(folder, 'lib'), { recursive: true })
+      writeFileSync(join(folder, 'lib/desktop-cli.js'), '')
     }
     execFileSync('tar', ['-czf', join(inputs, `${stem}.tgz`), '-C', join(folder, '..'), 'package'])
   }

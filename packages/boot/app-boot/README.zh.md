@@ -35,6 +35,10 @@ profile 加载时会从 `dsh.profile.bundles` 移除已停用的安装方 bundle
 
 ### 启动应用
 
+`runResolvedProfile` 使用调用方显式提供的 `installAnchor` 启动已加载的 `Profile`，不导入产品 CLI 代码或选择 profile 模板。调用方提供 profile 名称、环境快照、应用参数、已解析覆盖层及可选包管理器调用。Runner 写入空根配置、计算运行时解析，并在挂载组合树前提供 `profileContext`、`pluginPackages`、命令行事实和就绪信号。CLI 负责具名 profile 初始化和覆盖文件解析；Desktop 负责私有 profile 目录及依赖锚点。
+
+Runner 在插件发出请求前安装出站代理策略，并在树释放后撤销它，启动失败时同样如此。只有启动成功且未被启动期间的信号中断才发布就绪。正常关闭会合并释放操作；若释放停滞，五秒上限会强制退出。SIGTERM 请求退出码 0，SIGINT 请求退出码 130，重复信号则强制退出。启动和清理错误通过聚合原因保持可分别检查。进程关闭和就绪属于单次调用，而非 profile 插件。
+
 你把配置文件交给入口，进程就会启动整个应用：加载环境层、应用 patch 与 profile、启动每个插件，并在应用运行后返回。在回放模式下，它会启动同级的 `cordis.snapshot.yml` 替代文件，使已记录的会话能够原样复现。最小的入口只需两次调用：
 
 ```text

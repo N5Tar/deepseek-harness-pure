@@ -1,11 +1,11 @@
 /** Keyless built Desktop Host acceptance; requires built packages but no primary Office payload. */
 import { randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { DesktopHostProcess } from '../src/host-process.ts'
+import { DesktopHostFatalError, DesktopHostProcess } from '../src/host-process.ts'
 import { DesktopProjectManager } from '../src/project-manager.ts'
 import { resolveDesktopPaths } from '../src/paths.ts'
 import { authenticateWebHost } from '../src/web-document.ts'
@@ -71,6 +71,10 @@ describe('built shell Desktop Host', () => {
     })
     const paths = resolveDesktopPaths(home)
     await new DesktopProjectManager(paths, { dsh: project }, 'shell').applyRelease()
+    // Remove only the fixture's CLI link; Host boot must use its own installation anchor.
+    const productCli = join(project, 'node_modules', '@deepseek-ai', 'dsh')
+    expect(lstatSync(productCli).isSymbolicLink()).toBe(true)
+    unlinkSync(productCli)
     const probe = join(root, 'probe.mjs')
     // The test-only route reports the real service store; it provides no substitute business services.
     writeFileSync(probe, `export const inject = ['webServer', 'loader']
@@ -104,9 +108,9 @@ export function apply(ctx) {
     expect(status.entries).not.toContain('session-controller')
     expect(await host!.inspectQuit()).toEqual({ activeTasks: false, scheduledTasks: false })
     for (const action of ['inspect', 'lock', 'unlock'] as const) {
-      await expect(host!.updateTasks(action)).rejects.toThrow('unsupported in shell mode')
+      await expect(host!.updateTasks(action)).rejects.toThrow('unsupported by desktop base')
     }
-    await expect(host!.resolveDragResource('not-a-session-file')).rejects.toThrow('unsupported in shell mode')
+    await expect(host!.resolveDragResource('not-a-session-file')).rejects.toThrow('unsupported by desktop base')
     const initialSettings = await settingsRpc(connection.url, connection.cookie, 'describe', {}) as { namespaces: unknown[] }
     expect(Array.isArray(initialSettings.namespaces)).toBe(true)
     expect(await settingsRpc(connection.url, connection.cookie, 'update', { ns: 'locale', patch: { preference: 'zh' } }))
@@ -124,6 +128,13 @@ export function apply(ctx) {
     host = new DesktopHostProcess(process.execPath, project, paths.profile, undefined,
       { ...environment, DSH_DESKTOP_MODE: 'Shell' }, undefined, missingPrimaryRuntime)
     await expect(host.start()).rejects.toThrow('DSH_DESKTOP_MODE must be product or shell')
+    await host.stop()
+    writeFileSync(join(paths.profile, 'cordis.patch.yml'), 'invalid: [yaml')
+    host = new DesktopHostProcess(process.execPath, project, paths.profile, undefined,
+      environment, undefined, missingPrimaryRuntime)
+    const failure: unknown = await host.start().catch((error: unknown) => error)
+    expect(failure).toBeInstanceOf(DesktopHostFatalError)
+    if (failure instanceof DesktopHostFatalError) expect(failure.diagnostic).toContain('cordis.patch.yml')
     await host.stop()
   })
 })

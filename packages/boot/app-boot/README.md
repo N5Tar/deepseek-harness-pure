@@ -35,6 +35,10 @@ Use it when implementing the shared `dsh` launcher or embedding its lower-level 
 
 ### Starting the app
 
+`runResolvedProfile` starts an already loaded `Profile` against the caller's explicit `installAnchor`, without importing product CLI code or choosing a profile template. The caller supplies the profile name, environment snapshot, application arguments, parsed overlays, and optional package-manager invocation. The runner writes the empty root configuration, computes runtime resolution, and provides `profileContext`, `pluginPackages`, command-line facts, and readiness before mounting the composed tree. The CLI owns named-profile initialization and overlay-file parsing; Desktop owns its private profile directory and dependency anchor.
+
+The runner installs outbound proxy policy before plugins can issue requests and releases it after tree disposal, including startup failure. Readiness commits only after successful boot without a startup signal interruption. Normal shutdown coalesces disposal; the five-second bound forces exit if disposal stalls. SIGTERM requests exit 0, SIGINT requests exit 130, and a repeated signal forces exit. Startup and cleanup errors remain separately inspectable through aggregate causes. Process shutdown and readiness are invocation-owned, not profile plugins.
+
 You give your entry point a config file, and the process starts the whole app: it loads your environment layers, applies patches and profiles, boots every plugin, and returns once the app is running. In replay mode it boots the sibling `cordis.snapshot.yml` instead, so a recorded session reproduces identically. The smallest entry point is two calls:
 
 ```text

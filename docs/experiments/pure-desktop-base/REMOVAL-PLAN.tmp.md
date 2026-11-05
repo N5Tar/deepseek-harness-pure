@@ -1,6 +1,6 @@
 # AI 产品剥离：模块分支执行计划（临时）
 
-日期：2026-11-05。状态：第 01–03 项已合入并推送（master `7d2b72aef9`）；第 04 项 Web Shell 去业务化已完成本地验收，尚未提交，按用户指示沿用 `pure/ui-test-runtime`，不新建分支；其余模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
+日期：2026-11-05。状态：第 01–04 项已合入本地 master，第 04 项提交为 `4f36847664`，完整托管 CI 清理提交为 `6c49d13bb2`；第 05 项按用户指示直接提交至现有 master，不新建分支；后续模块未开始。本文件是中文临时工作清单，不是已实现功能说明，不作为产品文档发布。完成剥离后删除本文件，或将必要验收记录归入执行状态。
 
 ## 目标与范围
 
@@ -33,8 +33,8 @@
 | 01 | `pure/settings` | 清理 settings、settings-controller 的 Session / Agent preset 残余依赖和编译引用；设置 UI 改用所属设置类型及必要的 shell 远程声明；替换业务化 fixture | 设置链路不依赖全量业务 API；读写、冲突处理、主题与语言持久化正常 | 已合入 |
 | 02 | `pure/connection` | 移除 Connection 的 Session、LLM 消息等业务类型出口和业务声明；保留通用传输与 Peer 生命周期 | RPC、鉴权、取消、断开与资源清理测试通过；剩余消费者引用已调整 | 已合入 |
 | 03 | `pure/ui-test-runtime` | 建立无 Session 的 Cordis + Slots + Renderer 测试环境；迁移底座 UI 测试 | 底座测试不借用聊天、Session、Workspace fixture；真实注册、更新和卸载仍被覆盖 | 已合入 |
-| 04 | `pure/ui-test-runtime`（沿用当前分支） | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 已验收，未提交 |
-| 05 | `pure/desktop-host` | 桌面 Host 脱离全量产品 CLI；直接使用通用启动能力；移除 Agent、任务、账号等 Host 业务集成 | 无密钥、无账号和旧用户目录可启动；Host 启停、就绪和失败报告正常 | 待开始 |
+| 04 | `pure/ui-test-runtime`（沿用当时分支） | 清除 Web 构建中的业务 preview、消息引用及非必要静态输入；收紧启动模块 | 基础页面、主题、语言、设置与插件模块加载正常；源码及构建输入不需要 AI UI | 已合入 |
+| 05 | `master`（按用户指示不新建分支） | 桌面 Host 脱离全量产品 CLI；直接使用通用启动能力；移除 Agent、任务、账号等 Host 业务集成 | 无密钥、无账号和旧用户目录可启动；Host 启停、就绪和失败报告正常 | 已合入 |
 | 06 | `pure/desktop-shell` | 纯桌面成为唯一模式；删除双模式、账号 Welcome、产品专属 IPC 和构建入口 | 不设置模式变量也启动底座；窗口、菜单、设置、退出与子进程清理正常 | 待开始 |
 
 UI 远程类型与测试依赖可能交叉，每个分支开始前核实。遇到必须同时修改的消费者，仅纳入使当前模块独立所必需的改动，不提前清理无关功能。
@@ -177,6 +177,20 @@ Gateway 不再注入 `remoteAccess`：分发入口统一要求存活的 owner Pe
 提交阶段发现 pre-commit 与 pre-merge-commit 仍调用已删除的 `scripts/verify-translation-pairing.ts`。经用户确认，移除这两处失效 hook；归档、staged lint、空白、provider metadata、vendor guard 与 pre-push typecheck 保留。
 
 归档验证器通过，新增封存 9 个文件、既有封存哈希不变；归档聚焦测试 17 项通过。`doc-sync`、`test:docs` 与 `verify-translation-pairing` 入口已随文档工具链退役，未恢复；active 两组双语记录使用现存 pairing helper 重算。
+
+## 第 05 项执行记录
+
+本项在现有 `master` 上实施，基点 `6c49d13bb2`，不新建分支、不推送。目标是让 Desktop Host 的源码、manifest 和编译引用脱离产品 CLI、Agent、任务、账号、Session 文件与 Office 集成；保留真实 profile 装配、包解析、连接鉴权、插件操作诊断、就绪消息、失败报告与有界关闭。验证使用临时 home/profile、无密钥环境和单 worker，构建最多两个并发任务。
+
+兼容性变化：Host 不再发布账号状态、安装 Office 提供者或执行 Agent 任务检查；Session 文件拖拽和更新任务控制通过现有 IPC 明确返回不支持。Shell 退出检查报告无业务任务；旧产品 profile 返回未知状态错误，保持 Electron 退出前询问。产品 CLI 桥及其 Windows/Office 支持归回 CLI 包，包装脚本同步切换到 `dsh/lib/desktop-cli.js`，不以动态导入或占位服务保留 Host 的产品依赖。桌面默认模式、Welcome、产品 IPC 和发行资源继续由第 06、07、14 项负责，本项不宣称已得到完整纯净发行版。
+
+通用启动实现归入 app-boot 的 `runResolvedProfile`，CLI 仅准备具名 profile 和 overlay 后委托。原 boot 实现移动到 `boot.ts`，逐字节比较确认没有逻辑修改。保留代理安装/释放、profileContext、命令参数、就绪快照、SIGTERM/SIGINT、重复关闭及五秒退出上限。CLI 的本地 profile/overlay 准备现在发生在代理安装前；无效代理配置可能发生在具名 profile 已初始化之后，无效 overlay 不再触发代理安装/释放。Host 原本就先解析私有 profile，不受此顺序调整影响。
+
+验收发现并修复：改用 Host 自身安装锚点后，内置 shell-base 不再从 CLI 的依赖闭包提供，导致根认证路由返回 404。Host 现显式依赖纯底座 shell-base；未恢复 CLI 依赖。真实验收进一步删除临时运行树中的产品 CLI 符号链接，仍能启动、交换认证 Cookie、读写语言设置、重启持久化并正常退出；非法模式和损坏 YAML 均收到致命诊断，YAML 诊断包含配置路径。
+
+最终验证：`DSH_GATE_CONCURRENCY=2 pnpm run build` 10/10 通过；单 worker 的 Host 单元与父进程套件 55 项通过，boot 实现/诊断与依赖守卫 101 项通过，最终 runner/信号/关闭/CLI 委托与守卫 27 项通过（这些批次有重叠，不相加）；最终产物的 shell Host 与 shell-base composition e2e 2/2 通过，重试关闭。迁移后的 CLI 构建入口 `--version` 返回 `0.2.2-alpha.3`。消费者任务报告包装/Office 解析/准备包集等 34 项通过、workspace constraints 165 项通过、prepared-runtime smoke 2 项通过，Windows 信号 2 项因本机 macOS 跳过。变更 TypeScript 的完整规则 lint 为零警告、零错误，离线安装/锁文件更新、双语记录和 `git diff --check` 通过。
+
+未验证：真实 Electron 窗口启动、Windows 执行、跨平台或 ASAR 完整打包及实际发行 Host smoke；未运行全仓测试或全仓 lint。没有接触已安装应用、旧用户目录或凭据。用户随后授权提交、推送并合入；本项直接提交至现有 master，不创建额外分支或合并提交。
 
 ## 第 04 项执行记录
 

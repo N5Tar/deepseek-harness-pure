@@ -37,7 +37,7 @@ describe.skipIf(process.platform !== 'win32')('Windows Electron console signals'
     ].join('\r\n'))
     await execute(process.env.ComSpec, ['/d', '/v:off', '/c', compile], { windowsHide: true })
     // Only TypeScript is erased; the child has no source-loader hook that could change signal handling.
-    const source = await readFile(new URL('../../desktop-host/src/windows-cli-signals.ts', import.meta.url), 'utf8')
+    const source = await readFile(new URL('../../cli/src/windows-cli-signals.ts', import.meta.url), 'utf8')
     const code = ts.transpileModule(source, {
       compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
     }).outputText

@@ -80,7 +80,7 @@ const localArtifactDirs = new Set(['node_modules'])
 const appPackageFiles: Readonly<Record<string, readonly string[]>> = {
   '@deepseek-ai/dsh': ['lib/*.js', 'lib/types/*.d.ts'],
   '@deepseek-ai/dsh-desktop-host': [
-    'lib/index.js', 'lib/cli.js',
+    'lib/index.js',
   ],
   // The Web payload contains only the Host-backed shell; sourcemaps stay out by payload policy.
   '@deepseek-ai/dsh-web-frontend': ['dist', '!dist/**/*.map'],

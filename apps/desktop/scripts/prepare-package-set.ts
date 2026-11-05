@@ -143,6 +143,16 @@ export function assertDesktopHostPackageFiles(files: readonly string[]): void {
 }
 
 /**
+ * Require the installed command bridge from the CLI package.
+ * @param files - Tarball paths rooted at `package/`.
+ */
+export function assertDesktopCliPackageFiles(files: readonly string[]): void {
+  if (!files.includes('package/lib/desktop-cli.js')) {
+    throw new Error(`desktop package set: ${DSH_PACKAGE} tarball omits required file: package/lib/desktop-cli.js`)
+  }
+}
+
+/**
  * Prepare a package set from release tarball directories.
  * @param inputs - Release tarball directories.
  * @param output - Destination package-set directory.
@@ -155,6 +165,9 @@ export function prepareDesktopPackageSet(
   const host = selected.find(packed => packed.manifest.name === DESKTOP_HOST_PACKAGE)
   if (host === undefined) throw new Error(`desktop package set: selected closure omits ${DESKTOP_HOST_PACKAGE}`)
   assertDesktopHostPackageFiles(tarballFiles(host.tarball))
+  const cli = selected.find(packed => packed.manifest.name === DSH_PACKAGE)
+  if (cli === undefined) throw new Error(`desktop package set: selected closure omits ${DSH_PACKAGE}`)
+  assertDesktopCliPackageFiles(tarballFiles(cli.tarball))
   rmSync(output, { recursive: true, force: true })
   const packageDir = join(output, DESKTOP_PACKAGES_DIR)
   mkdirSync(packageDir, { recursive: true })
