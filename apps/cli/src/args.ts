@@ -2,7 +2,7 @@
  * Commander adapter for the `dsh` command line.
  *
  * The launcher parses only what it owns — which profile to boot, which extra
- * patch overlays to apply, and the config dumps — and hands **everything after
+ * patch overlays to apply — and hands **everything after
  * its own flags** to the booted tree verbatim, where injected app plugins parse
  * their own flag families and print their own `--help` (see
  * `@deepseek-ai/dsh-cmdline`). Launcher flags therefore come first: the first
@@ -29,26 +29,6 @@ interface ProfileInvocation {
   args: string[]
 }
 
-/** Print a composed profile tree and exit without booting. */
-interface DumpConfigInvocation {
-  mode: 'dump-config'
-  profile: string
-  /** Shipped template that replaces the named profile. */
-  fromDefaultProfile?: string | undefined
-  /** Omit the profile's user layer and --patch overlays; print bundle layers only. */
-  defaultOnly: boolean
-  patches: string[]
-}
-
-/** Print declared plugin schemas without mounting the profile. */
-interface DumpConfigSchemaInvocation {
-  mode: 'dump-config-schema'
-  profile: string
-  /** Shipped template that replaces the named profile. */
-  fromDefaultProfile?: string | undefined
-  patches: string[]
-}
-
 /** Manage a profile's plugins: forward `args` to pnpm inside the profile directory. */
 interface PluginInvocation {
   mode: 'plugin'
@@ -58,14 +38,11 @@ interface PluginInvocation {
 }
 
 /** The resolved `dsh` invocation. Help, version, and errors exit inside {@link parseDshArgs}. */
-export type DshInvocation = ProfileInvocation | DumpConfigInvocation | DumpConfigSchemaInvocation | PluginInvocation
+export type DshInvocation = ProfileInvocation | PluginInvocation
 
-/** Launcher flags for profile boot and configuration dumps. */
+/** Launcher flags for profile boot. */
 interface BootOptions {
   patch?: string[]
-  dumpConfig?: boolean
-  dumpDefaultConfig?: boolean
-  dumpConfigSchema?: boolean
   fromDefaultProfile?: string
 }
 
@@ -95,12 +72,12 @@ Examples:
   dsh headless "run the tests"              answer one task, print the result, and exit
   dsh tui --patch ./extra.yml               boot a custom profile with one extra overlay
   dsh tui --resume <session>                arguments after the launcher flags reach the app
-  dsh web --help                            the web app's own flags and help
+  dsh web --help                            the app's own flags and help
   dsh plugin --profile tui add <package>    install a plugin into the tui profile
 `
 
 /**
- * Resolve a boot or dump invocation from the launcher flags and the leftover
+ * Resolve a boot invocation from the launcher flags and the leftover
  * inner arguments.
  * @param program - the command whose options were parsed.
  * @param profile - the profile these flags boot.
@@ -112,27 +89,7 @@ function resolveBoot(program: Command, profile: string, options: BootOptions, ar
   const patches = options.patch ?? []
   if (patches.includes('')) program.error('error: --patch needs a path')
   if (options.fromDefaultProfile === '') program.error('error: --from-default-profile needs a name')
-  const dumps = [options.dumpConfig, options.dumpDefaultConfig, options.dumpConfigSchema].filter(Boolean)
-  if (dumps.length === 0) {
-    return { mode: 'profile', profile, fromDefaultProfile: options.fromDefaultProfile, patches, args }
-  }
-  if (dumps.length > 1) {
-    program.error('error: --dump-config, --dump-default-config, and --dump-config-schema are mutually exclusive')
-  }
-  // The dump is boot-free: it never runs app command-line providers, so it
-  // cannot show what those flags would decide, and printing a tree that differs
-  // from the same invocation's boot would mislead.
-  if (args.length > 0) {
-    program.error(`error: config dumps take no app arguments, got ${args.map(argument => JSON.stringify(argument)).join(' ')}`)
-  }
-  if (options.dumpConfigSchema === true) {
-    return { mode: 'dump-config-schema', profile, fromDefaultProfile: options.fromDefaultProfile, patches }
-  }
-  const defaultOnly = options.dumpDefaultConfig === true
-  if (defaultOnly && patches.length > 0) {
-    program.error('error: --dump-default-config prints the bundle layers and takes no --patch')
-  }
-  return { mode: 'dump-config', profile, fromDefaultProfile: options.fromDefaultProfile, defaultOnly, patches }
+  return { mode: 'profile', profile, fromDefaultProfile: options.fromDefaultProfile, patches, args }
 }
 
 /**
@@ -168,9 +125,6 @@ export function parseDshArgs(argv: readonly string[], version: string, manageDes
     .option('--profile <name>', 'the profile under $DSH_HOME/profiles to boot', selectProfile)
     .option('--from-default-profile <name>', 'replace a custom profile with a fresh copy of a shipped profile template')
     .option('--patch <path>', 'extra patch-list overlay applied after the profile layer (repeatable)', collect)
-    .option('--dump-config', 'print the composed profile tree and exit')
-    .option('--dump-config-schema', 'print JSON Schema for profile entries and patches without mounting')
-    .option('--dump-default-config', 'print the profile tree without its user layer or --patch overlays and exit')
     .action((args: string[], options: BootOptions & { profile?: string }) => {
       // With the app owning -h, the launcher's own help is what a bare
       // `dsh -h` (no profile to hand it to) must print.

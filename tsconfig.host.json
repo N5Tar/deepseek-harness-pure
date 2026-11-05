@@ -8,6 +8,7 @@
     "rewriteRelativeImportExtensions": false
   },
   "include": [
+    "apps/cli/tests/**/*.ts",
     "packages/experimental/cua-macos/native/generate-protocol.ts",
     "website/.vitepress/**/*.ts"
   ],

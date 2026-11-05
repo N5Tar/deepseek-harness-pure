@@ -61,7 +61,6 @@ describe('parseDshArgs', () => {
       [], ['task', 'words'], ['--help'], ['-h'], ['web'],
       ['--patch', 'a.yml', '--patch', 'b.yml'],
       ['--from-default-profile', 'web', '--help'],
-      ['--dump-config'], ['--dump-default-config'], ['--dump-config-schema'],
       ['--patch', 'a.yml', '--resume', 'id', '--patch', 'late.yml'],
       ['--', '--help'], ['--', '--', 'task'],
       ['plugin'], ['--', 'plugin'],
@@ -82,9 +81,6 @@ describe('parseDshArgs', () => {
   it.each([
     [''], ['desktop'], ['Desktop'], ['DESKTOP'],
     ['custom', '--patch='], ['custom', '--from-default-profile='],
-    ['custom', '--dump-config', '--dump-default-config'],
-    ['custom', '--dump-default-config', '--patch', 'a.yml'],
-    ['custom', '--dump-config', 'task'],
   ])('rejects invalid shorthand %j', (...argv: string[]) => {
     expect(exitCode(argv)).toBe(1)
   })
@@ -149,70 +145,11 @@ describe('parseDshArgs', () => {
 
   it.each([
     ['desktop'], ['--profile', 'Desktop'],
-    ['desktop', '--dump-config'], ['DESKTOP', '--dump-default-config'],
-    ['desktop', '--dump-config-schema'],
   ])('keeps Desktop boot and inspection reserved in its installed CLI: %j', (...argv: string[]) => {
     expect(exitCode(argv, true)).toBe(1)
   })
 
-  it('routes profile and web config dumps', () => {
-    expect(parse(['--profile', 'web', '--dump-config']))
-      .toEqual({ mode: 'dump-config', profile: 'web', defaultOnly: false, patches: [] })
-    expect(parse(['--profile', 'web', '--dump-default-config']))
-      .toEqual({ mode: 'dump-config', profile: 'web', defaultOnly: true, patches: [] })
-    expect(parse(['--profile', 'rescue', '--from-default-profile', 'web', '--dump-config']))
-      .toEqual({
-        mode: 'dump-config',
-        profile: 'rescue',
-        fromDefaultProfile: 'web',
-        defaultOnly: false,
-        patches: [],
-      })
-    expect(parse(['--profile', 'tui', '--dump-config', '--patch', 'x.yml']))
-      .toEqual({ mode: 'dump-config', profile: 'tui', defaultOnly: false, patches: ['x.yml'] })
-    expect(parse(['web', '--dump-config']))
-      .toEqual({ mode: 'dump-config', profile: 'web', defaultOnly: false, patches: [] })
-    expect(parse(['web', '--dump-default-config']))
-      .toEqual({ mode: 'dump-config', profile: 'web', defaultOnly: true, patches: [] })
-  })
 
-  it('routes schema dumps with ordered overlays and explicit initialization', () => {
-    expect(parse(['--profile', 'web', '--dump-config-schema']))
-      .toEqual({ mode: 'dump-config-schema', profile: 'web', patches: [] })
-    expect(parse(['rescue', '--from-default-profile', 'web', '--patch', 'first.yml', '--dump-config-schema', '--patch', 'second.json']))
-      .toEqual({
-        mode: 'dump-config-schema',
-        profile: 'rescue',
-        fromDefaultProfile: 'web',
-        patches: ['first.yml', 'second.json'],
-      })
-    expect(parse(['web', '--port', '8080', '--dump-config-schema']))
-      .toMatchObject({ mode: 'profile', args: ['--port', '8080', '--dump-config-schema'] })
-  })
-
-  it.each([
-    ['--dump-config', '--dump-default-config'],
-    ['--dump-config', '--dump-config-schema'],
-    ['--dump-default-config', '--dump-config-schema'],
-    ['--dump-config', '--dump-default-config', '--dump-config-schema'],
-  ])('rejects competing dump flags %j', (...flags: string[]) => {
-    expect(exitCode(['web', ...flags])).toBe(1)
-    expect(exitCode(['--profile', 'web', ...flags.toReversed()])).toBe(1)
-  })
-
-  it.each([
-    ['--dump-config-schema'],
-    ['desktop', '--dump-config-schema'],
-    ['--profile', 'Desktop', '--dump-config-schema'],
-    ['web', '--dump-config-schema', 'task'],
-    ['web', '--dump-config-schema', '--port', '8080'],
-    ['web', '--dump-config-schema', '--help'],
-    ['web', '--dump-config-schema', '--', '--patch', 'late.yml'],
-    ['web', '--dump-config-schema', '--patch='],
-    ['rescue', '--dump-config-schema', '--from-default-profile='],
-  ])('rejects invalid schema dump inputs %j', (...argv: string[]) => {
-    expect(exitCode(argv)).toBe(1)
-  })
 
   it('rejects missing profile, removed flags, and contradictory inputs', () => {
     expect(exitCode([])).toBe(1)
@@ -222,26 +159,14 @@ describe('parseDshArgs', () => {
     expect(exitCode(['--profile', 'x', '--from-default-profile='])).toBe(1)
     expect(exitCode(['--profile', 'x', '--from-default-profile'])).toBe(1)
     expect(exitCode(['--profile', 'x', '--patch='])).toBe(1)
-    expect(exitCode(['--dump-config'])).toBe(1)
-    expect(exitCode(['--profile', 'x', '--dump-config', '--dump-default-config'])).toBe(1)
-    expect(exitCode(['--profile', 'x', '--dump-default-config', '--patch', 'p.yml'])).toBe(1)
-    expect(exitCode(['--profile', 'x', '--dump-config', 'task'])).toBe(1)
     expect(exitCode(['--bogus'])).toBe(1)
-    expect(exitCode(['web', '--dump-config', '--dump-default-config'])).toBe(1)
-    expect(exitCode(['web', '--dump-default-config', '--patch', 'w.yml'])).toBe(1)
     expect(exitCode(['web', '--patch='])).toBe(1)
-    // A dump never runs app command-line providers, so it cannot show what
-    // those flags would decide; printing a tree that differs from the same
-    // invocation's boot would mislead.
-    expect(exitCode(['web', '--dump-config', '--port', '8080'])).toBe(1)
-    expect(exitCode(['--profile', 'web', '--dump-config', '-h'])).toBe(1)
     expect(exitCode(['plugin', 'add', 'x'])).toBe(1) // --profile required
     expect(exitCode(['plugin', '--profile', 'tui'])).toBe(1) // nothing to forward
     expect(exitCode(['plugin', '--profile', ''])).toBe(1)
     expect(exitCode(['--profile', 'desktop'])).toBe(1)
     expect(exitCode(['--profile', 'Desktop'])).toBe(1)
     expect(exitCode(['--profile', 'DESKTOP'])).toBe(1)
-    expect(exitCode(['--profile', 'desktop', '--dump-config'])).toBe(1)
     expect(exitCode(['plugin', '--profile', 'desktop', 'add', 'x'])).toBe(1)
     expect(exitCode(['plugin', '--profile', 'Desktop', 'add', 'x'])).toBe(1)
     expect(exitCode(['--from-default-profile', 'web', 'plugin', '--profile', 'x', 'add', 'y'])).toBe(1)

@@ -52,21 +52,6 @@ export async function runCli(options: RunCliOptions = {}): Promise<void> {
       process.exit(await runPlugin(invocation.profile, invocation.args, options.packageManager))
       break
     }
-    case 'dump-config': {
-      const { runDumpConfig } = await import('./dump-config.ts')
-      runDumpConfig(
-        invocation.profile,
-        invocation.defaultOnly,
-        invocation.patches,
-        invocation.fromDefaultProfile,
-      )
-      break
-    }
-    case 'dump-config-schema': {
-      const { runDumpConfigSchema } = await import('./dump-config-schema.ts')
-      await runDumpConfigSchema(invocation.profile, invocation.patches, invocation.fromDefaultProfile)
-      break
-    }
     default:
       invocation satisfies never
       throw new Error(`dsh: unhandled invocation mode ${JSON.stringify(invocation)}`)
