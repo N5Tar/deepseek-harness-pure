@@ -8,6 +8,9 @@
     "src"
   ],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../ui-primitives/tsconfig.json" },
+
     {
       "path": "../../util/brand"
     },

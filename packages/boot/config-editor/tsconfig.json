@@ -8,6 +8,10 @@
     "src"
   ],
   "references": [
+    { "path": "../app-boot/tsconfig.json" },
+    { "path": "../../util/atomic-write/tsconfig.json" },
+    { "path": "../hmr/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

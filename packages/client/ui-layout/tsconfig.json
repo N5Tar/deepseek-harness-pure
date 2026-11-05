@@ -8,6 +8,15 @@
     "src"
   ],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../locale/tsconfig.client.json" },
+    { "path": "../shortcuts/tsconfig.client.json" },
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-renderer/tsconfig.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../ui-theme/tsconfig.client.json" },
+    { "path": "../../core/session/tsconfig.json" },
+
     {
       "path": "../../util/brand"
     },

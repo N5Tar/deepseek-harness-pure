@@ -8,6 +8,9 @@
     "src"
   ],
   "references": [
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../core/session/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

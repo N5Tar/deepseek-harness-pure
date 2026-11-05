@@ -8,6 +8,9 @@
     "src"
   ],
   "references": [
+    { "path": "../../util/http-proxy/tsconfig.json" },
+    { "path": "../../util/launch-environment/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

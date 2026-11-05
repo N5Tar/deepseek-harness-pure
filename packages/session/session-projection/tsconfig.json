@@ -8,6 +8,9 @@
     "src"
   ],
   "references": [
+    { "path": "../../boot/app-boot/tsconfig.json" },
+    { "path": "../../core/session/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

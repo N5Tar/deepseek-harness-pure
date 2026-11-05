@@ -10,6 +10,13 @@
     "src/index.ts"
   ],
   "references": [
+    { "path": "../../api/shell-remotes/tsconfig.json" },
+    { "path": "../connection/tsconfig.host.json" },
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

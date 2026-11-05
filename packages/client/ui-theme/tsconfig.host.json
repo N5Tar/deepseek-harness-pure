@@ -11,6 +11,16 @@
     "src/theme-settings.ts"
   ],
   "references": [
+    { "path": "../locale/tsconfig.host.json" },
+    { "path": "../shortcuts/tsconfig.host.json" },
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-primitives/tsconfig.json" },
+    { "path": "../ui-renderer/tsconfig.json" },
+    { "path": "../ui-settings/tsconfig.host.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../host/webserver/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

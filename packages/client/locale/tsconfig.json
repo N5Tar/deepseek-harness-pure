@@ -1,6 +1,14 @@
 {
   "files": [],
   "references": [
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-primitives/tsconfig.json" },
+    { "path": "../ui-renderer/tsconfig.json" },
+    { "path": "../ui-settings/tsconfig.client.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../util/package-manifest/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+
     {
       "path": "./tsconfig.host.json"
     },

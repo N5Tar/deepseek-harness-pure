@@ -8,6 +8,14 @@
     "src"
   ],
   "references": [
+    { "path": "../modules/tsconfig.json" },
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-dockkit/tsconfig.json" },
+    { "path": "../ui-primitives/tsconfig.json" },
+    { "path": "../ui-renderer/tsconfig.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../host/webserver/tsconfig.json" },
+
     {
       "path": "../store"
     },

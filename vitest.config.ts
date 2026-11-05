@@ -1,7 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import tsconfigPaths from 'vite-tsconfig-paths'
-import { resolvePwshPath } from './packages/shell/pwsh-local/src/resolve.ts'
 import { defineConfig } from 'vitest/config'
 import { standardDecoratorPlugin, vitestExecArgv } from './vitest.shared.ts'
 import { COVERAGE_EXEMPT_ENV, coverageExemptHeavySuites } from './scripts/coverage-exempt.ts'
@@ -27,17 +26,7 @@ const windowsUnsupportedPackages = process.platform === 'win32'
       // INCLUDED: PowerShell ships with Windows, so they run natively here.
       // This explicit list (not a 'packages/shell/*' glob) keeps
       // packages/shell/shell — the Service Definition package — running on Windows.
-      'packages/shell/bash-local',
-      'packages/shell/bash-sandbox',
-      'packages/shell/tool-bash',
-      'packages/experimental/hook-protocol',
-      'packages/experimental/hooks-claude-code',
-      'packages/experimental/hooks-codex',
-      'packages/terminal/terminal-bash',
-      'packages/experimental/ptc-runtime-python',
-      'packages/sandbox/sandbox-local',
       // OpenSSH multiplexing and Unix-socket helper streams require POSIX endpoints.
-      'packages/ssh/*',
     ]
   : []
 
@@ -126,12 +115,7 @@ const windowsRunnerCoverageExclusions = process.platform === 'win32'
 // runs the suites' own resolution (the dependency-free resolve.ts module),
 // so the exemption is active exactly when the suites skip — a mismatched
 // narrower probe could exempt the file on hosts whose suites actually run.
-const pwshCoverageExclusions = spawnSync(resolvePwshPath(), ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', '$true'], { encoding: 'utf8' }).status === 0
-  ? []
-  : [
-      'packages/shell/pwsh-local/src/index.ts',
-      'packages/shell/pwsh-sandbox/src/**/*.ts',
-    ]
+const pwshCoverageExclusions: string[] = []
 
 const testIncludes = [
   'packages/*/*/tests/**/*.spec.{ts,tsx}',

@@ -3,6 +3,11 @@
   "compilerOptions": { "rootDir": "src", "outDir": "lib/types" },
   "include": ["src"],
   "references": [
+    { "path": "../gateway/tsconfig.client.json" },
+    { "path": "../settings-controller/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+
     { "path": "../../../vendor/cordis" },
     { "path": "../gateway/tsconfig.client.json" },
     { "path": "../settings-controller" },

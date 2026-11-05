@@ -8,6 +8,15 @@
     "src"
   ],
   "references": [
+    { "path": "../../util/atomic-write/tsconfig.json" },
+    { "path": "../cmdline/tsconfig.json" },
+    { "path": "../../util/home-paths/tsconfig.json" },
+    { "path": "../../util/http-proxy/tsconfig.json" },
+    { "path": "../../util/launch-environment/tsconfig.json" },
+    { "path": "../../util/official-bundles/tsconfig.json" },
+    { "path": "../../util/package-manifest/tsconfig.json" },
+    { "path": "../../core/system-prompt/tsconfig.json" },
+
     { "path": "../cmdline" },
     { "path": "../../util/http-proxy" },
     {

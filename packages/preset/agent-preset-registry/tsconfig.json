@@ -8,6 +8,17 @@
     "src"
   ],
   "references": [
+    { "path": "../../core/agent/tsconfig.json" },
+    { "path": "../../boot/app-boot/tsconfig.json" },
+    { "path": "../../llm/llm/tsconfig.json" },
+    { "path": "../../core/scope/tsconfig.json" },
+    { "path": "../../core/session/tsconfig.json" },
+    { "path": "../../session/session-projection/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+    { "path": "../../core/system-prompt/tsconfig.json" },
+    { "path": "../../core/tools/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+
     {
       "path": "../../boot/app-boot"
     },

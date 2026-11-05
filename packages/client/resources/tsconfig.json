@@ -8,6 +8,11 @@
     "src"
   ],
   "references": [
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-renderer/tsconfig.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

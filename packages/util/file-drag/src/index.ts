@@ -1,6 +1,33 @@
 /** File export naming, browser transfer token type, and native byte-or-resource requests. */
-import mime from 'mime'
 import type { Branded } from '@deepseek-ai/dsh-brand'
+
+/** Suffixes this package offers when a declared media type conflicts with the caller's name. */
+const MIME_EXTENSIONS: Readonly<Record<string, readonly string[]>> = {
+  'application/json': ['json'],
+  'application/octet-stream': ['bin'],
+  'application/pdf': ['pdf'],
+  'application/zip': ['zip'],
+  'image/gif': ['gif'],
+  'image/jpeg': ['jpg', 'jpeg'],
+  'image/png': ['png'],
+  'image/svg+xml': ['svg'],
+  'image/webp': ['webp'],
+  'text/csv': ['csv'],
+  'text/html': ['html'],
+  'text/markdown': ['md'],
+  'text/plain': ['txt'],
+}
+
+/** Declared media type → preferred suffix. */
+function getExtension(mediaType: string): string | null {
+  return MIME_EXTENSIONS[mediaType]?.[0] ?? null
+}
+
+/** Declared media type → every compatible suffix. */
+function getAllExtensions(mediaType: string): ReadonlySet<string> | undefined {
+  const extensions = MIME_EXTENSIONS[mediaType]
+  return extensions === undefined ? undefined : new Set(extensions)
+}
 
 /** Browser transfer token type; original bytes stay with the application owner. */
 export const FILE_DRAG_TOKEN_TYPE = 'application/x-dsh-file'
@@ -52,9 +79,9 @@ export function resolveDragFileName(request: DragFileName): string {
   const dot = clean.lastIndexOf('.')
   const suffix = dot < 0 ? '' : clean.slice(dot + 1)
   const declared = mediaType.replace(/;.*$/su, '').trim().toLowerCase()
-  const preferred = mime.getExtension(declared)
+  const preferred = getExtension(declared)
   const explicit = outputExtension?.replace(/^\./u, '').replace(/[^a-z\d_-]/giu, '')
-  const compatible = mime.getAllExtensions(declared)?.has(suffix.toLowerCase()) === true
+  const compatible = getAllExtensions(declared)?.has(suffix.toLowerCase()) === true
   const extension = explicit || (suffix === '' || (preferred !== null && !compatible) ? preferred : suffix)
   if (extension) clean = `${dot < 0 ? clean : clean.slice(0, dot)}.${extension}`
   if (/^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/iu.test(clean)) clean = `_${clean}`

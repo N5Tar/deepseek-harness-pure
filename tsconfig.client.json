@@ -40,31 +40,21 @@
   ],
   "references": [
     { "path": "./packages/util/atomic-write" },
-    { "path": "./packages/api/terminal-controller/tsconfig.client.json" },
-    // Producer-to-UI spill tests use the ptc-runtime contract with the real tool registry.
-    { "path": "./packages/ptc-runtime/ptc-runtime" },
-    { "path": "./packages/core/tool-executor-native" },
-    { "path": "./packages/core/tool-executor-ptc" },
+    // Producer-to-UI spill tests use the ptc-runtime contract with the real tool registry.,
     // Shared leaf: web e2e boots the real host webserver (fixture + real-host
     // smoke policy). webserver has zero workspace deps and no cordis merge,
     // so it cannot drag host-side Context augmentation into this program.
     { "path": "./packages/host/webserver" },
     // Compaction seam: ui-chat type-imports the canonical checkpoint contract
     // from the cordis-free dsh-compaction/checkpoint leaf. Composite rootDir
-    // rules make that path depend on this project reference.
-    { "path": "./packages/compaction/compaction" },
+    // rules make that path depend on this project reference.,
     { "path": "./packages/client/store" },
     { "path": "./packages/client/ui-slots" },
     { "path": "./packages/client/ui-primitives" },
     { "path": "./packages/client/modules" },
     { "path": "./packages/client/connection/tsconfig.client.json" },
-    { "path": "./packages/client/file-upload/tsconfig.client.json" },
     { "path": "./packages/typert/registry" },
     { "path": "./packages/api/gateway/tsconfig.client.json" },
-    { "path": "./packages/api/session-controller/tsconfig.client.json" },
-    { "path": "./packages/api/workspace-controller/tsconfig.client.json" },
-    { "path": "./packages/test-support/remote-mock" },
-    { "path": "./packages/test-support/tool-testkit" },
     { "path": "./packages/client/shortcuts/tsconfig.client.json" },
     { "path": "./packages/client/ui-layout" },
     { "path": "./packages/client/ui-shell" },
@@ -75,8 +65,6 @@
     { "path": "./packages/client/locale/tsconfig.client.json" },
     { "path": "./packages/client/ui-renderer" },
     { "path": "./packages/client/resources" },
-    { "path": "./packages/api/workspace-files/tsconfig.client.json" },
-    { "path": "./packages/client/web" },
-    { "path": "./packages/context/file-reference" }
+    { "path": "./packages/client/web" }
   ]
 }

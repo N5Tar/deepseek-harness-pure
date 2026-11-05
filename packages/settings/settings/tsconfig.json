@@ -8,6 +8,12 @@
     "src"
   ],
   "references": [
+    { "path": "../../boot/app-boot/tsconfig.json" },
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../boot/config-editor/tsconfig.json" },
+    { "path": "../../boot/hmr/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

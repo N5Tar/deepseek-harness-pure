@@ -8,6 +8,12 @@
     "src"
   ],
   "references": [
+    { "path": "../../packages/boot/app-boot/tsconfig.json" },
+    { "path": "../../packages/client/connection/tsconfig.host.json" },
+    { "path": "../../packages/host/webserver/tsconfig.json" },
+    { "path": "../kernel/tsconfig.json" },
+    { "path": "../../packages/boot/plugin-manager/tsconfig.json" },
+
     {
       "path": "../../vendor/cordis"
     },

@@ -8,6 +8,12 @@
     "src"
   ],
   "references": [
+    { "path": "../../credentials/credentials/tsconfig.json" },
+    { "path": "../../util/native-command/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

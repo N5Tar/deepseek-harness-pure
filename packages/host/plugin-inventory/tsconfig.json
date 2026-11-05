@@ -8,6 +8,12 @@
     "src"
   ],
   "references": [
+    { "path": "../../preset/agent-preset-registry/tsconfig.json" },
+    { "path": "../../boot/app-boot/tsconfig.json" },
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../util/package-manifest/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+
     {
       "path": "../../boot/app-boot"
     },

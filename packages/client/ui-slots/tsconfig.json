@@ -8,6 +8,8 @@
     "src"
   ],
   "references": [
+    { "path": "../store/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

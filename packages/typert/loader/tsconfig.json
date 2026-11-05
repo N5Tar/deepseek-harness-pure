@@ -8,6 +8,10 @@
     "src"
   ],
   "references": [
+    { "path": "../../boot/app-boot/tsconfig.json" },
+    { "path": "../protocol/tsconfig.json" },
+    { "path": "../registry/tsconfig.json" },
+
     {
       "path": "../../boot/app-boot"
     },

@@ -8,6 +8,8 @@
     "src"
   ],
   "references": [
+    { "path": "../brand/tsconfig.json" },
+
     {
       "path": "../brand"
     }

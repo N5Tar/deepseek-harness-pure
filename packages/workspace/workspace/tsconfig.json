@@ -8,6 +8,12 @@
     "src"
   ],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../core/session/tsconfig.json" },
+    { "path": "../../session/session-persistence/tsconfig.json" },
+    { "path": "../../storage/storage/tsconfig.json" },
+    { "path": "../../storage/storage-domain/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

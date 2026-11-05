@@ -1,6 +1,14 @@
 {
   "files": [],
   "references": [
+    { "path": "../../packages/boot/app-boot/tsconfig.json" },
+    { "path": "../../packages/util/atomic-write/tsconfig.json" },
+    { "path": "../../packages/client/shortcuts/tsconfig.json" },
+    { "path": "../../packages/util/home-paths/tsconfig.json" },
+    { "path": "../kernel/tsconfig.json" },
+    { "path": "../../packages/util/official-bundles/tsconfig.json" },
+    { "path": "../../packages/boot/plugin-manager/tsconfig.json" },
+
     {
       "path": "./tsconfig.host.json"
 

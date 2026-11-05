@@ -19,6 +19,12 @@
     "src/rpc.ts"
   ],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../credentials/credentials/tsconfig.json" },
+    { "path": "../../host/webserver/tsconfig.json" },
+    { "path": "../../core/scope/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

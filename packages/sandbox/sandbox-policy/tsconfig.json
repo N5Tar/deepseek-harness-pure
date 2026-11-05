@@ -8,6 +8,12 @@
     "src"
   ],
   "references": [
+    { "path": "../../core/agent/tsconfig.json" },
+    { "path": "../sandbox/tsconfig.json" },
+    { "path": "../../core/session/tsconfig.json" },
+    { "path": "../../session/session-projection/tsconfig.json" },
+    { "path": "../../core/system-prompt/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

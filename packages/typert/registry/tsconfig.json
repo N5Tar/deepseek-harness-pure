@@ -8,6 +8,8 @@
     "src"
   ],
   "references": [
+    { "path": "../protocol/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

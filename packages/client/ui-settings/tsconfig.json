@@ -1,6 +1,13 @@
 {
   "files": [],
   "references": [
+    { "path": "../../api/shell-remotes/tsconfig.json" },
+    { "path": "../connection/tsconfig.client.json" },
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "./tsconfig.host.json"
     },

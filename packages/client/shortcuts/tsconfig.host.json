@@ -15,6 +15,14 @@
     "src/config.ts"
   ],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../locale/tsconfig.host.json" },
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-primitives/tsconfig.json" },
+    { "path": "../../host/webserver/tsconfig.json" },
+    { "path": "../../util/crypto/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../util/brand"
     },

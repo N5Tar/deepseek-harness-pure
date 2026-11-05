@@ -8,6 +8,15 @@
     "src"
   ],
   "references": [
+    { "path": "../../attachment/attachment/tsconfig.json" },
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../util/package-manifest/tsconfig.json" },
+    { "path": "../../util/timeout/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+    { "path": "../../util/crypto/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
+    { "path": "../../attachment/attachment" },
     {
       "path": "../../../vendor/cosmokit"
     },
@@ -19,9 +28,6 @@
     },
     {
       "path": "../../util/brand"
-    },
-    {
-      "path": "../../attachment/attachment"
     },
     {
       "path": "../../util/timeout"

@@ -1,6 +1,18 @@
 {
   "files": [],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../client/connection/tsconfig.client.json" },
+    { "path": "../../boot/cmdline/tsconfig.json" },
+    { "path": "../../credentials/credentials-local/tsconfig.json" },
+    { "path": "../../util/deque/tsconfig.json" },
+    { "path": "../../host/frontend-static/tsconfig.json" },
+    { "path": "../../host/webserver/tsconfig.json" },
+    { "path": "../../util/timeout/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+    { "path": "../../typert/registry/tsconfig.json" },
+    { "path": "../../util/crypto/tsconfig.json" },
+
     {
       "path": "./tsconfig.host.json"
     },

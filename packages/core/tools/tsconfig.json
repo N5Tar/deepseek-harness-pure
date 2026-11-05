@@ -8,6 +8,15 @@
     "src"
   ],
   "references": [
+    { "path": "../agent/tsconfig.json" },
+    { "path": "../../llm/llm/tsconfig.json" },
+    { "path": "../scope/tsconfig.json" },
+    { "path": "../session/tsconfig.json" },
+    { "path": "../../session/session-projection/tsconfig.json" },
+    { "path": "../system-prompt/tsconfig.json" },
+    { "path": "../../interaction/user-approval/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../core/session"
     },

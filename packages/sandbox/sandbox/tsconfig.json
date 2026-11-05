@@ -8,6 +8,10 @@
     "src"
   ],
   "references": [
+    { "path": "../../llm/llm/tsconfig.json" },
+    { "path": "../../core/session/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

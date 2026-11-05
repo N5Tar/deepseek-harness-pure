@@ -8,6 +8,10 @@
     "src"
   ],
   "references": [
+    { "path": "../../client/connection/tsconfig.client.json" },
+    { "path": "../../credentials/credentials-local/tsconfig.json" },
+    { "path": "../webserver/tsconfig.json" },
+
     {
       "path": "../../../vendor/cordis"
     },

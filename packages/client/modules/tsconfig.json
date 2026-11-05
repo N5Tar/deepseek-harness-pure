@@ -8,6 +8,10 @@
   },
   "include": ["src"],
   "references": [
+    { "path": "../store/tsconfig.json" },
+    { "path": "../../host/webserver/tsconfig.json" },
+    { "path": "../../util/package-manifest/tsconfig.json" },
+
     {"path": "../../../vendor/cordis"},
     {"path": "../../../vendor/loader"},
     {"path": "../../host/webserver"},

@@ -8,6 +8,25 @@
     "src"
   ],
   "references": [
+    { "path": "../../packages/core/agent/tsconfig.json" },
+    { "path": "../../packages/preset/agent-preset-registry/tsconfig.json" },
+    { "path": "../../packages/boot/app-boot/tsconfig.json" },
+    { "path": "../../packages/util/atomic-write/tsconfig.json" },
+    { "path": "../../packages/client/modules/tsconfig.json" },
+    { "path": "../../packages/boot/cmdline/tsconfig.json" },
+    { "path": "../../packages/boot/hmr/tsconfig.json" },
+    { "path": "../../packages/util/home-paths/tsconfig.json" },
+    { "path": "../../packages/util/http-proxy/tsconfig.json" },
+    { "path": "../../packages/util/launch-environment/tsconfig.json" },
+    { "path": "../../packages/llm/llm/tsconfig.json" },
+    { "path": "../../packages/util/official-bundles/tsconfig.json" },
+    { "path": "../../packages/boot/plugin-manager/tsconfig.json" },
+    { "path": "../../packages/sandbox/sandbox-policy/tsconfig.json" },
+    { "path": "../../packages/core/session/tsconfig.json" },
+    { "path": "../../packages/session/session-projection/tsconfig.json" },
+    { "path": "../../packages/core/system-prompt/tsconfig.json" },
+    { "path": "../../packages/core/tools/tsconfig.json" },
+
     {
       "path": "../../vendor/cordis"
     },
@@ -46,24 +65,6 @@
     },
     {
       "path": "../../packages/util/home-paths"
-    },
-    {
-      "path": "../../packages/mcp/mcp-client"
-    },
-    {
-      "path": "../../packages/test-support/loader-smoke"
-    },
-    {
-      "path": "../../packages/session-query/session-query-sqlite"
-    },
-    {
-      "path": "../../packages/session-query/session-query"
-    },
-    {
-      "path": "../../packages/shell/shell-env"
-    },
-    {
-      "path": "../../packages/shell/tool-bash"
     },
     {
       "path": "../../packages/boot/plugin-manager"

@@ -8,6 +8,8 @@
     "src"
   ],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

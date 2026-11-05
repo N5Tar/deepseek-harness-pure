@@ -8,6 +8,13 @@
     "src"
   ],
   "references": [
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../llm/llm/tsconfig.json" },
+    { "path": "../scope/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+    { "path": "../../typert/registry/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../../vendor/cosmokit"
     },

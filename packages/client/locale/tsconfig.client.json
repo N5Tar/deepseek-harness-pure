@@ -9,6 +9,13 @@
     "src"
   ],
   "references": [
+    { "path": "../store/tsconfig.json" },
+    { "path": "../ui-primitives/tsconfig.json" },
+    { "path": "../ui-renderer/tsconfig.json" },
+    { "path": "../ui-slots/tsconfig.json" },
+    { "path": "../../util/package-manifest/tsconfig.json" },
+    { "path": "../../settings/settings/tsconfig.json" },
+
     {
       "path": "../../util/package-manifest"
     },

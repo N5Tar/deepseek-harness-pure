@@ -8,6 +8,8 @@
     "src"
   ],
   "references": [
+    { "path": "../package-manifest/tsconfig.json" },
+
     {
       "path": "../package-manifest"
     }

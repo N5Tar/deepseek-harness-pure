@@ -8,6 +8,29 @@
     "src"
   ],
   "references": [
+    { "path": "../../core/agent/tsconfig.json" },
+    { "path": "../app-boot/tsconfig.json" },
+    { "path": "../../util/atomic-write/tsconfig.json" },
+    { "path": "../../util/brand/tsconfig.json" },
+    { "path": "../../client/connection/tsconfig.client.json" },
+    { "path": "../hmr/tsconfig.json" },
+    { "path": "../../host/plugin-inventory/tsconfig.json" },
+    { "path": "../../llm/llm/tsconfig.json" },
+    { "path": "../../util/official-bundles/tsconfig.json" },
+    { "path": "../../util/package-manifest/tsconfig.json" },
+    { "path": "../../util/plugin-detail/tsconfig.json" },
+    { "path": "../../sandbox/sandbox/tsconfig.json" },
+    { "path": "../../sandbox/sandbox-policy/tsconfig.json" },
+    { "path": "../../core/session/tsconfig.json" },
+    { "path": "../../session/session-projection/tsconfig.json" },
+    { "path": "../../subprocess/subprocess/tsconfig.json" },
+    { "path": "../../core/system-prompt/tsconfig.json" },
+    { "path": "../../util/timeout/tsconfig.json" },
+    { "path": "../../core/tools/tsconfig.json" },
+    { "path": "../../typert/protocol/tsconfig.json" },
+    { "path": "../../interaction/user-approval/tsconfig.json" },
+    { "path": "../../util/values/tsconfig.json" },
+
     {
       "path": "../../util/package-manifest"
     },
