@@ -234,3 +234,15 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 延后项及证据：`sdk`、`sdk-minimal` 模板与 bundle 保留——`packages/sdk/client/src/launch.ts` 默认启动 `sdk` profile，Python SDK 运行时与 `python/sdk` 场景直接使用 `sdk`/`sdk-minimal`，删除会打断保留侧；随 SDK 退役模块处理。`headless` 保留——`snapshots/session/*` 约 150 个 `snapshot.yml` 与 `headless.snapshot.ts` 绑定该 profile，随第 12 项会话运行时退役。`web`/`base` 与 `web-app` 保留，随第 08 项 AI 界面退役。`boot.ts` 的 `requiredStartupEntryIds` 中 `acp` 未删除：`web-failure-matrix.expected.e2e.ts` 用它作 required-entry 故障注入，prune 属于 12/15。
 
 本地验证：`DSH_GATE_CONCURRENCY=2 pnpm run build` 首轮 9/10（host aggregate 报 `built-bin.e2e.ts` 一处未使用导入），删除该导入后 `DSH_GATE_CONCURRENCY=1 pnpm run build:check` 2/2 通过。定向单 worker 测试 230 项通过：official-bundles、`apps/cli/tests/args.spec.ts`、`profile-hmr.spec.ts`、workspace constraints。变更 TypeScript 文件 lint 0 warnings / 0 errors；`gen-plugin-packages`、`gen-tsconfig-paths` 重新生成并一致；三组双语 README 与配对记录刷新；`verify-md-links` 未新增 ACP 断链（其余断链为早前文档树退役遗留）。未运行全仓 lint/coverage，未推送。
+
+### 第 08 项删除清单（已核算）
+
+以 `packages/bundle/shell-base/package.json` 的运行时依赖，加上 `packages/client/web`、`apps/web/src` 实际导入的包为存活集，得到客户端存活 13 项：connection、locale、modules、store、ui-dockkit、ui-layout、ui-primitives、ui-renderer、ui-settings、ui-shell、ui-slots、ui-theme、web（另需按构建实测确认 shortcuts、resources、file-upload、hmr、product-analytics 是否仍被底座使用）。
+
+其余 `packages/client/*` 共 42 项进入删除清单：全部聊天与会话呈现（ui-chat、ui-conversation、ui-trajectory、ui-tool、ui-session、ui-attachment、ui-reference、ui-deliverables、ui-secret-mask、ui-user-questions、ui-input-trigger、ui-message-feedback）、编排与任务（ui-plan、ui-goal、ui-schedule、ui-workflow-run、ui-agent-preset、ui-subagent、ui-approval、ui-permission-presets、ui-skill）、外壳扩展（ui-sidebar 系列、ui-open-in-app、ui-context-menu、ui-file-drag、ui-directory-picker-*、ui-entry-customization、ui-brand-official、ui-plugin-manager、ui-plugin-market）与 AI 设置页（ui-settings-general、ui-settings-models、ui-settings-plugin-inventory、ui-settings-plugins、ui-settings-shell、ui-commands、ui-model-selection）。
+
+已删除并验证：ui-settings-account、ui-settings-subagent、ui-settings-agent-loop、ui-settings-web-search、ui-settings-session-log、ui-agent-team、ui-jobs。
+
+连带面（未开始）：`packages/bundle/web-app` 整包与其 113 条装配行、`web` profile 模板、`apps/web/tests` 中的 AI UI e2e 与 expected（含 desktop-onboarding 相关已删项之外的其余场景）、`snapshots/web` 中绑定会话 UI 的场景、`benchmarks/user-text`、`packages/api/remotes` 的客户端导出、`packages/extensions/cordis-client-runner` 的 slot 目录（生成物）、`packages/experimental` 中仅依赖上述 UI 的插件包。
+
+顺序约束：这些 UI 互相引用（ui-conversation 被 261 个文件引用），必须整组一次性删除并同步删测试，无法再按小批独立提交。
