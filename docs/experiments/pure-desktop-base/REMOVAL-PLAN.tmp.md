@@ -256,3 +256,15 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 3. **收尾**：删除绑定这些 UI 的 `apps/web/tests` e2e/expected、`snapshots/web` 场景、`benchmarks/user-text`，修复 `api/remotes` 客户端导出与 `cordis-client-runner` 生成目录，直至 `build:check` 通过。
 
 上表“存活 13 项”相应修订为 14 项（加入 `client-shortcuts`）。
+
+### 第 08 项阻塞点与顺序建议
+
+第 5 轮尝试只把 `ui-layout` 对 `ui-session` 的类型导入与依赖删掉，`build:artifacts` 能过，但 `AppFrame` 的 props 契约本身由声明合并提供会话钩子：`useSessions`、`useSessionStatus`、`useSessionRetainInfo`、`useWorkspaces`、`useContextMenu`、`useResource` 等，其 76 项测试固定住这些钩子与“浏览器标题跟随会话标题”的行为。删掉导入后标题行为改变、测试夹具需要重写，已回退，工作树保持干净。
+
+结论：08 不是“删包”而是“改写底座外壳的 props 契约”。更有效的顺序是先把提供这些钩子的上层功能退役，再删 UI：
+
+1. 第 10 项（编排：subagent/team/plan/goal/schedule）与第 11 项（工具与终端）先移除对应钩子与槽位贡献。
+2. 第 12 项（会话运行时）移除会话投影、`ui-session` 的钩子与标题投影，`AppFrame` 自然只剩布局、面板与主题。
+3. 之后再执行本节的 41 包整组删除，测试与快照范围也随之缩小。
+
+因此建议把 08 排到 10–12 之后，而不是继续在 08 内部做外壳重构；若坚持先做 08，则 08 需扩张为“外壳 props 契约重构 + UI 删除 + 测试重写”，工作量显著大于原计划。
