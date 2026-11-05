@@ -268,3 +268,19 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 3. 之后再执行本节的 41 包整组删除，测试与快照范围也随之缩小。
 
 因此建议把 08 排到 10–12 之后，而不是继续在 08 内部做外壳重构；若坚持先做 08，则 08 需扩张为“外壳 props 契约重构 + UI 删除 + 测试重写”，工作量显著大于原计划。
+
+### 第 08 项 AppFrame props 提供方映射（只读核算）
+
+`AppFrame` 的 root 槽位 props 全部由声明合并提供，来源已定位：
+
+| prop | 提供方 |
+|---|---|
+| `useSessions`、`useSessionStatus`、`useSessionRetainInfo` | `packages/client/ui-session` |
+| `useWorkspaces` | `packages/client/ui-workspace` |
+| `useContextMenu` | `packages/client/ui-context-menu` |
+| `useResource` | `packages/client/resources` |
+| `usePanelInfo` | `packages/client/ui-layout` 自身 |
+
+因此解耦工作可收敛为：删除上述四个提供方（都在 41 包删除清单内）→ 从 `AppFrameProps` 与 `AppFrame` 解构里去掉对应 5 个 prop → 重写 `app-frame.client.spec.tsx` 夹具（该夹具目前直接构造会话/工作区快照并提供这些钩子）→ 调整 `document-title` 行为测试。四个提供方一旦移除，标题投影与依赖它们的 2 个行为测试自然消失。
+
+`build:artifacts` 已证明只改包依赖可编译；剩下的成本集中在测试夹具重写（约 76 项）。
