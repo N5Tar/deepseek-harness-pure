@@ -41,7 +41,15 @@ DSH_HOME=/tmp/kernel-home pnpm --filter @deepseek-ai/dsh-kernel start
 
 ## 插件
 
-插件就是普通的 Cordis 函数插件：通过 `inject` 声明所读服务，并在 `ctx.effect()` 内注册路由或设置键。不依赖 `packages/` 中的产品服务：内核只依赖 `vendor/cordis` 与 Node 内置模块，因此每增加一个能力都不会把产品运行时重新拉回来。
+内核挂载 Cordis Loader 并读取 `<DSH_HOME>/kernel/plugins.json`：
+
+```json
+{ "plugins": [{ "name": "./plugins/health.ts" }] }
+```
+
+每个条目就是一个 Loader 条目（`name`，可选 `config` 与 `disabled`）；它们在页面插件之后启动，因此可以注入 `kernelServer` 与 `kernelSettings`。清单缺失时不挂载任何插件；清单格式错误时启动失败，并指出有问题的字段。
+
+插件就是普通的 Cordis 函数插件：通过 `inject` 声明所读服务，并在 `ctx.effect()` 内注册路由或设置键。不依赖 `packages/` 中的产品服务：内核只依赖 `vendor/cordis`、Loader 与 Node 内置模块，因此每增加一个能力都不会把产品运行时重新拉回来。
 
 <a id="verification"></a>
 

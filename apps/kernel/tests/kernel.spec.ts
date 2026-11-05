@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -51,5 +51,25 @@ describe('kernel', () => {
       body: '[]',
     })
     expect(invalid.status).toBe(400)
+  })
+
+  it('mounts a Loader plugin declared by the caller', async () => {
+    kernel = await bootKernel({ home, plugins: [{ name: './plugins/health.ts' }] })
+    const health = await fetch(`${kernel.url}/health`)
+    expect(health.status).toBe(200)
+    expect(await health.json()).toEqual({ status: 'ok', plugin: 'kernel-health' })
+  })
+
+  it('mounts a Loader plugin declared by the home manifest', async () => {
+    mkdirSync(join(home, 'kernel'), { recursive: true })
+    writeFileSync(join(home, 'kernel', 'plugins.json'), JSON.stringify({ plugins: [{ name: './plugins/health.ts' }] }))
+    kernel = await bootKernel({ home })
+    await expect((await fetch(`${kernel.url}/health`)).json()).resolves.toEqual({ status: 'ok', plugin: 'kernel-health' })
+  })
+
+  it('fails loudly for a malformed plugin manifest', async () => {
+    mkdirSync(join(home, 'kernel'), { recursive: true })
+    writeFileSync(join(home, 'kernel', 'plugins.json'), JSON.stringify({ plugins: 'nope' }))
+    await expect(bootKernel({ home })).rejects.toThrow('"plugins" must be an array')
   })
 })

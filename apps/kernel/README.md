@@ -41,7 +41,15 @@ The store reads and writes `<DSH_HOME>/kernel/settings.json`, creating the direc
 
 ## Plugins
 
-A plugin is an ordinary Cordis function plugin. It declares the services it reads through `inject` and registers routes or settings keys inside `ctx.effect()`. `packages/` product services are not required: the kernel depends only on `vendor/cordis` and Node builtins, so mounting one more capability never pulls the product runtime back in.
+The kernel mounts the Cordis Loader and reads `<DSH_HOME>/kernel/plugins.json`:
+
+```json
+{ "plugins": [{ "name": "./plugins/health.ts" }] }
+```
+
+Each entry is one Loader entry (`name`, optional `config` and `disabled`); entries run after the built-in page plugin, so plugins may inject `kernelServer` and `kernelSettings`. A missing manifest mounts nothing; a malformed one stops startup with a message naming the offending field.
+
+A plugin is an ordinary Cordis function plugin that declares its services through `inject` and registers routes or settings keys inside `ctx.effect()`. Nothing from `packages/` is required: the kernel depends on `vendor/cordis`, the Loader, and Node builtins, so mounting one more capability never pulls the product runtime back in.
 
 <a id="verification"></a>
 

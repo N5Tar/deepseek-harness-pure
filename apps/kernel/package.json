@@ -9,7 +9,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/cordis-plugin-loader": "workspace:~"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
