@@ -246,3 +246,13 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 连带面（未开始）：`packages/bundle/web-app` 整包与其 113 条装配行、`web` profile 模板、`apps/web/tests` 中的 AI UI e2e 与 expected（含 desktop-onboarding 相关已删项之外的其余场景）、`snapshots/web` 中绑定会话 UI 的场景、`benchmarks/user-text`、`packages/api/remotes` 的客户端导出、`packages/extensions/cordis-client-runner` 的 slot 目录（生成物）、`packages/experimental` 中仅依赖上述 UI 的插件包。
 
 顺序约束：这些 UI 互相引用（ui-conversation 被 261 个文件引用），必须整组一次性删除并同步删测试，无法再按小批独立提交。
+
+### 第 08 项耦合发现与修订顺序
+
+整组删除试运行得到 119 个类型错误后已回退，暴露出底座 UI 仍直接引用 AI 界面包：`ui-layout` 引入 `ui-session`（会话界面）与 `client-shortcuts`，`ui-theme` 引入 `client-shortcuts`；`client-shortcuts` 是键盘快捷键协议、属底座依赖需保留。因此 08 必须分三步，不能直接删包：
+
+1. **解耦**：从 `ui-layout` 移除对 `ui-session` 的依赖（改用槽位或注入取会话信息），保留 `client-shortcuts`；确认 `ui-shell`/`ui-settings`/`ui-renderer` 只依赖底座包。
+2. **整组删除**：41 个客户端 AI 界面包 + `web-app` 包与装配行 + `web` 模板；`client-shortcuts` 移入存活集。
+3. **收尾**：删除绑定这些 UI 的 `apps/web/tests` e2e/expected、`snapshots/web` 场景、`benchmarks/user-text`，修复 `api/remotes` 客户端导出与 `cordis-client-runner` 生成目录，直至 `build:check` 通过。
+
+上表“存活 13 项”相应修订为 14 项（加入 `client-shortcuts`）。
