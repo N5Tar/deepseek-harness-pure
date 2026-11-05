@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { allowAllAccess, bindSnapshotSelector, contextMenuHook, makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector, contextMenuHook, makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import type { ScheduleId, ScheduleCatalogEntry, ScheduleRecord } from '@deepseek-ai/dsh-schedule/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
@@ -61,7 +61,7 @@ function mount(rows: readonly ScheduleCatalogEntry[] = [task], overrides: Partia
   }
   const props: TaskManagerPageProps = {
     useStore: bindSnapshotSelector(editor), actions: editor.actions,
-    ...allowAllAccess, useCatalog: select => select(snapshot), useSessions: select => select(sessions),
+    useCatalog: select => select(snapshot), useSessions: select => select(sessions),
     useWorkspaces: select => select(workspaces), usePanelInfo: select => select({ activePanelId: null }),
     useSessionStatus: select => select(new Map()), useSessionRetainInfo: () => undefined,
     useResource: () => { throw new Error('Task editor loads no document resources') },

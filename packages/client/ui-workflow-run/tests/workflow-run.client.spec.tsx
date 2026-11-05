@@ -21,7 +21,7 @@ import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session/types'
 import { SessionSeq } from '@deepseek-ai/dsh-session'
 import { apply as applyLocale, inject as localeInject } from '@deepseek-ai/dsh-client-locale/client'
 import {
-  allowAllAccess, chatSnapshot as emptyChatSnapshot, conversationSnapshot, makeTranslate, sessionSnapshot,
+  chatSnapshot as emptyChatSnapshot, conversationSnapshot, makeTranslate, sessionSnapshot,
   stubConfigForm, TestSessions, workspaceSnapshot,
 } from '@deepseek-ai/dsh-client-test-runtime'
 import {
@@ -362,7 +362,6 @@ function panelProps(data: WorkflowRunChatData, sessions = listState(), openSessi
       submit: () => {},
     },
     useWorkspaces: selector => selector(panelWorkspace),
-    ...allowAllAccess,
     useContextMenu: contextMenuHook(),
     useTurnData: () => undefined,
     useDisclosure: () => { throw new Error('unused') },

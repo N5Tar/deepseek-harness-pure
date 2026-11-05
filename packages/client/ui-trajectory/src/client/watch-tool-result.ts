@@ -1,5 +1,7 @@
 /** Selected-result subscriptions retain no history-sized Client cache. */
 import type { ClientRemote } from '@deepseek-ai/dsh-api-gateway/client'
+// Type-only: the generated `toolResults` Remote namespace merges into ClientRemote.
+import type {} from '@deepseek-ai/dsh-client-ui-trajectory/remote'
 import type { SessionToolResultValue } from '../types.ts'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'

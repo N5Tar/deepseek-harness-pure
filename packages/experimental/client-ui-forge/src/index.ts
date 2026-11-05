@@ -3,7 +3,6 @@
 import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-api-remote-access'
 import { changeRequestKey } from '@deepseek-ai/dsh-experimental-forge'
 import type { ChangeRequestSnapshot, ForgeActionFailure, ForgeFailure, ForgeReviewRequest, ForgeReviewResult, MergeMethod } from '@deepseek-ai/dsh-experimental-forge'
 import type { SessionChangeRequest } from '@deepseek-ai/dsh-experimental-forge-session'
@@ -161,7 +160,7 @@ export class ForgePanelController extends TypertRemoteService {
 
   /**
    * Stream the last known state of every change request that a listed
-   * Session the caller may read binds: the stored states first, then each
+   * Session binds: the stored states first, then each
    * state a poll changes or a new binding reveals. Listing reads no Session
    * log: loaded Sessions report their bindings, others the cached Session
    * summary, and a Session without one shows nothing until it is opened.
@@ -173,8 +172,7 @@ export class ForgePanelController extends TypertRemoteService {
    */
   @Remote({ mode: 'stream' })
   async *changeRequestStates(signal: AbortSignal): AsyncIterable<ForgeChangeRequestStatesFrame> {
-    const access = this.ctx.get('remoteAccess')
-    yield* this.changeRequestStatesHub().stream(id => access === undefined || access.allows({ kind: 'session', id }), signal)
+    yield* this.changeRequestStatesHub().stream(signal)
   }
 
   /**

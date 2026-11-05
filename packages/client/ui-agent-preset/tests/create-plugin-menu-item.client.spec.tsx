@@ -3,7 +3,7 @@ import { contextMenuHook } from '@deepseek-ai/dsh-client-test-runtime'
 import { useState, type ComponentProps } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { allowAllAccess, bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { Menu, MenuItemButton } from '@deepseek-ai/dsh-client-ui-primitives'
 import { CreatePluginMenuItem } from '../src/client/CreatePluginMenuItem.tsx'
@@ -30,7 +30,6 @@ function view(roster: Partial<AgentPresetSettingsState> = {}, inMenu = false) {
     useAgentPresets: bindSnapshotSelector(agentPresets),
     usePanelInfo: unusedHook, useSessions: unusedHook, useSessionStatus: unusedHook,
     useSessionRetainInfo: unusedHook, useWorkspaces: unusedHook, useResource: unusedHook,
-    ...allowAllAccess,
     useContextMenu: contextMenuHook(),
     load, startCreatorDraft, onDismiss,
   }

@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-将 `dsh-agent` 与 `dsh-session-projection` 一起挂载：它提供 `ctx.agents`、`Agent` 句柄，以及读取已记录轮次和步骤位置的 `turnBoundaryOf(session)`。创建或恢复 Agent 还需要驱动器注册工厂；随附驱动器是 `dsh-agent-loop`。 [Session 模型选择](#model-selection) 通过每个句柄的 `agent.model` 提供。
+将 `dsh-agent` 与 `dsh-session-projection` 一起挂载：它提供 `ctx.agents`、`Agent` 句柄，以及读取已记录轮次和步骤位置的 `turnBoundaryOf(session)`。创建或恢复 Agent 还需要驱动器注册工厂；随附驱动器是 `dsh-agent-loop`。 [Session 模型选择](#model-selection) 通过每个句柄的 `agent.model` 提供。 Typert 挂载时，注册表按 Session id 提供在线 Agent 查找与 Host Context 解析；这些提供方不负责 Remote 调用方授权。
 
 ### 创建或恢复 agent
 

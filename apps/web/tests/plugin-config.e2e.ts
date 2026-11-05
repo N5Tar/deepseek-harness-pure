@@ -119,7 +119,6 @@ describe('web e2e: plugin configuration pages', () => {
     const bundles = await scaffold.ctx.pluginManager.listBundles()
     expect(await panel.locator('[data-plugin-group="more"] [data-plugin-package]').count())
       .toBe(bundles.filter(bundle => !HIDDEN_BUNDLES.has(bundle.name)
-        && bundle.name !== '@deepseek-ai/dsh-experimental-liveshare'
         && bundle.official && (bundle.listedByDefault !== false || bundle.enabled || bundle.installed)).length)
     expect(await basic.count()).toBe(0)
     expect(await extensions.count()).toBe(0)

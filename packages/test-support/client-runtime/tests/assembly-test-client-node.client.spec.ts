@@ -80,7 +80,7 @@ describe('TestClient (node environment)', () => {
     )
   })
 
-  it.each(['@deepseek-ai/dsh-api-remotes', '@deepseek-ai/dsh-api-remote-access'])(
+  it.each(['@deepseek-ai/dsh-api-remotes'])(
     'refuses a provide entry for the %s row, whose generated Remote mount the tier replaces',
     async (name) => {
       const roster = webApp.closure([name])
@@ -88,15 +88,6 @@ describe('TestClient (node environment)', () => {
         .rejects.toThrow(`${name} cannot be provided; the tier replaces its generated Remote mount`)
     },
   )
-
-  it('drops the remote-access row and answers every access question with true', async () => {
-    const mock = RemoteMock.create().load(remoteDefaultResponses)
-    const client = await TestClient.start({ roster: webApp.closure(['@deepseek-ai/dsh-api-remote-access']) }, mock)
-    onTestFinished(() => client.dispose())
-    expect(client.ctx.get('remoteAccess')?.source('session', 's1', 'session/fork').getSnapshot()).toBe(true)
-    // The dropped row never mounts its namespace, so no access stream opens.
-    expect(mock.log.streams('remoteAccess/follow')).toEqual([])
-  })
 
   it('reports unmatched requests alongside a failed teardown instead of hiding them', async () => {
     const mock = RemoteMock.create().load(remoteDefaultResponses)

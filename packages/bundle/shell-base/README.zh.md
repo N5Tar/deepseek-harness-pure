@@ -27,7 +27,7 @@ kind: "package-bundle"
 
 通过 [profile 机制](../../boot/app-boot/README.zh.md)将此 bundle 选为 profile 的完整 bundle 列表。不要将它与完整 base 或 Web bundle 叠加。将 profile 和 Harness home 与现有产品数据隔离。
 
-[补丁](cordis.patch.yml)绑定回环地址及操作系统分配的端口。运行时仅在启动器就绪后发布带认证的 URL，且不会自动打开浏览器。认证仍使用托管本地凭证；缺少账户业务服务不代表移除浏览器访问检查。
+[补丁](cordis.patch.yml)绑定回环地址及操作系统分配的端口。运行时仅在启动器就绪后发布带认证的 URL，且不会自动打开浏览器。认证仍使用托管本地凭证；缺少账户业务服务不代表移除浏览器访问检查。Gateway 仅接受 owner Peer；此 bundle 不提供访客分享或按资源授权策略。
 
 Profile 覆盖会替换条目的完整配置。外观和语言偏好通过 profile 设置文档持久化。默认 Root 由 [ui-shell](../../client/ui-shell/README.zh.md) 提供。
 

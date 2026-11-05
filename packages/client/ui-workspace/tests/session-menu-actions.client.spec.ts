@@ -21,19 +21,12 @@ function bench() {
     items: [], pinnedSessionIds: [], archivedSessionIds: [], state: 'idle', phase: 'ready', error: null,
   })
   ctx.provide('workspaces', { list } as never)
-  const permissions = new Map<string, ReturnType<typeof createSnapshotStore<boolean>>>()
-  const access = (action: string) => {
-    let source = permissions.get(action)
-    if (source === undefined) { source = createSnapshotStore(true); permissions.set(action, source) }
-    return source
-  }
-  ctx.provide('remoteAccess', { source: (_kind: string, _id: string, action: string) => access(action) } as never)
   const actions = { pinSession: vi.fn(), unpinSession: vi.fn(), archiveSession: vi.fn(), unarchiveSession: vi.fn(),
     forkSession: vi.fn(), requestSessionRename: vi.fn(), copySessionId: vi.fn(async () => {}) }
   const fiber = ctx.plugin({ apply: (plugin: Context) => { registerSessionMenus(plugin, actions) } })
   const target = { kind: 'session' as const, value: { sessionId: SessionId('background'), displayTitle: 'Background' } }
   const open = () => registry.resolve(target)
-  return { ctx, fiber, registry, locale, list, access, actions, target, open }
+  return { ctx, fiber, registry, locale, list, actions, target, open }
 }
 
 it('preserves built-in order, groups, icons, command identities, and captured action targets', async () => {
@@ -71,27 +64,16 @@ it('preserves built-in order, groups, icons, command identities, and captured ac
   expect(b.actions.unarchiveSession).toHaveBeenCalledWith('background')
 })
 
-it('reacts to permission and locale updates, prevents withdrawn actions, and disposes subscriptions', async () => {
+it('reacts to locale updates and disposes subscriptions', async () => {
   const b = bench()
   await b.fiber.await()
   const menu = b.open()
-  b.access('session/rename').set(false)
-  b.access('session/fork').set(false)
-  b.access('workspace/archiveSession').set(false)
-  b.access('workspace/pinSession').set(false)
-  expect(menu.source.getSnapshot().map(item => item.id)).toEqual(['session.id/copy'])
-  menu.select('session.rename/rename')
-  expect(b.actions.requestSessionRename).not.toHaveBeenCalled()
+  expect(menu.source.getSnapshot()[0]?.label).toBe('Pin session')
   b.locale.setLocale('zh')
-  expect(menu.source.getSnapshot()[0]?.label).toBe('复制 Session ID')
-  b.access('session/rename').set(true)
-  expect(menu.source.getSnapshot()[0]?.label).toBe('重命名')
+  expect(menu.source.getSnapshot()[0]?.label).toBe('置顶会话')
   await b.fiber.dispose()
   expect(menu.source.getSnapshot()).toEqual([])
-  b.access('session/rename').set(false)
-  b.list.set({ ...b.list.getSnapshot(), pinnedSessionIds: [] })
   menu.select('session.id/copy')
   expect(b.actions.copySessionId).not.toHaveBeenCalled()
-  expect(menu.source.getSnapshot()).toEqual([])
   menu.dispose()
 })

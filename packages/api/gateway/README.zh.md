@@ -30,9 +30,7 @@ kind: "package-reference"
 
 Connection 可用时，Host 入口会在 Connection 共享的 `/api` FetchHandler 上注册 trusted-host interceptor。Connection 把这个复合 handler 交给 HTTP bridge；handler 将已认领 endpoint 分发给 Gateway，未认领且没有精确 Fetch 路由负责的请求返回 404。直接调用 `invoke()` 会保留业务错误；`TypertGatewayError` 是 `RemoteError` 的子类，其 `gateway/*` 码命名了分发、绑定、提供方、查找、Context、参数、编解码器以及上行各自负责的故障：缓冲帧超过 `streamInboxBytes` 的上行报 `gateway/uplink-overflow`，`end` 之后的上行项报 `gateway/protocol`，被 codec 拒绝的上行项报编解码码 `gateway/input-invalid`。因策略而拒绝的解析器——冷恢复失败或 ownership fence——抛出自己的 `RemoteError`，它选定的码原样到达调用方。
 
-每次调用都指明它所代表的 Peer：`InvokeRemoteRequest.peer` 与 `wireStream.open()` 的 `peer` 参数都是必填项，Gateway 从不提供默认 Peer。来自已释放 Peer 的分发以 `gateway/peer-disposed` 失败，一元调用、流、`$events` 与 `$events/result` 一律如此，wire 路径在读取 payload 之前检查。Host 服务注入 `remoteAccess`，没有 [`dsh-api-remote-access`](../remote-access/README.zh.md) 就不启动。每次调用在 endpoint 与参数字段检查之后按 Typert 编译类型校验一次 JSON 参数，失败为 `gateway/input-invalid`，分派复用校验后的值。对 Peer 的 principal 不是 owner 的调用，Gateway 在该校验之后、lookup 与 Context 解析之前解析调用访问的资源，并以端点为 action、校验后的参数为 `args` 询问 `ctx.remoteAccess.decide({ principal, action, resources, args })`，资源非法时不询问而以原因 `resource-invalid` 拒绝；被拒的调用抛出 details 为 `{ action, reason }` 的 `remote-access/denied`，因此被拒绝的调用在激活任何 Session 之前就失败。owner 的调用不解析资源、不询问判定即分派。
-
-资源从已校验参数中读取：Typert 编译 codec 会移除未声明的对象字段，SRC fallback 只检查 JSON 安全性而不移除字段；lookup 与 Context 身份保持 wire 值。对每个资源种类，方法 `@Remote({ resources })` 或 `@RemoteScope(key, { resources })` options 中的读取函数优先；它以方法的位置参数调用（lookup 位为 wire 身份，取消参数位为调用的 signal），从根 Service 实例的类元数据读取。否则 provider 经 `resource` 声明了该种类的每个 lookup 参数贡献其 wire 身份，省略的可选 lookup 参数不贡献；Host Context adapter 声明了该种类的 Context 方法贡献其 Context 身份，在解析 Context 之前直接从参数读取。再否则使用该种类在 `typert.resources` 中登记的默认字段或同步 resolver。字段规则读取同名顶层参数，没有时读取第一个对象参数的同名字段。resolver 以 `{ args, parameters }` 调用一次：命名的已校验 wire 值，以及包含 `name`、`wire` 的有序参数描述。两种默认规则均返回单个身份或 `undefined`，数组无效。显式读取函数可以返回多个身份。resolver 或读取函数抛错、读取函数返回空列表、或某个身份（含 Context 身份）不是非空字符串时，解析结果为 `invalid`；不指明任何资源的调用只访问 `global` 资源，指明了资源的调用只访问这些资源。转发事件携带其条目声明的每个资源，因此在事件路径上读取函数返回 `undefined` 同样使解析结果为 `invalid`，而没有读取函数的条目访问 `global`。
+每次调用都指明它所代表的 Peer：`InvokeRemoteRequest.peer` 与 `wireStream.open()` 的 `peer` 参数都是必填项，Gateway 从不提供默认 Peer。Connection 对 HTTP 请求与 WebSocket 升级进行身份验证并提供接纳的 Peer；进程内调用方显式提供自己的 Peer。Gateway 只接受 `peer.principal.kind === 'owner'`。已释放的 Peer 以 `gateway/peer-disposed` 失败；其余非 owner Peer 以 `gateway/owner-required` 失败，details 为 `{ endpoint }`。一元调用、流、`$events` 与 `$events/result` 均在 payload 解析、描述符解析、lookup 与 Context 解析之前执行这些检查。owner 调用保留严格的参数字段检查及 Typert 编译 JSON 校验，校验失败返回 `gateway/input-invalid`。
 
 `getPendingRemoteEvents()` 按到达顺序返回当前未结算转发事件的独立元数据，仅含事件名和 Agent ID。它不暴露请求正文，不改变事件生命周期，也不提供变化通知。
 
@@ -46,9 +44,9 @@ Connection 可用时，Host 入口会在 Connection 共享的 `/api` FetchHandle
 
 Host 下行、Host 上行和 Client 上行泵的取消与停止状态归属单次读取，不保留已交付项的历史。下行结束也会唤醒尚未完成的上行读取。
 
-Host 组合可通过 `registerRemoteEvents()` 注册唯一的应用事件 source。Gateway 为它保留内部 `$events` logical endpoint，只接受空 `args`，并在 source 撤回时中止该注册打开的流。事件名单、参数校验、每个 Client 的队列及 opening `{ type: 'ready', clientId, host: { home } }` frame 中的 Host home 由 API Remotes 拥有。source factory 在返回 iterable 前同步挂好增量 listener，因此 Client 只在增量投递就绪后发布 generation 并开始 baseline 读取。Peer 的 principal 不是 owner 的 `$events` 流从不收到它可以作答的 scoped waterfall（瀑布式事件）；只有当 `ctx.remoteAccess.decide({ principal, action: 'event:<name>', resources })` 在该帧读取函数指明的资源上（帧没有读取函数时为 `global`）允许时，才整条、不裁剪地收到广播 emit 帧；每帧只解析一次资源，资源非法的帧不经判定即不送达任何非 owner 流，被拒的帧只对该流丢弃。这类 Peer 的 `$events/result` 回复以 `gateway/invocation-unavailable` 失败。
+Host 组合可通过 `registerRemoteEvents()` 注册唯一的应用事件 source。Gateway 为它保留内部 `$events` logical endpoint，只接受空 `args`，并在 source 撤回时中止该注册打开的流。事件名单、参数校验、每个 Client 的队列及 opening `{ type: 'ready', clientId, host: { home } }` frame 中的 Host home 由 API Remotes 拥有。source factory 在返回 iterable 前同步挂好增量 listener，因此 Client 只在增量投递就绪后发布 generation 并开始 baseline 读取。
 
-已释放的 Peer 在事件流参与检查之前被拒绝。无论 principal 是否为 owner，`$events` 与 `$events/result` 都要求 `peer.interactions === 'answer'`；否则返回 `gateway/interactions-forbidden`。只有 owner Peer 接收并回答转发的 waterfall，回复必须来自持有该事件流的同一 Peer。`hasLiveClient()` 只计算未取消的 owner 回答流；非 owner 广播流、单独的 WebSocket 与已取消但尚未完成 iterator 清理的流均不计入。这一同步观察不保证后续投递成功或 Client Provider 已就绪。
+已释放及非 owner Peer 在事件流参与检查之前被拒绝。`$events` 与 `$events/result` 还要求 `peer.interactions === 'answer'`；否则返回 `gateway/interactions-forbidden`。回复必须来自持有该事件流的同一 Peer。`hasLiveClient()` 只计算未取消的 owner 回答流；单独的 WebSocket 不计入。已取消但尚未完成 iterator 清理的流也不计入。这一同步观察不保证后续投递成功或 Client Provider 已就绪。
 
 <a id="client-service-clientremote-ctx-key-remote"></a>
 ## Client 服务：`ClientRemote`（ctx key：`remote`）

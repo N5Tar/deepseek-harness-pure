@@ -19,8 +19,6 @@
       name: cordis:loop
       config:
         agents: []
-    - id: access
-      name: cordis:access
     - id: manager
       name: cordis:manager
     - id: action-cards

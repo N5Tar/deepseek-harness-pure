@@ -24,8 +24,6 @@ import {
 import type {} from '@deepseek-ai/dsh-plan-mode/client'
 // Type-only: the `goal` projection key merge (hint disambiguation).
 import type {} from '@deepseek-ai/dsh-goal/client'
-// Declare the Session and upload endpoints queried by useAccess in this component.
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { Translate } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ComposerBarProps } from '../contract/slots.ts'
 import { DraftEditor } from '../input/editor/DraftEditor.tsx'
@@ -47,7 +45,6 @@ export const InputBar = memo(function InputBar({
   retryFileUpload,
   toggleCommandMenu, stop, t,
   renderSlot, useBusyEnter, useFileUploads, useNotices, useLexicon, useMenuLauncher, useStopShortcut,
-  useAccess,
   useProjection, sessionId, variant, disabled: inert = false, blocked,
   workspacePickerOpen = false, onRequestWorkspace,
   placeholder, accessory,
@@ -56,13 +53,6 @@ export const InputBar = memo(function InputBar({
   const notice = useNotices(s => s)
   const busyEnter = useBusyEnter(s => s)
   const stopKeys = useStopShortcut(keys => keys)
-  // A page whose access snapshot excludes prompting, stopping, or uploading to this Session is offered
-  // no Send, no Stop, or no file intake rather than a disabled control. `useAccess` is undefined only
-  // without a Session, where the bar is an inert placeholder with no keyboard, stop, or file intake.
-  const promptDenied = useAccess('session/prompt') === false
-  const cancelDenied = useAccess('session/cancel') === false
-  const uploadDenied = useAccess('fileUploads/upload') === false
-  const stopAction = cancelDenied ? undefined : stop
   void useLexicon // hook seat stays bound by the inject compartment; text-ref decoration rides the shell's editor transforms
   const commandMenuOpen = useMenuLauncher(source => source === 'command')
   const [activity, setActivity] = useState(false)
@@ -236,7 +226,7 @@ export const InputBar = memo(function InputBar({
   // The host enforces the same image limits at submit for callers that bypass
   // this composer.
   const intakeFiles = useCallback((files: readonly File[], directories?: ReadonlySet<File>): void => {
-    if (uploadDenied || locked || machineBusy || (subagent !== null && !continuable)
+    if (locked || machineBusy || (subagent !== null && !continuable)
       || addFiles === undefined || files.length === 0) return
     const rejected = ((): string | null => {
       // Child prompts support images, but not generic file receipts or the
@@ -263,9 +253,9 @@ export const InputBar = memo(function InputBar({
       return addFiles(files, directories)
     })()
     if (rejected !== null) showToast(rejected)
-  }, [uploadDenied, locked, machineBusy, subagent, continuable, addFiles, attachments, imageLimits, showToast, t])
+  }, [locked, machineBusy, subagent, continuable, addFiles, attachments, imageLimits, showToast, t])
 
-  const canAcceptDrop = !uploadDenied && (subagent === null || continuable) && !locked && !machineBusy && addFiles !== undefined
+  const canAcceptDrop = (subagent === null || continuable) && !locked && !machineBusy && addFiles !== undefined
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const onPickFiles = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -355,7 +345,7 @@ export const InputBar = memo(function InputBar({
   // message waits for the Host.
   const primaryStops = running && subagent === null && !sending && (empty || blocked !== undefined)
   // Disabled native buttons may omit mouseleave; their tooltip must close from state.
-  const primaryDisabled = primaryStops ? stopAction === undefined : empty || disabled || machineBusy || uploadsPending
+  const primaryDisabled = primaryStops ? stop === undefined : empty || disabled || machineBusy || uploadsPending
   const interruptible = running && (continuable || (sending && subagent === null))
   const primarySubmitMode = resolveSubmitMode(busyEnter, running, 'enter', steeringAvailable)
   const plainMessageDraft = !empty && input?.phase === 'plain' && !draft.trimStart().startsWith('/')
@@ -368,7 +358,7 @@ export const InputBar = memo(function InputBar({
         : t('input.send')
   const onPrimary = (): void => {
     if (primaryStops) {
-      stopAction?.()
+      stop?.()
       return
     }
     if (keyboard === undefined) return // absent machine: the button is disabled
@@ -513,15 +503,15 @@ export const InputBar = memo(function InputBar({
             {input === undefined || sessionId === undefined ? null : <div className={activity ? css.activityExpanded : css.activity}>
               {renderSlot('conversation.input.activity', { locked, onActiveChange: setActivity })}
             </div>}
-            {interruptible && !cancelDenied && (
-              <Tooltip label={t('input.stop')} shortcutKeys={stopKeys} side="top" delayMs={500} disabled={stopAction === undefined} portal>
+            {interruptible && (
+              <Tooltip label={t('input.stop')} shortcutKeys={stopKeys} side="top" delayMs={500} disabled={stop === undefined} portal>
                 <button
                   type="button"
                   className={css.primary}
                   aria-label={t('input.stop')}
-                  disabled={stopAction === undefined}
+                  disabled={stop === undefined}
                   onMouseDown={keepFocus}
-                  onClick={stopAction}
+                  onClick={stop}
                 >
                   <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden>
                     <rect x="3" y="3" width="10" height="10" rx="3" fill="currentColor" />
@@ -529,35 +519,33 @@ export const InputBar = memo(function InputBar({
                 </button>
               </Tooltip>
             )}
-            {(primaryStops ? cancelDenied : promptDenied) ? null : (
-              <Tooltip label={primaryStops ? t('input.stop') : primaryLabel} shortcutKeys={primaryStops ? stopKeys : undefined} side="top" delayMs={500} disabled={primaryDisabled} portal>
-                <button
-                  type="button"
-                  className={css.primary}
-                  aria-label={primaryLabel}
-                  aria-busy={sending}
-                  data-sending={sending ? '' : undefined}
-                  disabled={primaryDisabled}
-                  onMouseDown={keepFocus}
-                  onClick={onPrimary}
-                >
-                  {primaryStops ? (
-                    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden>
-                      <rect x="3" y="3" width="10" height="10" rx="3" fill="currentColor" />
-                    </svg>
-                  ) : sending ? (
-                    <svg className={css.sendingSpinner} viewBox="0 0 16 16" width="16" height="16" aria-hidden>
-                      <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeOpacity="0.35" strokeWidth="2" />
-                      <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden>
-                      <path d="M8.3125 0.980183C8.66767 1.0531 8.97902 1.20418 9.2627 1.43233C9.48724 1.61297 9.73029 1.85793 9.97949 2.10714L14.707 6.83468L13.293 8.24874L9 3.95577V15.0417H7V3.95577L2.70703 8.24874L1.29297 6.83468L6.02051 2.10714C6.26971 1.85793 6.51277 1.61297 6.7373 1.43233C6.97662 1.23986 7.28445 1.04402 7.6875 0.980183C7.8973 0.947006 8.1031 0.95516 8.3125 0.980183Z" fill="currentColor" />
-                    </svg>
-                  )}
-                </button>
-              </Tooltip>
-            )}
+            <Tooltip label={primaryStops ? t('input.stop') : primaryLabel} shortcutKeys={primaryStops ? stopKeys : undefined} side="top" delayMs={500} disabled={primaryDisabled} portal>
+              <button
+                type="button"
+                className={css.primary}
+                aria-label={primaryLabel}
+                aria-busy={sending}
+                data-sending={sending ? '' : undefined}
+                disabled={primaryDisabled}
+                onMouseDown={keepFocus}
+                onClick={onPrimary}
+              >
+                {primaryStops ? (
+                  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden>
+                    <rect x="3" y="3" width="10" height="10" rx="3" fill="currentColor" />
+                  </svg>
+                ) : sending ? (
+                  <svg className={css.sendingSpinner} viewBox="0 0 16 16" width="16" height="16" aria-hidden>
+                    <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeOpacity="0.35" strokeWidth="2" />
+                    <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden>
+                    <path d="M8.3125 0.980183C8.66767 1.0531 8.97902 1.20418 9.2627 1.43233C9.48724 1.61297 9.73029 1.85793 9.97949 2.10714L14.707 6.83468L13.293 8.24874L9 3.95577V15.0417H7V3.95577L2.70703 8.24874L1.29297 6.83468L6.02051 2.10714C6.26971 1.85793 6.51277 1.61297 6.7373 1.43233C6.97662 1.23986 7.28445 1.04402 7.6875 0.980183C7.8973 0.947006 8.1031 0.95516 8.3125 0.980183Z" fill="currentColor" />
+                  </svg>
+                )}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

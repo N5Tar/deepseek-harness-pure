@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { act, cleanup, fireEvent, isInaccessible, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { allowAllAccess, bindSnapshotSelector, makeTranslate, RemoteError } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector, makeTranslate, RemoteError } from '@deepseek-ai/dsh-client-test-runtime'
 import type { RemoteResult } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { WorkspaceSnapshot } from '@deepseek-ai/dsh-api-workspace-controller/client'
@@ -167,7 +167,6 @@ function mount(
     useSessionStatus: select => select(new Map()),
     useSessionRetainInfo: () => undefined,
     useResource: () => { throw new Error('The task manager does not load document resources') },
-    ...allowAllAccess,
     useContextMenu: contextMenuHook(),
     onDelete: vi.fn<TaskManagerPageProps['onDelete']>(async () => 'deleted'),
     onRetry: vi.fn(async () => {}),
@@ -1739,7 +1738,6 @@ describe('Task manager details', () => {
       useContextMenu={contextMenuHook()} useResource={unread}
       useSessionStatus={unread}
       useSessionRetainInfo={unread}
-      {...allowAllAccess}
     />)
   }
 

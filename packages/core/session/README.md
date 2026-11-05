@@ -25,7 +25,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount `dsh-session` wherever a session must exist. It creates and holds event-sourced `Session` instances in memory; durable storage is layered on by a persistence plugin that subscribes to the `session/event` feed.
+Mount `dsh-session` wherever a session must exist. It creates and holds event-sourced `Session` instances in memory; durable storage is layered on by a persistence plugin that subscribes to the `session/event` feed. When Typert is mounted, the store contributes a live Session lookup by Session id; Remote admission belongs to the Gateway.
 
 ### Create and inspect sessions
 

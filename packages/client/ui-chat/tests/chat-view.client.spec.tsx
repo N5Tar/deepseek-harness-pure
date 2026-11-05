@@ -29,7 +29,7 @@ import type { WorkspaceSnapshot } from '@deepseek-ai/dsh-api-workspace-controlle
 import { SessionSeq, type SessionId } from '@deepseek-ai/dsh-session/types'
 import type { SessionStatusSnapshot } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { KeyedSnapshotSelectorHook, SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
-import { allowAllAccess, bindSnapshotSelector, makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector, makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { createSnapshotStore, type ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
 import type { ConnectionState } from '@deepseek-ai/dsh-client-connection/client'
 import { EMPTY_CONVERSATION_SNAPSHOT } from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -514,7 +514,7 @@ function makeHarness(
       createSnapshotStore<SessionStatusSnapshot>(new Map()),
     ),
     useWorkspaces: emptyWorkspaces(),
-    ...allowAllAccess,
+
     useProjection: (key: string) => {
       const inbox = useTestSession(snapshot => snapshot.testInbox)
       return key === 'inbox' ? inbox : outlineValue
@@ -3696,17 +3696,6 @@ describe('ChatView', () => {
     expect(buttons[0]!.getAttribute('aria-disabled')).toBe('true')
     fireEvent.click(buttons[0]!)
     expect(h.forkAt).not.toHaveBeenCalled()
-  })
-
-  it('omits the Turn Tail branch action when the Session access snapshot excludes session/fork', () => {
-    const h = makeHarness({ nodes: [user(1, 'question'), assistant(2, 'answer')], turnEnds: new Map([[1, 3]]) })
-    const useAccess = vi.fn((endpoint: string) => endpoint !== 'session/fork')
-    // Chat Node renderers read the harness's standard props object, so the override goes there.
-    Object.assign(h.props, { useAccess })
-    const view = render(<h.ChatView {...h.props} />)
-    expect(view.getAllByRole('button', { name: '复制' }).length).toBeGreaterThan(0)
-    expect(view.queryByRole('button', { name: '在新对话中分支' })).toBeNull()
-    expect(useAccess).toHaveBeenCalledWith('session/fork')
   })
 
   it('renders assistant Markdown across history, streaming, final, and interrupted states while user text stays literal', () => {

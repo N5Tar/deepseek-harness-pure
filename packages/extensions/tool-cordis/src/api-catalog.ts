@@ -769,6 +769,11 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         parameters: [],
       },
       {
+        signature: 'readonly maxRequestBodyBytes: number',
+        description: 'Buffered body limit for the shared /api HTTP route; streaming routes bypass this cap.',
+        parameters: [],
+      },
+      {
         signature: 'createSharedFetchHandler(channel: \'/api\'): ConnectionFetchHandler',
         description: 'Compose exact Fetch routes and the shared-channel RPC interceptor.',
         parameters: [{ name: 'channel', description: 'shared channel mounted by Connection.' }],
@@ -1304,7 +1309,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: '@Remote({ mode: \'stream\' }) async *changeRequestStates(signal: AbortSignal): AsyncIterable<ForgeChangeRequestStatesFrame>',
-        description: 'Stream the last known state of every change request that a listed Session the caller may read binds: the stored states first, then each state a poll changes or a new binding reveals. Listing reads no Session log: loaded Sessions report their bindings, others the cached Session summary, and a Session without one shows nothing until it is opened. Closed requests are polled at the idle cadence so reopening is observed. The stream ends when `signal` aborts or the Remote stops.',
+        description: 'Stream the last known state of every change request that a listed Session binds: the stored states first, then each state a poll changes or a new binding reveals. Listing reads no Session log: loaded Sessions report their bindings, others the cached Session summary, and a Session without one shows nothing until it is opened. Closed requests are polled at the idle cadence so reopening is observed. The stream ends when `signal` aborts or the Remote stops.',
         parameters: [{ name: 'signal', description: 'ends the stream.' }],
         returns: 'frames in publication order.',
         throws: ['when the Host lacks the Session query, projection cache, storage, or Session store service.'],
@@ -1827,85 +1832,6 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Attach an effect-scoped controller that can read and stop jobs. It serves the owners its registering context\'s scope covers, and start refuses an owner no attached controller serves.',
         parameters: [{ name: 'name', description: 'diagnostic label; duplicate names remain independent.' }],
         returns: 'disposer that detaches this controller.',
-      },
-    ],
-  },
-  {
-    key: 'liveshareShares',
-    summary: 'Owner-only Remote surface over the share-management operations.',
-    description: 'Owner-only Remote surface over the share-management operations.\n\nThe Gateway decides each call through remote access, so a `share-viewer` Peer is refused before a method runs; the owner Peer reaches the one implementation that owns each share-management side effect. `create` takes its Session as the `sessionId` of its single request object, so the Session resource kind\'s default resolver names that Session for the call without a reader declared here.',
-    methods: [
-      {
-        signature: '@Remote(\'create\') create(request: CreateShareRequest): Promise<CreatedShare>',
-        description: 'Publish one Session and store the share.',
-        parameters: [{ name: 'request', description: 'Session, title, access, lifetime, and both switches the owner chose.' }],
-        returns: 'The created share\'s link and stored values.',
-      },
-      {
-        signature: '@Remote(\'list\') list(): Promise<OwnerShareList>',
-        description: 'Refresh titles and Liveshare server authority, then list this host\'s shares.',
-        parameters: [],
-        returns: 'Every share this host publishes.',
-      },
-      {
-        signature: '@Remote(\'stop\') stop(request: StopShareRequest): Promise<StopShareResult>',
-        description: 'Stop one share locally, revoke its forks, and delete its row on the Liveshare server when reachable.',
-        parameters: [{ name: 'request', description: 'Share to stop.' }],
-        returns: 'Whether the row on the Liveshare server still needs a retry.',
-      },
-      {
-        signature: '@Remote(\'updatePermissions\') updatePermissions(request: UpdateSharePermissionsRequest): Promise<SharePermissions>',
-        description: 'Change one share\'s tier, fork switch, or both.',
-        parameters: [{ name: 'request', description: 'Share and the switches to change.' }],
-        returns: 'The permissions the share now carries.',
-      },
-      {
-        signature: '@Remote(\'setCapabilities\') setCapabilities(request: SetShareCapabilitiesRequest): Promise<ShareCapabilities>',
-        description: 'Replace one share\'s exposed plugin endpoints.',
-        parameters: [{ name: 'request', description: 'Share and the selection to store.' }],
-        returns: 'The capability selection the share now carries.',
-      },
-      {
-        signature: '@Remote(\'capabilities\') capabilities(): ShareCapabilityOffers',
-        description: 'Read the endpoints plugins currently offer.',
-        parameters: [],
-        returns: 'The live offer list.',
-      },
-      {
-        signature: '@Remote(\'relay\') relay(): OwnerRelayState',
-        description: 'Read the Liveshare server address the owner saved.',
-        parameters: [],
-        returns: 'The current Liveshare server state, with both address fields absent while none is saved.',
-      },
-      {
-        signature: '@Remote(\'setRelay\') setRelay(request: SetRelayRequest): Promise<OwnerRelayState>',
-        description: 'Choose the Liveshare server address later shares publish to.',
-        parameters: [{ name: 'request', description: 'Normalized address or null to clear the saved one.' }],
-        returns: 'The Liveshare server state after the change.',
-      },
-      {
-        signature: '@Remote(\'identity\') identity(request: OwnerIdentityRequest): Promise<OwnerIdentityStatus>',
-        description: 'Report this host\'s owner identity for one Liveshare server address.',
-        parameters: [{ name: 'request', description: 'Address to report, or the effective one when absent.' }],
-        returns: 'The owner identity status, without the credential.',
-      },
-      {
-        signature: '@Remote(\'audit\') audit(request: ShareAuditRequest): Promise<ShareAudit>',
-        description: 'Read the Liveshare server\'s durable audit trail for one share.',
-        parameters: [{ name: 'request', description: 'Share whose audit is read.' }],
-        returns: 'The audit events, or a structured failure when the Liveshare server cannot answer.',
-      },
-      {
-        signature: '@Remote(\'testRelay\') testRelay(): Promise<RelayConnectivityView>',
-        description: 'Check that the effective Liveshare server answers at all.',
-        parameters: [],
-        returns: 'The anonymous connectivity result.',
-      },
-      {
-        signature: '@Remote(\'testPublish\') testPublish(request: TestPublishRequest): Promise<RelayPublishView>',
-        description: 'Register one throwaway share to check whether this host may publish.',
-        parameters: [{ name: 'request', description: 'Session the throwaway registration names.' }],
-        returns: 'The Liveshare server\'s decision about this host\'s credential.',
       },
     ],
   },
@@ -2495,49 +2421,6 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
-    key: 'remoteAccess',
-    summary: 'Registry of access policies, the Gateway\'s access decisions, list filtering, and the per-Peer access snapshot.',
-    description: 'Registry of access policies, the Gateway\'s access decisions, list filtering, and the per-Peer access snapshot. Every composition that mounts the Gateway mounts this service too.',
-    methods: [
-      {
-        signature: 'registerPolicy<K extends Exclude<keyof PrincipalMap, \'owner\'>>(kind: K, policy: RemoteAccessPolicy<PrincipalMap[K]>): () => void',
-        description: 'Register the policy of one non-owner principal kind in the caller\'s fiber; open snapshots are recomputed on registration and removal.',
-        parameters: [{ name: 'kind', description: 'the principal kind the policy serves; never `owner`.' }, { name: 'policy', description: 'business-owned bindings and refusal reasons for principals of `kind`.' }],
-        returns: 'disposer removing this policy.',
-        throws: ['Error when `kind` already has a policy.'],
-      },
-      {
-        signature: 'invalidate(principal?: Principal): void',
-        description: 'Report that the bindings or condition answers for `principal` may have changed. Business packages call this on every grant, revocation, mode change, and expiry; open snapshots re-push, and the next failure of each policy is logged again.',
-        parameters: [{ name: 'principal', description: 'affected principal; omitted for every principal.' }],
-      },
-      {
-        signature: 'decide(request: RemoteAccessRequest<Principal>): RemoteAccessDecision',
-        description: 'Gateway-only: decide one request whose resources the Gateway resolved. The owner is allowed, and so is `remoteAccess/follow`: every Peer reads its own snapshot. Otherwise the action is allowed only when, on every listed resource, some binding of the principal\'s policy names that resource, has a role listing the action, and has no condition or a condition that allows. `bindings()` is called once per decision.',
-        parameters: [{ name: 'request', description: 'the caller or recipient, the action, the resources it touches, and a call\'s arguments.' }],
-        returns: '`allow`; or `deny` with `no-allow` when the principal kind has no policy, the first refusing condition\'s reason on the first resource no binding allows, else `explain()`\'s reason, else `no-allow`; `policy-failed` when `bindings()`, a condition, or `explain()` throws, logged once per policy until the next `invalidate()`. The Gateway throws `remote-access/denied` for a denied call and drops a denied event.',
-      },
-      {
-        signature: 'allows(resource: RemoteAccessResource): boolean',
-        description: 'Filter items inside a Remote method. The invocation is read from the Context that accessed this service, so call it as `this.ctx.remoteAccess.allows(resource)` from the Remote method. Each check reads the policy\'s bindings again, so a long-running stream sees binding changes from the next check on.',
-        parameters: [{ name: 'resource', description: 'resource of one result item.' }],
-        returns: 'true for the owner and outside a Remote call; otherwise whether the invocation\'s endpoint action is allowed on `resource` without call arguments, false when the policy is absent or fails.',
-      },
-      {
-        signature: 'snapshotFor(principal: Principal): RemoteAccessBaseline',
-        description: 'The baseline a page opens with before its snapshot stream connects; every index the webServer renders carries it under REMOTE_ACCESS_SNAPSHOT_KEY for the Peer the page speaks for.',
-        parameters: [{ name: 'principal', description: 'the page\'s caller identity.' }],
-        returns: 'the owner baseline for the owner; otherwise the principal\'s current grants.',
-      },
-      {
-        signature: '@Remote({ mode: \'stream\' }) async *follow(signal: AbortSignal): AsyncIterable<RemoteAccessFrame>',
-        description: 'Stream the calling Peer\'s access snapshot: one baseline, then `upsert` and `remove` frames after each `invalidate()` and each policy registration or removal that changes a grant. The owner receives only `{ owner: true }`. The generation ends when `signal` aborts or this service unloads, so a reloaded service starts every reader from a fresh baseline.',
-        parameters: [{ name: 'signal', description: 'generation cancellation.' }],
-        returns: 'the access frames of one generation.',
-      },
-    ],
-  },
-  {
     key: 'sandbox',
     summary: 'Abstract process-sandbox service.',
     description: 'Abstract process-sandbox service. confine must return enforcing argv or fail closed at wrap or runner-execution time; silent unconfined passthrough is forbidden. Functional probes arbitrate multi-runner chains and may be skipped for a sole candidate, whose own refusal remains the fail-closed end.',
@@ -2690,7 +2573,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         signature: '@Remote(\'search\') async search(request: SessionSearchRequest, signal: AbortSignal): Promise<SessionSearchValue>',
         description: 'Search visible Session content without resuming an Agent. A non-owner receives only the hits whose Session `allows()` admits; `hasMore` describes the bounded result before that filtering.',
         parameters: [{ name: 'request', description: 'literal message-content query.' }, { name: 'signal', description: 'cancellation for list and search reads.' }],
-        returns: 'authorized bounded Session search results.',
+        returns: 'bounded Session search results.',
       },
       {
         signature: '@Remote(\'create\') create(request: SessionCreateRequest): Promise<SessionCreateValue>',
@@ -3722,15 +3605,15 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         throws: ['{@link SubagentError} when listing dependencies are unavailable or the caller cancels.', 'SessionQueryError when the root catalog cannot be read.'],
       },
       {
-        signature: '@Remote({ name: \'prompt\', resources: { session: request => request.childSessionId } }) async prompt(request: SubagentPromptRequest, signal: AbortSignal): Promise<SubagentPromptReceipt>',
-        description: 'Deliver one browser-authored message to a continuable child through its live subagent tree root, retaining the caller-minted request identity and validated browser zone on the accepted message. Success identifies the message the child\'s inbox accepted; later execution is independent of this call. Queue delivery targets a later turn; steer delivery targets the nearest step and retains the Agent loop\'s best-effort fallback semantics. Image parts are admitted and persisted through the attachment store before delivery, and the child\'s model must accept image input. Cold resume at capacity rejects with `subagent/delivery-unavailable`. Access is checked on the target Session before attachment admission or restoration.',
+        signature: '@Remote(\'prompt\') async prompt(request: SubagentPromptRequest, signal: AbortSignal): Promise<SubagentPromptReceipt>',
+        description: 'Deliver one browser-authored message to a continuable child through its live subagent tree root, retaining the caller-minted request identity and validated browser zone on the accepted message. Success identifies the message the child\'s inbox accepted; later execution is independent of this call. Queue delivery targets a later turn; steer delivery targets the nearest step and retains the Agent loop\'s best-effort fallback semantics. Image parts are admitted and persisted through the attachment store before delivery, and the child\'s model must accept image input. Cold resume at capacity rejects with `subagent/delivery-unavailable`. The Gateway admits only owner Peers before attachment admission or restoration.',
         parameters: [{ name: 'request', description: 'target id, delivery, minted identity, content, and optional browser zone.' }, { name: 'signal', description: 'carrier cancellation, owning the call until inbox acceptance.' }],
         returns: 'the accepted message\'s inbox identity.',
         throws: ['{RemoteError} `gateway/bad-request`, `subagent/attachment-invalid`, `subagent/invalid-time-zone`, `subagent/not-resumable`, `subagent/unauthorized`, `subagent/delivery-unavailable`, `gateway/cancelled`, or `gateway/internal`.'],
       },
       {
-        signature: '@Remote({ name: \'interruptByUser\', resources: { session: childSessionId => childSessionId } }) interruptByUser(childSessionId: SessionId): SubagentInterruptReceipt',
-        description: 'Remote face of interrupt, authorized on the target Session by the Gateway. No catalog, history, persistence, or parent Agent lookup runs. Absent, idle, and already-completed targets are accepted no-ops there.',
+        signature: '@Remote(\'interruptByUser\') interruptByUser(childSessionId: SessionId): SubagentInterruptReceipt',
+        description: 'Remote face of interrupt, admitted only for owner Peers by the Gateway. No catalog, history, persistence, or parent Agent lookup runs. Absent, idle, and already-completed targets are accepted no-ops there.',
         parameters: [{ name: 'childSessionId', description: 'durable child session id to interrupt.' }],
         returns: 'acknowledgement that the cancel signal was admitted, not that the target is quiescent.',
         throws: ['{RemoteError} `gateway/bad-request` for an empty id, otherwise `gateway/internal`.'],
@@ -4550,7 +4433,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: '@Remote({ mode: \'stream\' }) async *follow(signal: AbortSignal): AsyncIterable<WorkspaceFollowFrame>',
-        description: 'Stream a complete Workspace baseline followed by ordered increments. A non-owner receives only the Workspaces and Sessions `allows()` admits. When a delivered Workspace is no longer admitted at its next change or the next order change, the stream sends a `replace` frame with the complete filtered state instead of a `remove`, because a Client never resurrects a removed Workspace; a `remove` frame reports a deletion and reaches only a Client that received that Workspace.',
+        description: 'Stream a complete Workspace baseline followed by ordered increments.',
         parameters: [{ name: 'signal', description: 'generation cancellation.' }],
         returns: 'baseline followed by ordered Workspace increments.',
       },
@@ -5480,7 +5363,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'ActionCardVerb',
-    declaration: 'export interface ActionCardVerb {\n    readonly global?: true;\n    readonly writes?: true;\n}',
+    declaration: 'export interface ActionCardVerb {\n    readonly writes?: true;\n}',
   },
   {
     name: 'ActionCardView',
@@ -5831,10 +5714,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type CheckState = \'pending\' | \'success\' | \'failure\' | \'neutral\' | \'skipped\' | \'cancelled\';',
   },
   {
-    name: 'ClaimOutcome',
-    declaration: 'export interface ClaimOutcome {\n    readonly claimed: number;\n    readonly skipped: number;\n}',
-  },
-  {
     name: 'ClientArtifactBaseline',
     declaration: 'export interface ClientArtifactBaseline {\n    readonly path: string;\n    readonly mtimeMs: number;\n    readonly ctimeMs: number;\n    readonly size: number;\n}',
   },
@@ -6095,10 +5974,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface CreateAgentOptions {\n    readonly sessionId: SessionId;\n    readonly meta?: {\n        readonly cwd?: string;\n        readonly parentSession?: SessionId;\n        readonly isSeeded?: boolean;\n        readonly origin?: \'subagent\';\n        readonly delegationDepth?: number;\n        readonly agentPreset?: string;\n    };\n    readonly inheritedEventCount?: SessionLogOffset;\n    readonly seed?: readonly SessionEvent[];\n    readonly agentOptions?: AgentOptions;\n    readonly signal?: AbortSignal;\n    readonly setup?: AgentSetup;\n}',
   },
   {
-    name: 'CreatedShare',
-    declaration: 'export interface CreatedShare {\n    readonly link: string;\n    readonly shareId: string;\n    readonly sessionId: string;\n    readonly sessionMode: \'view\' | \'write\';\n    readonly access: ShareAccess;\n}',
-  },
-  {
     name: 'CreatedWorktree',
     declaration: 'export interface CreatedWorktree {\n    path: string;\n    branch: string;\n    baseCommit: string;\n    repositoryRoot: string;\n}',
   },
@@ -6113,10 +5988,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'CreateSessionOptions',
     declaration: 'export interface CreateSessionOptions {\n    readonly seed?: readonly SessionEvent[];\n    readonly inheritedEventCount?: SessionLogOffset;\n    readonly meta?: {\n        readonly cwd?: string;\n        readonly parentSession?: SessionId;\n        readonly createdAt?: number;\n        readonly isSeeded?: boolean;\n        readonly origin?: \'subagent\';\n        readonly delegationDepth?: number;\n        readonly agentPreset?: string;\n    };\n}',
-  },
-  {
-    name: 'CreateShareRequest',
-    declaration: 'export interface CreateShareRequest {\n    readonly sessionId: string;\n    readonly sessionTitle?: string;\n    readonly accessMode?: \'open\' | \'selected\';\n    readonly ttlMinutes?: number;\n    readonly allowedSubjectIds?: readonly string[];\n    readonly allowsFork?: boolean;\n    readonly sessionMode?: \'view\' | \'write\';\n}',
   },
   {
     name: 'CreateTeamTaskRequest',
@@ -7419,30 +7290,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type OTelEventScalar = string | number | boolean;',
   },
   {
-    name: 'OwnerIdentityRequest',
-    declaration: 'export interface OwnerIdentityRequest {\n    readonly relay?: string;\n}',
-  },
-  {
-    name: 'OwnerIdentityState',
-    declaration: 'export type OwnerIdentityState = \'verified\' | \'expired\' | \'unverified\' | \'relay-unsupported\';',
-  },
-  {
-    name: 'OwnerIdentityStatus',
-    declaration: 'export interface OwnerIdentityStatus {\n    readonly state: OwnerIdentityState;\n    readonly relay: string;\n    readonly displayName?: string;\n    readonly subjectId?: string;\n    readonly avatarUrl?: string;\n    readonly expiresAt?: string;\n    readonly renewed?: boolean;\n    readonly claim?: ClaimOutcome;\n}',
-  },
-  {
-    name: 'OwnerRelayState',
-    declaration: 'export interface OwnerRelayState {\n    readonly configured?: string;\n    readonly override?: string;\n    readonly effective?: string;\n}',
-  },
-  {
-    name: 'OwnerShareList',
-    declaration: 'export interface OwnerShareList {\n    readonly shares: readonly OwnerShareView[];\n}',
-  },
-  {
-    name: 'OwnerShareView',
-    declaration: 'export interface OwnerShareView {\n    readonly shareId: string;\n    readonly sessionId: string;\n    readonly sessionTitle: string;\n    readonly link: string;\n    readonly createdAt: string;\n    readonly expiresAt?: string;\n    readonly allowsFork: boolean;\n    readonly sessionMode: \'view\' | \'write\';\n    readonly viewerPluginAccess?: ViewerPluginAccess;\n    readonly viewerPlugins: readonly ViewerPluginPolicy[];\n    readonly online: boolean;\n    readonly access?: ShareAccess;\n}',
-  },
-  {
     name: 'PackageResult',
     declaration: 'export interface PackageResult {\n    exitCode: number;\n    output: string;\n    truncated: boolean;\n    logPath: string;\n    kind?: PluginInstallFailureKind;\n    timedOut?: boolean;\n    incompatible?: IncompatiblePlugin[];\n}',
   },
@@ -7851,72 +7698,8 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface RegistryAttempt {\n    readonly registry: Registry;\n    readonly problem?: \'not-found\' | \'network\' | \'unknown\';\n    readonly reason?: string;\n}',
   },
   {
-    name: 'RelayConnectivityView',
-    declaration: 'export interface RelayConnectivityView {\n    readonly ok: boolean;\n    readonly httpReachable: boolean;\n    readonly blocking: boolean;\n    readonly error?: string;\n}',
-  },
-  {
-    name: 'RelayPublishView',
-    declaration: 'export interface RelayPublishView {\n    readonly ok: boolean;\n    readonly blocking: boolean;\n    readonly error?: string;\n}',
-  },
-  {
     name: 'Reload',
     declaration: 'export interface Reload {\n    filename: string;\n    modules: ReloadModules;\n    runtime?: Plugin.Runtime | undefined;\n}',
-  },
-  {
-    name: 'RemoteAccessAction',
-    declaration: 'export type RemoteAccessAction = RemoteAccessEndpoint | `event:${string}`;',
-  },
-  {
-    name: 'RemoteAccessBaseline',
-    declaration: 'export type RemoteAccessBaseline = Extract<RemoteAccessFrame, {\n    type: \'baseline\';\n}>;',
-  },
-  {
-    name: 'RemoteAccessBinding',
-    declaration: 'export type RemoteAccessBinding = {\n    [K in RemoteAccessResourceKind]: {\n        readonly role: RemoteAccessRole<K>;\n        readonly resource: RemoteAccessResourceOf<K>;\n        readonly condition?: RemoteAccessCondition<K>;\n    };\n}[RemoteAccessResourceKind];',
-  },
-  {
-    name: 'RemoteAccessCondition',
-    declaration: 'export type RemoteAccessCondition<K extends RemoteAccessResourceKind> = (request: {\n    readonly action: RemoteAccessAction;\n    readonly resource: RemoteAccessResourceOf<K>;\n    readonly args?: Readonly<Record<string, unknown>>;\n}) => RemoteAccessDecision;',
-  },
-  {
-    name: 'RemoteAccessDecision',
-    declaration: 'export type RemoteAccessDecision = {\n    readonly kind: \'allow\';\n} | {\n    readonly kind: \'deny\';\n    readonly reason: string;\n};',
-  },
-  {
-    name: 'RemoteAccessEndpoint',
-    declaration: 'export type RemoteAccessEndpoint = `${string}/${string}`;',
-  },
-  {
-    name: 'RemoteAccessFrame',
-    declaration: 'export type RemoteAccessFrame = {\n    readonly type: \'baseline\';\n    readonly owner: true;\n} | {\n    readonly type: \'baseline\';\n    readonly owner: false;\n    readonly grants: readonly RemoteAccessGrant[];\n} | {\n    readonly type: \'upsert\';\n    readonly grant: RemoteAccessGrant;\n} | {\n    readonly type: \'remove\';\n    readonly resource: RemoteAccessResource;\n};',
-  },
-  {
-    name: 'RemoteAccessGrant',
-    declaration: 'export interface RemoteAccessGrant {\n    readonly resource: RemoteAccessResource;\n    readonly actions: readonly string[];\n}',
-  },
-  {
-    name: 'RemoteAccessPolicy',
-    declaration: 'export interface RemoteAccessPolicy<P extends Principal> {\n    bindings(principal: P): readonly RemoteAccessBinding[];\n    explain?(request: RemoteAccessRequest<P>): string | undefined;\n}',
-  },
-  {
-    name: 'RemoteAccessRequest',
-    declaration: 'export interface RemoteAccessRequest<P extends Principal> {\n    readonly principal: P;\n    readonly action: RemoteAccessAction;\n    readonly resources: readonly RemoteAccessResource[];\n    readonly args?: Readonly<Record<string, unknown>>;\n}',
-  },
-  {
-    name: 'RemoteAccessResource',
-    declaration: 'export type RemoteAccessResource = {\n    readonly kind: \'global\';\n} | {\n    [Kind in TypertResourceKind]: {\n        readonly kind: Kind;\n        readonly id: TypertResourceId<TypertResourceMap[Kind]>;\n    };\n}[TypertResourceKind];',
-  },
-  {
-    name: 'RemoteAccessResourceKind',
-    declaration: 'export type RemoteAccessResourceKind = \'global\' | TypertResourceKind;',
-  },
-  {
-    name: 'RemoteAccessResourceOf',
-    declaration: 'export type RemoteAccessResourceOf<K extends RemoteAccessResourceKind> = Extract<RemoteAccessResource, {\n    readonly kind: K;\n}>;',
-  },
-  {
-    name: 'RemoteAccessRole',
-    declaration: 'export interface RemoteAccessRole<K extends RemoteAccessResourceKind> {\n    readonly name: string;\n    readonly resource: K;\n    readonly actions: readonly RemoteAccessAction[];\n}',
   },
   {
     name: 'RemoteError',
@@ -8875,14 +8658,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type SessionWorkspacePathApplication = NativeFileApplication;',
   },
   {
-    name: 'SetRelayRequest',
-    declaration: 'export interface SetRelayRequest {\n    readonly relayUrl: string | null;\n}',
-  },
-  {
-    name: 'SetShareCapabilitiesRequest',
-    declaration: 'export interface SetShareCapabilitiesRequest {\n    readonly shareId: string;\n    readonly viewerPluginAccess?: ViewerPluginAccess;\n    readonly viewerPlugins?: readonly ViewerPluginPolicy[];\n}',
-  },
-  {
     name: 'SettingsDescribeOptions',
     declaration: 'export interface SettingsDescribeOptions {\n    redactSecrets?: boolean;\n}',
   },
@@ -8917,38 +8692,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SettingsSecretView',
     declaration: 'export interface SettingsSecretView {\n    path: string[];\n    set: boolean;\n}',
-  },
-  {
-    name: 'ShareAccess',
-    declaration: 'export interface ShareAccess {\n    readonly mode: \'open\' | \'selected\';\n    readonly selected: readonly ShareAccessSelection[];\n    readonly deploymentAllowedSubjectIds: readonly string[];\n    readonly shareAllowedSubjectIds: readonly string[];\n    readonly broadenedByDeploymentSubjects: boolean;\n    readonly identityKeyAcl: true;\n}',
-  },
-  {
-    name: 'ShareAccessSelection',
-    declaration: 'export interface ShareAccessSelection {\n    readonly providerId: string;\n    readonly tenantId: string;\n    readonly subjectId: string;\n    readonly identityKey: string;\n}',
-  },
-  {
-    name: 'ShareAudit',
-    declaration: 'export interface ShareAudit {\n    readonly events: readonly ShareAuditEntryView[];\n}',
-  },
-  {
-    name: 'ShareAuditEntryView',
-    declaration: 'export interface ShareAuditEntryView {\n    readonly id: string;\n    readonly action: string;\n    readonly createdAt: string;\n    readonly actor?: string;\n    readonly detail?: JsonValue;\n}',
-  },
-  {
-    name: 'ShareAuditRequest',
-    declaration: 'export interface ShareAuditRequest {\n    readonly shareId: string;\n}',
-  },
-  {
-    name: 'ShareCapabilities',
-    declaration: 'export interface ShareCapabilities {\n    readonly shareId: string;\n    readonly viewerPluginAccess: ViewerPluginAccess;\n    readonly viewerPlugins: readonly ViewerPluginPolicy[];\n}',
-  },
-  {
-    name: 'ShareCapabilityGroup',
-    declaration: 'export interface ShareCapabilityGroup {\n    readonly plugin: string;\n    readonly package?: string;\n    readonly titles?: Readonly<Record<string, string>>;\n    readonly endpoints: readonly string[];\n    readonly descriptions?: Readonly<Record<string, string>>;\n}',
-  },
-  {
-    name: 'ShareCapabilityOffers',
-    declaration: 'export interface ShareCapabilityOffers {\n    readonly capabilities: readonly ShareCapabilityGroup[];\n}',
   },
   {
     name: 'ShellExecRequest',
@@ -9163,14 +8906,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type StagedAttachment = {\n    readonly type: \'file\';\n    readonly attachment: FileAttachmentRef;\n} | {\n    readonly type: \'image\';\n    readonly attachment: ImageAttachmentRef;\n    readonly encodedBytes: number;\n};',
   },
   {
-    name: 'StopShareRequest',
-    declaration: 'export interface StopShareRequest {\n    readonly shareId: string;\n}',
-  },
-  {
-    name: 'StopShareResult',
-    declaration: 'export interface StopShareResult {\n    readonly ok: true;\n    readonly relay?: \'unreachable\';\n}',
-  },
-  {
     name: 'StorageBackend',
     declaration: 'export interface StorageBackend {\n    readonly kv?: KvFacet;\n    close(): Promise<void>;\n}',
   },
@@ -9260,7 +8995,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SubagentRuntime',
-    declaration: 'export class SubagentRuntime extends TypertRemoteService {\n    static Config;\n    static inject;\n    constructor(ctx: Context, private config: Config);\n    resolveMaxDepth(configured?: number | \'provider-managed\'): number | undefined;\n    startActivation(spec: SubagentActivationSpec & {\n        readonly childId: SessionId;\n    }): Promise<SubagentActivation & {\n        readonly messageId: MessageId;\n    }>;\n    startActivation(spec: SubagentActivationSpec): Promise<SubagentActivation>;\n    async startActivation(spec: SubagentActivationSpec): Promise<SubagentActivation>;\n    rootOf(caller: Agent): Agent;\n    async waitForTreeWork(root: Agent): Promise<boolean>;\n    async sendMessage(sender: Agent, targetId: SessionId, content: ContentBlock[], options: SubagentSendMessageOptions): Promise<MessageId>;\n    interrupt(targetSessionId: SessionId, authority: SubagentInterruptAuthority): void;\n    async drainDescendants(parents: readonly Agent[]): Promise<void>;\n    listDescendants(rootSessionId: SessionId, signal?: AbortSignal): Promise<SubagentDescendantListEntry[]>;\n    @Remote({ name: \'prompt\', resources: { session: request => request.childSessionId } })\n    async prompt(request: SubagentPromptRequest, signal: AbortSignal): Promise<SubagentPromptReceipt>;\n    @Remote({ name: \'interruptByUser\', resources: { session: childSessionId => childSessionId } })\n    interruptByUser(childSessionId: SessionId): SubagentInterruptReceipt;\n    registerProvider(provider: SubagentProvider): () =>  /* …truncated — full shape in source */',
+    declaration: 'export class SubagentRuntime extends TypertRemoteService {\n    static Config;\n    static inject;\n    constructor(ctx: Context, private config: Config);\n    resolveMaxDepth(configured?: number | \'provider-managed\'): number | undefined;\n    startActivation(spec: SubagentActivationSpec & {\n        readonly childId: SessionId;\n    }): Promise<SubagentActivation & {\n        readonly messageId: MessageId;\n    }>;\n    startActivation(spec: SubagentActivationSpec): Promise<SubagentActivation>;\n    async startActivation(spec: SubagentActivationSpec): Promise<SubagentActivation>;\n    rootOf(caller: Agent): Agent;\n    async waitForTreeWork(root: Agent): Promise<boolean>;\n    async sendMessage(sender: Agent, targetId: SessionId, content: ContentBlock[], options: SubagentSendMessageOptions): Promise<MessageId>;\n    interrupt(targetSessionId: SessionId, authority: SubagentInterruptAuthority): void;\n    async drainDescendants(parents: readonly Agent[]): Promise<void>;\n    listDescendants(rootSessionId: SessionId, signal?: AbortSignal): Promise<SubagentDescendantListEntry[]>;\n    @Remote(\'prompt\')\n    async prompt(request: SubagentPromptRequest, signal: AbortSignal): Promise<SubagentPromptReceipt>;\n    @Remote(\'interruptByUser\')\n    interruptByUser(childSessionId: SessionId): SubagentInterruptReceipt;\n    registerProvider(provider: SubagentProvider): () => void;\n    getProvider(name: string): SubagentProvider | undefined;\n}',
   },
   {
     name: 'SubagentSendMessageOptions',
@@ -9505,10 +9240,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TerminalWaitReason',
     declaration: 'export type TerminalWaitReason = \'stdin_read\' | \'inferred_idle\' | \'timeout\' | \'session_exit\';',
-  },
-  {
-    name: 'TestPublishRequest',
-    declaration: 'export interface TestPublishRequest {\n    readonly sessionId: string;\n}',
   },
   {
     name: 'TextProps',
@@ -9816,7 +9547,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'TypertRemoteEventFrame',
-    declaration: 'export interface TypertRemoteEventFrame {\n    readonly event: string;\n    readonly args: readonly unknown[];\n    readonly resources?: Readonly<Record<string, TypertResourceReader>>;\n}',
+    declaration: 'export interface TypertRemoteEventFrame {\n    readonly event: string;\n    readonly args: readonly unknown[];\n}',
   },
   {
     name: 'TypertRemoteEventInvocation',
@@ -9837,26 +9568,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TypertRemoteValue',
     declaration: 'export interface TypertRemoteValue<Value = unknown> {\n    readonly create: () => TypertSchema<Value>;\n    readonly description?: string | undefined;\n    readonly jsonSchema?: Readonly<Record<string, unknown>> | undefined;\n    readonly jsonSchemaError?: string | undefined;\n}',
-  },
-  {
-    name: 'TypertResource',
-    declaration: 'export interface TypertResource<Id> {\n    readonly [RESOURCE_ID]: Id;\n}',
-  },
-  {
-    name: 'TypertResourceId',
-    declaration: 'export type TypertResourceId<Resource> = Resource extends TypertResource<infer Id> ? Id : never;',
-  },
-  {
-    name: 'TypertResourceKind',
-    declaration: 'export type TypertResourceKind = Extract<keyof TypertResourceMap, string>;',
-  },
-  {
-    name: 'TypertResourceMap',
-    declaration: 'export interface TypertResourceMap {\n}',
-  },
-  {
-    name: 'TypertResourceReader',
-    declaration: 'export type TypertResourceReader = {\n    read(...args: readonly unknown[]): unknown;\n}[\'read\'];',
   },
   {
     name: 'TypertSchema',
@@ -9911,10 +9622,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface UpdateBundleOptions {\n    readonly registry?: Registry;\n    readonly requestId?: PluginInstallRequestId;\n}',
   },
   {
-    name: 'UpdateSharePermissionsRequest',
-    declaration: 'export interface UpdateSharePermissionsRequest {\n    readonly shareId: string;\n    readonly sessionMode?: \'view\' | \'write\';\n    readonly allowsFork?: boolean;\n    readonly ttlMinutes?: number | null;\n}',
-  },
-  {
     name: 'UpdateTeamTaskRequest',
     declaration: 'export interface UpdateTeamTaskRequest {\n    readonly taskId: TeamTaskId;\n    readonly expectedRevision: number;\n    readonly action: TeamTaskAction;\n    readonly subject?: string;\n    readonly description?: string;\n    readonly blockedBy?: readonly TeamTaskId[];\n    readonly writeScopes?: readonly string[];\n    readonly owner?: SessionId;\n}',
   },
@@ -9925,14 +9632,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'VerifiedWebhookDelivery',
     declaration: 'export interface VerifiedWebhookDelivery<K extends string = string> {\n    readonly kind: K;\n    readonly source: WebhookSourceId;\n    readonly deliveryId: WebhookDeliveryId;\n    readonly event: WebhookEventOf<K>;\n    readonly receivedAt: number;\n}',
-  },
-  {
-    name: 'ViewerPluginAccess',
-    declaration: 'export type ViewerPluginAccess = \'all\' | \'none\' | \'custom\';',
-  },
-  {
-    name: 'ViewerPluginPolicy',
-    declaration: 'export interface ViewerPluginPolicy {\n    readonly plugin: string;\n    readonly mode: \'all\' | \'none\' | \'selected\';\n    readonly endpoints?: readonly string[];\n}',
   },
   {
     name: 'WebBootBatch',

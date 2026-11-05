@@ -28,7 +28,11 @@ it.each(['accepted', 'refused', 'disconnected', 'pending'] as const)('initialize
   const disposers: (() => void)[] = []
   let operations: AccountSectionInjected | undefined
   const ctx = {
-    effect: (install: () => (() => void) | undefined) => { const dispose = install(); if (dispose) disposers.push(dispose) },
+    effect: (install: () => (() => void) | Iterable<() => void> | undefined) => {
+      const effect = install()
+      if (typeof effect === 'function') disposers.push(effect)
+      else if (effect !== undefined) disposers.push(...effect)
+    },
     locale: { register: () => () => {}, bind: () => (key: string) => key, getSnapshot: () => ({ active: 'en' }) },
     configForms: {
       get: () => ({ subscribe: () => () => {}, getSnapshot: () => ({ status: 'loading', value: undefined }) }),
@@ -41,14 +45,6 @@ it.each(['accepted', 'refused', 'disconnected', 'pending'] as const)('initialize
       },
       register: (entry: { inject?: () => AccountSectionInjected }) => {
         if (entry.inject) operations = entry.inject()
-        return () => {}
-      },
-    },
-    remoteAccess: {
-      whenAccess: (_action: string, install: () => (() => void) | Iterable<() => void> | undefined) => {
-        const effect = install()
-        if (typeof effect === 'function') disposers.push(effect)
-        else if (effect !== undefined) for (const dispose of effect) disposers.push(dispose)
         return () => {}
       },
     },

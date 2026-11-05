@@ -1,6 +1,5 @@
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
-import { installFileActions } from './file-actions.ts'
 import { configurationFailure, channelSaveFailure, configurationMessage } from './update-configuration.ts'
 import type { DesktopChannelState, DesktopChannelChangeResult } from '@deepseek-ai/dsh-client-ui-settings-general/types'
 import { DesktopUpdateSettings } from './update-settings.ts'
@@ -864,7 +863,6 @@ async function main(): Promise<void> {
       || !event.senderFrame.url.startsWith('dsh-app://app/')) throw new Error('Rejected Platform command')
     return owner
   }
-  installFileActions(assertMainApplication, () => hostUrl)
   ipcMain.on(PLATFORM_IPC.bootstrap, (event) => {
     try { event.returnValue = platformView.bootstrap(event) }
     catch { event.returnValue = null }

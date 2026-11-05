@@ -12,7 +12,6 @@
     { "path": "../../core/agent" },
     { "path": "../../core/session" },
     { "path": "../../session/session-projection" },
-    { "path": "../../api/remote-access/tsconfig.host.json" },
     { "path": "../../sandbox/sandbox-policy" },
     { "path": "../../util/values" }
   ],

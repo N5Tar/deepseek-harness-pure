@@ -62,7 +62,7 @@ export class PluginRecommendations extends TypertRemoteService {
       action: ACTION, skill: 'official-plugins', details: detailsSchema,
       invitation: 'End with at most one short invitation in the user’s language to click Enable below; '
         + 'do not say the plugin is already on.',
-      verbs: { enable: { global: true } },
+      verbs: { enable: {} },
       openPhases: ['failed', 'unconfirmed'],
       statusGuidance: 'Plugin cards: enabled means the plugin is on now, or after a DSH restart when application is restart-required; '
         + 'already-enabled means it was on before; failed, or unconfirmed when a reload cut enabling off, can be retried from the card; '

@@ -187,7 +187,6 @@ describe('Session-list work slices', () => {
     h.ctx.provide('typert', {
       lookups: { configure: () => dispose },
       contexts: { configureHost: () => dispose },
-      resources: { register: () => dispose },
     } as never)
     h.ctx.provide('fileUploads', { registerAgentResolver: () => dispose } as never)
     h.ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: 'test', model: 'test' }) } as never)

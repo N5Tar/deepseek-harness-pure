@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-test-bench",
-  "description": "jsdom slot bench for the desktop base UI: real Cordis Context, SlotRegistry and renderer, a Remote double, and access/translate fixtures without Session, Agent, or Workspace business doubles",
+  "description": "jsdom slot bench for the desktop base UI: real Cordis Context, SlotRegistry and renderer, a Remote double, and translation fixtures without Session, Agent, or Workspace business doubles",
   "version": "0.2.2-alpha.3",
   "publishConfig": {
     "access": "public"
@@ -29,7 +29,6 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-api-remote-access": "workspace:*",
     "@deepseek-ai/dsh-client-store": "workspace:*",
     "@deepseek-ai/dsh-client-ui-context-menu": "workspace:*",
     "@deepseek-ai/dsh-client-ui-renderer": "workspace:*",
@@ -41,7 +40,6 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-api-remote-access": "workspace:*",
     "@deepseek-ai/dsh-client-store": "workspace:*",
     "@deepseek-ai/dsh-client-ui-context-menu": "workspace:*",
     "@deepseek-ai/dsh-client-ui-renderer": "workspace:*",

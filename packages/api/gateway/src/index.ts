@@ -11,8 +11,6 @@ import type {
   ConnectionRpcAttachment,
   ConnectionRpcHandler,
 } from '@deepseek-ai/dsh-client-connection'
-import type { RemoteAccessDecision } from '@deepseek-ai/dsh-api-remote-access'
-import { callResources, eventResources } from './access.ts'
 import { Deque } from '@deepseek-ai/dsh-deque'
 import type { WebUpgradeRoute } from '@deepseek-ai/dsh-host-webserver'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
@@ -27,10 +25,7 @@ import {
   type InvocationDescriptor,
   type InvocationParameterDescriptor,
   type PeerScope,
-  type Principal,
-  type RemoteAccessResource,
   type RemoteInvocation,
-  type RemoteMethodMarker,
   type TypertCodec,
   type TypertGatewayBinding,
 } from '@deepseek-ai/dsh-typert-protocol'
@@ -128,10 +123,6 @@ interface RemoteEventClient {
   readonly queue: RemoteEventQueue
   readonly signal: AbortSignal
   readonly deliveries: Map<RemoteEventId, PendingRemoteEvent>
-  /** The stream's Peer principal: only the owner answers scoped waterfalls and receives every broadcast. */
-  readonly principal: Principal
-  /** Only owner streams receive scoped waterfalls they could answer; other Peers receive admitted broadcasts only. */
-  readonly answers: boolean
 }
 
 interface PendingRemoteEvent {
@@ -212,7 +203,7 @@ export class TypertGatewayError extends RemoteError<TypertGatewayErrorCode> {
  * @typert service typertGateway
  */
 export class TypertGatewayService extends Service implements TypertGateway {
-  static inject = ['typert', 'remoteAccess']
+  static inject = ['typert']
   static Config: z<Config> = z.object({
     websocketHeartbeatIntervalMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS)
       .default(DEFAULT_WEBSOCKET_HEARTBEAT_INTERVAL_MS),
@@ -330,7 +321,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
    */
   hasLiveClient(): boolean {
     for (const client of this.remoteEventClients.values()) {
-      if (client.answers && !client.signal.aborted) return true
+      if (!client.signal.aborted) return true
     }
     return false
   }
@@ -384,18 +375,6 @@ export class TypertGatewayService extends Service implements TypertGateway {
     if (this.ctx.typert.local.get(endpoint) !== undefined || this.ctx.typert.local.hasSeen(endpoint)) return true
     this.srcClaims ??= this.collectSrcClaims()
     return this.srcClaims.has(endpoint)
-  }
-
-  /**
-   * The `resources` readers of a method, read from the root Service's class
-   * metadata so a Context method's receiver is not resolved before access is
-   * decided; `undefined` when the Service is absent or the method declares none.
-   */
-  private resourceReaders(descriptor: InvocationDescriptor): RemoteMethodMarker['resources'] {
-    const receiver: unknown = this.ctx.get(descriptor.service)
-    if (!isObject(receiver)) return undefined
-    const member = descriptor.implementation ?? descriptor.method
-    return remoteMethods(originalOf(receiver)).find(marker => marker.method === member)?.resources
   }
 
   private collectSrcClaims(): ReadonlySet<string> {
@@ -496,12 +475,8 @@ export class TypertGatewayService extends Service implements TypertGateway {
   ): Promise<ConnectionRpcResult> {
     if (endpoint === REMOTE_EVENT_RESULT_ENDPOINT) {
       try {
-        assertPeerLive(peer, endpoint)
+        requireOwnerPeer(peer, endpoint)
         requireInteractions(peer, endpoint)
-        // oxlint-disable-next-line typescript/no-unnecessary-condition -- other packages merge non-owner kinds into PrincipalMap.
-        if (peer.principal.kind !== 'owner') {
-          throw new TypertGatewayError('gateway/invocation-unavailable', endpoint, 'only owner Peers answer forwarded Remote events')
-        }
         const result = parseRemoteEventResultPayload(payload)
         const client = this.remoteEventClients.get(result.clientId)
         if (client === undefined) {
@@ -534,7 +509,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
     if (endpoint === REMOTE_EVENT_STREAM_ENDPOINT) {
       // A Gateway-owned stream reads no uplink: releasing it now keeps its items out of the bounded inbox.
       releaseUplink(uplink)
-      assertPeerLive(peer, endpoint)
+      requireOwnerPeer(peer, endpoint)
       requireInteractions(peer, endpoint)
       return this.openRemoteEvents(payload, signal, peer)
     }
@@ -579,14 +554,9 @@ export class TypertGatewayService extends Service implements TypertGateway {
       queue: new RemoteEventQueue(),
       signal: lifetime,
       deliveries: new Map(),
-      principal: peer.principal,
-      // oxlint-disable-next-line typescript/no-unnecessary-condition -- other packages merge non-owner kinds into PrincipalMap.
-      answers: peer.principal.kind === 'owner',
     }
     this.remoteEventClients.set(clientId, client)
-    if (client.answers) {
-      for (const pending of this.pendingRemoteEvents.values()) this.deliverRemoteEvent(pending, client)
-    }
+    for (const pending of this.pendingRemoteEvents.values()) this.deliverRemoteEvent(pending, client)
     try {
       yield { ...REMOTE_EVENT_STREAM_READY, clientId, host: registration.host }
       yield* client.queue.iterate(lifetime)
@@ -619,19 +589,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
       event: frame.event,
       args: frame.args,
     }
-    let resolved = false
-    let resources: readonly RemoteAccessResource[] | undefined
     for (const client of this.remoteEventClients.values()) {
-      if (!client.answers) {
-        // A non-owner receives the whole notification or nothing: its resources decide, payloads are never trimmed,
-        // and a notification with invalid resources reaches no non-owner.
-        if (!resolved) {
-          resources = eventResources(frame.resources, frame.args)
-          resolved = true
-        }
-        if (resources === undefined) continue
-        if (this.ctx.remoteAccess.decide({ principal: client.principal, action: `event:${frame.event}`, resources }).kind === 'deny') continue
-      }
       client.queue.push(wire)
     }
   }
@@ -691,7 +649,7 @@ export class TypertGatewayService extends Service implements TypertGateway {
       if ([...signals].some(signal => signal.aborted)) abort()
       else {
         for (const client of this.remoteEventClients.values()) {
-          if (client.answers) this.deliverRemoteEvent(pending, client)
+          this.deliverRemoteEvent(pending, client)
         }
       }
     } catch (error) {
@@ -795,35 +753,10 @@ export class TypertGatewayService extends Service implements TypertGateway {
     control: AbortController,
   ): Promise<PreparedInvocation> {
     const endpoint = endpointOf(request.namespace, request.method)
-    assertPeerLive(request.peer, endpoint)
+    requireOwnerPeer(request.peer, endpoint)
     const descriptor = this.resolveDescriptor(request.namespace, request.method, endpoint)
     assertExactArguments(request.args, descriptor, endpoint)
     const validated = validateArguments(descriptor, request.args, endpoint)
-    // Access precedes lookup resolution, so a refused call activates nothing.
-    // oxlint-disable-next-line typescript/no-unnecessary-condition -- other packages merge non-owner kinds into PrincipalMap.
-    if (request.peer.principal.kind !== 'owner') {
-      const resources = callResources(
-        this.ctx.typert,
-        this.resourceReaders(descriptor),
-        descriptor,
-        validated,
-        request.signal ?? NEVER_ABORTED_SIGNAL,
-      )
-      const decision: RemoteAccessDecision = resources === undefined
-        ? { kind: 'deny', reason: 'resource-invalid' }
-        : this.ctx.remoteAccess.decide({
-          principal: request.peer.principal,
-          action: `${descriptor.namespace}/${descriptor.method}`,
-          resources,
-          args: validated,
-        })
-      if (decision.kind === 'deny') {
-        throw new RemoteError('remote-access/denied', `remote access: ${endpoint}: access denied (${decision.reason})`, {
-          action: endpoint,
-          reason: decision.reason,
-        })
-      }
-    }
     const receiverContext = await this.resolveReceiverContext(descriptor, validated, endpoint)
     const receiver: unknown = receiverContext.get(descriptor.service)
     if (!isObject(receiver)) {
@@ -1264,8 +1197,8 @@ function remoteRequest(
   signal: AbortSignal,
   peer: PeerScope,
 ): InvokeRemoteRequest {
-  // A disposed Peer is refused whatever it sent.
-  assertPeerLive(peer, endpoint)
+  // Peer admission precedes payload parsing.
+  requireOwnerPeer(peer, endpoint)
   const segments = endpoint.split('/')
   if (segments.length !== 2 || segments[0] === '' || segments[1] === '') {
     throw new Error(`invalid Remote endpoint ${JSON.stringify(endpoint)}`)
@@ -1298,14 +1231,18 @@ function methodSignal(request: InvokeRemoteRequest, control: AbortController, st
 }
 
 /**
- * Refuse a call whose Peer has been disposed.
+ * Refuse disposed Peers and non-owner principals before reading call arguments.
  * @param peer - Peer the call speaks for.
  * @param endpoint - endpoint named in the failure.
- * @throws {@link TypertGatewayError} `gateway/peer-disposed` once the Peer is disposed.
+ * @throws {@link TypertGatewayError} `gateway/peer-disposed` or `gateway/owner-required`.
  */
-function assertPeerLive(peer: PeerScope, endpoint: string): void {
+function requireOwnerPeer(peer: PeerScope, endpoint: string): void {
   if (peer.signal.aborted) {
     throw new TypertGatewayError('gateway/peer-disposed', endpoint, 'the calling Peer has been disposed')
+  }
+  // oxlint-disable-next-line typescript/no-unnecessary-condition -- PrincipalMap admits extension-defined non-owner principals.
+  if (peer.principal.kind !== 'owner') {
+    throw new TypertGatewayError('gateway/owner-required', endpoint, 'only the authenticated owner may invoke Remote endpoints')
   }
 }
 
@@ -1658,8 +1595,8 @@ function assertExactArguments(
 /**
  * Decode every present JSON argument once through its parameter codec; a
  * Typert codec drops object fields its compiled type does not declare. Lookup
- * and Context identities keep their wire values; dispatch decodes and resolves
- * them only after the access check. An absent field stays absent; a present
+ * and Context identities keep their wire values for subsequent resolution.
+ * An absent field stays absent; a present
  * `undefined` is not JSON-safe and fails decoding.
  */
 function validateArguments(

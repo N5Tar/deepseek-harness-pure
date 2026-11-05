@@ -1,4 +1,4 @@
-/** Target Session permissions are enforced before subagent input or cancellation is admitted. */
+/** The Gateway rejects non-owner subagent input and cancellation before side effects. */
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -6,7 +6,6 @@ import { Context } from '@deepseek-ai/cordis'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
 import TypertGatewayService from '@deepseek-ai/dsh-api-gateway'
-import type { RemoteAccessBinding } from '@deepseek-ai/dsh-api-remote-access'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SubagentRuntime from '@deepseek-ai/dsh-subagent'
@@ -25,7 +24,6 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
 }
 
 const GUEST: Principal = { kind: 'test-guest', guest: 'subagent-controls' }
-const ACTIONS = ['subagents/prompt', 'subagents/interruptByUser'] as const
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => {
   for (const cleanup of cleanups.splice(0).reverse()) await cleanup()
@@ -60,8 +58,6 @@ async function harness() {
   await vi.waitFor(() => { expect(adapter.requests).toHaveLength(1) })
   const child = ctx.agents.get(run.childId)!
   await ctx.plugin(TypertGatewayService)
-  const bindings: RemoteAccessBinding[] = []
-  ctx.remoteAccess.registerPolicy('test-guest', { bindings: () => bindings })
   const call = (method: 'prompt' | 'interruptByUser', principal: Principal = GUEST, image = false) => {
     const peer: PeerScope = {
       id: 'subagent-access-peer' as PeerId, ctx, principal, interactions: 'answer',
@@ -75,41 +71,28 @@ async function harness() {
       } } : { childSessionId: child.id },
     })
   }
-  return { ctx, parent, child, bindings, call }
+  return { ctx, parent, child, call }
 }
 
 describe('subagent target Session access', () => {
-  it.each(['prompt', 'interruptByUser'] as const)('requires the target permission for %s', async (method) => {
-    const { ctx, parent, child, bindings, call } = await harness()
+  it.each(['prompt', 'interruptByUser'] as const)('rejects non-owner %s before input or cancellation', async (method) => {
+    const { ctx, child, call } = await harness()
     const attachments = vi.spyOn(ctx.attachments, 'admitPromptContent')
     const observe = vi.spyOn(ctx.sessionQuery, 'observeSession')
     const cancel = vi.spyOn(child, 'cancel')
-    const grants: RemoteAccessBinding[][] = [
-      [],
-      [{ role: { name: 'global controls', resource: 'global', actions: ACTIONS }, resource: { kind: 'global' } }],
-      [{ role: { name: 'parent controls', resource: 'session', actions: ACTIONS }, resource: { kind: 'session', id: parent.id } }],
-      [{ role: { name: 'other control', resource: 'session', actions: [method === 'prompt' ? ACTIONS[1] : ACTIONS[0]] }, resource: { kind: 'session', id: child.id } }],
-    ]
-    for (const grant of grants) {
-      bindings.splice(0, bindings.length, ...grant)
-      await expect(call(method, GUEST, true)).rejects.toMatchObject({
-        code: 'remote-access/denied', details: { action: `subagents/${method}`, reason: 'no-allow' },
-      })
-    }
+    await expect(call(method, GUEST, true)).rejects.toMatchObject({
+      code: 'gateway/owner-required', details: { endpoint: `subagents/${method}` },
+    })
     expect(attachments).not.toHaveBeenCalled()
     expect(observe).not.toHaveBeenCalled()
     expect(cancel).not.toHaveBeenCalled()
     expect(child.inbox.nextTurn).toHaveLength(0)
 
-    bindings.splice(0, bindings.length, {
-      role: { name: 'target control', resource: 'session', actions: [`subagents/${method}`] },
-      resource: { kind: 'session', id: child.id },
-    })
-    const accepted = await call(method)
+    const accepted = await call(method, { kind: 'owner' })
     if (method === 'prompt') {
       expect(child.inbox.nextTurn).toHaveLength(1)
       expect(accepted).toEqual({ messageId: child.inbox.nextTurn[0]?.id })
-      expect(child.inbox.nextTurn[0]?.source).toMatchObject({ kind: 'user', principal: GUEST })
+      expect(child.inbox.nextTurn[0]?.source).toMatchObject({ kind: 'user' })
     } else {
       expect(accepted).toEqual({ accepted: true })
       expect(cancel).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: true })
@@ -117,7 +100,7 @@ describe('subagent target Session access', () => {
     }
   })
 
-  it('allows the owner without target bindings', async () => {
+  it('allows owner input and cancellation', async () => {
     const { child, call } = await harness()
     const accepted = await call('prompt', { kind: 'owner' })
     expect(child.inbox.nextTurn).toHaveLength(1)

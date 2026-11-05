@@ -391,7 +391,7 @@ export class SubagentRuntime extends TypertRemoteService {
    * Image parts are admitted and persisted through the attachment store
    * before delivery, and the child's model must accept image input.
    * Cold resume at capacity rejects with `subagent/delivery-unavailable`.
-   * Access is checked on the target Session before attachment admission or restoration.
+   * The Gateway admits only owner Peers before attachment admission or restoration.
    * @param request - target id, delivery, minted identity, content, and optional browser zone.
    * @param signal - carrier cancellation, owning the call until inbox acceptance.
    * @returns the accepted message's inbox identity.
@@ -400,7 +400,7 @@ export class SubagentRuntime extends TypertRemoteService {
    *   `subagent/not-resumable`, `subagent/unauthorized`,
    *   `subagent/delivery-unavailable`, `gateway/cancelled`, or `gateway/internal`.
    */
-  @Remote({ name: 'prompt', resources: { session: request => request.childSessionId } })
+  @Remote('prompt')
   async prompt(request: SubagentPromptRequest, signal: AbortSignal): Promise<SubagentPromptReceipt> {
     const { childSessionId, clientTimeZone, delivery } = request
     validateControlRequest('subagent.prompt', request)
@@ -445,7 +445,7 @@ export class SubagentRuntime extends TypertRemoteService {
   }
 
   /**
-   * Remote face of {@link interrupt}, authorized on the target Session by the Gateway.
+   * Remote face of {@link interrupt}, admitted only for owner Peers by the Gateway.
    * No catalog, history, persistence, or parent Agent lookup runs.
    * Absent, idle, and already-completed targets are accepted no-ops there.
    * @param childSessionId - durable child session id to interrupt.
@@ -453,7 +453,7 @@ export class SubagentRuntime extends TypertRemoteService {
    * @throws {RemoteError} `gateway/bad-request` for an empty id,
    *   otherwise `gateway/internal`.
    */
-  @Remote({ name: 'interruptByUser', resources: { session: childSessionId => childSessionId } })
+  @Remote('interruptByUser')
   interruptByUser(childSessionId: SessionId): SubagentInterruptReceipt {
     validateControlRequest('subagent.interrupt', { childSessionId })
     try {

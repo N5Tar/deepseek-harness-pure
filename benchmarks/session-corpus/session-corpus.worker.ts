@@ -8,7 +8,6 @@ import { Context } from '@deepseek-ai/cordis'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
 import { agentPresetProjectionDefinition } from '@deepseek-ai/dsh-agent-preset-registry'
-import RemoteAccessService from '@deepseek-ai/dsh-api-remote-access'
 import type SessionController from '@deepseek-ai/dsh-api-session-controller'
 import { currentSessionMessageProjections } from '@deepseek-ai/dsh-session-format-catalog/message-projections'
 import { Session, SessionLogOffset } from '@deepseek-ai/dsh-session'
@@ -158,7 +157,6 @@ async function mountHost(root: string): Promise<{ readonly ctx: Context; readonl
   ctx.provide('fileUploads', { registerAgentResolver: () => dispose } as never)
   ctx.provide('agentDefaultModel', { currentSelection: () => BENCH_MODEL } as never)
   ctx.provide('workspaceRegistry', { list: () => [], archivedSessionIds: [] } as never)
-  new RemoteAccessService(ctx)
   const controller = await createBenchmarkSessionController(ctx, { nativeOpen: false })
   return { ctx, controller }
 }

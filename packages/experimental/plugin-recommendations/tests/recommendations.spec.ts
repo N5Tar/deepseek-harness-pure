@@ -197,15 +197,6 @@ describe('official recommendations', () => {
     expect(f.manager.setBundleEnabled).not.toHaveBeenCalled()
   })
 
-  it('allows dismissal without global profile access but refuses enabling', async () => {
-    const f = await fixture()
-    f.propose()
-    vi.spyOn(f.ctx.remoteAccess, 'allows').mockReturnValue(false)
-    expect(await f.ctx.actionCards.act(f.agent, callId, 'enable')).toEqual({ status: 'refused', reason: 'access-denied' })
-    expect(await f.ctx.actionCards.act(f.agent, callId, 'dismiss')).toMatchObject({ status: 'settled', decision: { phase: 'dismissed' } })
-    expect(f.manager.setBundleEnabled).not.toHaveBeenCalled()
-  })
-
   it('refuses a click whose root leaves while the catalog is read', async () => {
     const f = await fixture()
     f.propose()

@@ -25,7 +25,7 @@ Use this package to keep an ordered, persistent list of project directories and 
 <a id="use-this-package"></a>
 ## Use this package
 
-Use this package to give the product a project list: named directories the user works in, the sessions that ran in each, a stable order, and a way to hide sessions without losing them or bring them back. The API contracts behind each action live in the implementation section.
+Use this package to give the product a project list: named directories the user works in, the sessions that ran in each, a stable order, and a way to hide sessions without losing them or bring them back. The API contracts behind each action live in the implementation section. Workspace identities and not-found errors are shared types; Remote admission belongs to the Gateway.
 
 ### When to use it
 

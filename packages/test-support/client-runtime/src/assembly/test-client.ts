@@ -18,17 +18,8 @@ import { act } from '@testing-library/react'
 import { createInProcessModules, loadPluginModules } from './modules.ts'
 import { assertPlan, graphFromRoster, type AssemblyPlan } from './roster.ts'
 import { REMOTES_PACKAGE, remoteNamespacesOf, remoteProxiesPlugin } from './remote-proxies.ts'
-import { allowAllAccessPlugin, staticAccessPlugin } from '@deepseek-ai/dsh-client-ui-test-bench'
-
-/** The remote-access row: it mounts its own generated Remote contribution and publishes the access Hooks. */
-const REMOTE_ACCESS_PACKAGE = '@deepseek-ai/dsh-api-remote-access'
-
-/**
- * Rows whose generated Remote contributions exist only in built `lib/`. The
- * tier drops them: `remote.<ns>` proxies stand in for the namespaces and
- * allow-all access Hooks stand in for remote-access.
- */
-const GENERATED_REMOTE_PACKAGES: readonly string[] = [REMOTES_PACKAGE, REMOTE_ACCESS_PACKAGE]
+/** Generated Remote rows replaced by contract-free namespace proxies. */
+const GENERATED_REMOTE_PACKAGES: readonly string[] = [REMOTES_PACKAGE]
 
 /** Carrier options. */
 export interface TestClientOptions {
@@ -41,8 +32,6 @@ export interface TestClientOptions {
   readonly awaitConnected?: boolean
   /** Readiness budget in milliseconds before `start` rejects with the mock log summary. Default 5000. */
   readonly connectTimeoutMs?: number
-  /** The fixed access answer for each action on every resource. Default: every action is allowed. */
-  readonly access?: (action: string) => boolean
   /**
    * Tolerate inactive roster entries outside the Web client's required list, as the product boot does. Default
    * false: every roster entry must activate, so a plugin that fails to import or activate, or waits on a missing
@@ -205,10 +194,8 @@ export class TestClient {
    * dropped from the roster: its generated Remote clients exist only in built
    * `lib/`, and the `remote.<ns>` services the roster injects (plus the
    * namespaces the mock has rules for at this point) are provided as
-   * contract-free proxies over the same Connection instead. The
-   * `@deepseek-ai/dsh-api-remote-access` row, which mounts its own generated
-   * contribution, is dropped too, and allow-all access Hooks replace it. A
-   * `provide` entry for either row is refused. Unless `allowInactiveEntries` is set, every roster entry must
+   * contract-free proxies over the same Connection instead. A `provide` entry
+   * for this row is refused. Unless `allowInactiveEntries` is set, every roster entry must
    * activate, stricter than the product boot, which only warns about entries outside its required list. On any
    * failure the context is disposed, an owned
    * mount removed, and this client's hold on the shims released before the
@@ -260,10 +247,6 @@ export class TestClient {
       release = sharedJsdomShims.acquire()
       const system = createInProcessModules(graphFromRoster(roster.rows), modules)
       ctx.plugin(remoteProxiesPlugin(remoteNamespacesOf(modules.values(), mock), mock) as Plugin)
-      // The dropped remote-access row's Hooks: every action is allowed on every resource unless the spec fixes the answers.
-      if (generated.includes(REMOTE_ACCESS_PACKAGE)) {
-        ctx.plugin(options.access === undefined ? allowAllAccessPlugin : staticAccessPlugin(options.access))
-      }
       await bootClient({ ctx, modules: system, manifest: system.manifest })
       if (options.allowInactiveEntries !== true) {
         await assertEntriesActive(ctx, system, (report) => {

@@ -7,7 +7,6 @@ import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
 import Skills, { BUNDLED_SKILL_RANK } from '@deepseek-ai/dsh-skill'
 import * as SkillTool from '@deepseek-ai/dsh-tool-skill'
-import RemoteAccess from '@deepseek-ai/dsh-api-remote-access'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import ActionCards from '../src/index.ts'
 import type { ActionCardFields, ActionCardKind, ActionCardProposalOf, ActionCardResult } from '../src/index.ts'
@@ -40,7 +39,6 @@ export async function fixture(kind: Partial<ActionCardKind<TestDetails>> = {}) {
   onTestFinished(async () => { await ctx.fiber.dispose() })
   await mountAgentLoopTestDependencies(ctx, { workingDirectory: true })
   const harness = await mountAgentLoopTestHarness(ctx)
-  await ctx.plugin(RemoteAccess)
   await ctx.plugin(Skills)
   await ctx.plugin(SkillTool)
   provideSkills(ctx, SKILL, 'other-skill')
@@ -53,7 +51,7 @@ export async function fixture(kind: Partial<ActionCardKind<TestDetails>> = {}) {
   const kindFiber = await ctx.plugin({ name: 'test-kind', inject: ['actionCards'], apply: (inner: Context) => {
     inner.actionCards.register({
       action: ACTION, skill: SKILL, invitation: INVITATION, details: z.object({ value: z.string() }),
-      verbs: { start: {}, publish: { global: true }, write: { writes: true } },
+      verbs: { start: {}, publish: {}, write: { writes: true } },
       act, ...kind,
     })
   } })

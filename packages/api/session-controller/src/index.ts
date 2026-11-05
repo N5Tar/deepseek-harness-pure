@@ -13,10 +13,8 @@ import { canOpenNativePath, nativeFileManager, nativeFileApplications, openNativ
 import type { SessionId } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-session-projection-cache'
 import type { SessionObservation } from '@deepseek-ai/dsh-session-query'
-import { Remote, RemoteError, TypertRemoteService, principalOf, type TypertResourceResolveInput } from '@deepseek-ai/dsh-typert-protocol'
+import { Remote, RemoteError, TypertRemoteService, principalOf } from '@deepseek-ai/dsh-typert-protocol'
 import { canonicalClientTimeZone } from '@deepseek-ai/dsh-util-time'
-import { assertNever } from '@deepseek-ai/dsh-util-values'
-import type {} from '@deepseek-ai/dsh-api-remote-access'
 import {
   ApiSessionAgentController,
   type ApiSessionAgentResult,
@@ -36,7 +34,6 @@ import { ArchivedSessionGate } from './archived-session-gate.ts'
 import type {
   ModelCatalog,
   SessionWorkspacePathApplication,
-  SessionAddress,
   SessionAttachmentRequest,
   SessionAttachmentValue,
   SessionCancelRequest,
@@ -80,34 +77,6 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-/**
- * Extract the Session resource from an ID or a history address.
- *
- * Registers as the `session` kind default, so it applies to every Remote method of
- * every namespace: a top-level `sessionId` parameter, otherwise the first object
- * parameter carrying `sessionId` or an `address`. A new request type whose first
- * object parameter has an unrelated `address` field would be read as an address.
- * @param input - validated wire arguments and their ordered parameter descriptions.
- * @returns the named Session identity, otherwise the first object's Session identity or history address.
- * @throws Error when the request object supplies both sessionId and address.
- */
-function resolveSessionResource({ args, parameters }: TypertResourceResolveInput): SessionId | undefined {
-  const sessionParameter = parameters.find(parameter => parameter.name === 'sessionId' || parameter.wire === 'sessionId')
-  if (sessionParameter !== undefined) return args[sessionParameter.wire] as SessionId | undefined
-  for (const parameter of parameters) {
-    const value = args[parameter.wire]
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) continue
-    const request = value as { readonly sessionId?: SessionId; readonly address?: SessionAddress }
-    const address = request.address
-    if (request.sessionId !== undefined && address !== undefined) {
-      throw new Error('Session resource request must not contain both sessionId and address')
-    }
-    return request.sessionId ?? (address === undefined ? undefined
-      : address.kind === 'session' ? address.sessionId : address.childSessionId)
-  }
-  return undefined
-}
-
 /** Session Controller deployment policy. */
 export interface Config {
   /** Override platform desktop-opener detection. */
@@ -143,7 +112,6 @@ export class SessionController extends TypertRemoteService {
     'fileUploads',
     'fs',
     'llm',
-    'remoteAccess',
     'sessions',
     'sessionProjections',
     'sessionQuery',
@@ -193,7 +161,6 @@ export class SessionController extends TypertRemoteService {
 
   protected async [Service.init](): Promise<void> {
     const ctx = this.ctx
-    ctx.typert.resources.register('session', { resolve: resolveSessionResource })
     this.agents = new ApiSessionAgentController(ctx)
     this.agents.initialize()
     this.commands = new SessionCommandController(ctx, this.agents, process.cwd())
@@ -283,7 +250,7 @@ export class SessionController extends TypertRemoteService {
   @Remote('list')
   async list(_request: SessionListRequest, signal: AbortSignal): Promise<SessionListValue> {
     const items = await this.listState.list(signal)
-    return { items: items.filter(item => this.ctx.remoteAccess.allows({ kind: 'session', id: item.sessionId })) }
+    return { items }
   }
 
   /**
@@ -292,12 +259,11 @@ export class SessionController extends TypertRemoteService {
    * describes the bounded result before that filtering.
    * @param request - literal message-content query.
    * @param signal - cancellation for list and search reads.
-   * @returns authorized bounded Session search results.
+   * @returns bounded Session search results.
    */
   @Remote('search')
   async search(request: SessionSearchRequest, signal: AbortSignal): Promise<SessionSearchValue> {
-    const result = await this.listState.search(request.query, signal)
-    return { ...result, items: result.items.filter(item => this.ctx.remoteAccess.allows({ kind: 'session', id: item.sessionId })) }
+    return await this.listState.search(request.query, signal)
   }
 
   /**
@@ -631,22 +597,7 @@ export class SessionController extends TypertRemoteService {
    */
   @Remote({ mode: 'stream' })
   async *control(signal: AbortSignal): AsyncIterable<SessionControlFrame> {
-    for await (const frame of this.controlState.control(signal)) {
-      switch (frame.type) {
-        case 'baseline': {
-          const projections = Object.fromEntries(Object.entries(frame.value.projections)
-            .filter(([sessionId]) => this.ctx.remoteAccess.allows({ kind: 'session', id: sessionId as SessionId })))
-          yield { type: 'baseline', value: { ...frame.value, projections } }
-          break
-        }
-        case 'projection':
-          if (this.ctx.remoteAccess.allows({ kind: 'session', id: frame.sessionId })) yield frame
-          break
-        /* v8 ignore next -- closed control-frame union. */
-        default:
-          assertNever(frame)
-      }
-    }
+    yield* this.controlState.control(signal)
   }
 }
 

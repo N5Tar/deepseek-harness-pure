@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 
 import { Context } from '@deepseek-ai/cordis'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import type { ChangeResult, PluginEntryId, PluginInstallRequestId, PluginUpdateResult, PluginVersion, RegistryAttempt } from '@deepseek-ai/dsh-api-remotes/client'
-import { allowAllAccess, bindSnapshotSelector, stubConfigForm } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector, stubConfigForm } from '@deepseek-ai/dsh-client-test-runtime'
 import type { ConfigForm, ConfigFormSnapshot, SettingsMirrorSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { MenuItemButton } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -159,7 +159,6 @@ function renderTab(
     useSessionStatus: unusedStandardHook,
     useSessionRetainInfo: unusedStandardHook,
     useResource: unusedStandardHook,
-    ...allowAllAccess,
     useContextMenu: contextMenuHook(),
   }
   const navigation = createNavigationStore().create()
@@ -806,7 +805,7 @@ describe('PluginManagerPage', () => {
   })
 
   it('keeps a shipped bundle out of both lists until one of its declared rows runs', () => {
-    const hidden = '@deepseek-ai/dsh-experimental-liveshare'
+    const hidden = '@deepseek-ai/dsh-experimental-terminal-bundle'
     const shown = '@deepseek-ai/dsh-experimental-voice-input-bundle'
     const offer = (rows: readonly PackageRow[]): PackageView => pkg({
       name: hidden, official: true, installed: false, optional: true, removable: false, enabled: false, listedByDefault: false, rows,
@@ -825,7 +824,7 @@ describe('PluginManagerPage', () => {
     // is listed as experimental exactly like a bundle the profile selected.
     b.set({
       packages: [
-        offer([row({ rowId: 'liveshare-viewer-declarations', moduleName: `${hidden}/viewer-declarations` })]),
+        offer([row({ rowId: 'terminal', moduleName: '@deepseek-ai/dsh-client-ui-sidebar-terminal' })]),
         other,
       ],
     })
@@ -837,7 +836,7 @@ describe('PluginManagerPage', () => {
     b.set({
       packages: [
         offer([row({
-          rowId: 'liveshare-viewer-declarations', moduleName: `${hidden}/viewer-declarations`,
+          rowId: 'terminal', moduleName: '@deepseek-ai/dsh-client-ui-sidebar-terminal',
           enabled: false, phase: null,
         })]),
         other,
@@ -847,7 +846,7 @@ describe('PluginManagerPage', () => {
   })
 
   it('does not open a default-hidden bundle by id while its card is hidden', () => {
-    const hidden = '@deepseek-ai/dsh-experimental-liveshare'
+    const hidden = '@deepseek-ai/dsh-experimental-terminal-bundle'
     const b = renderTab({
       packages: [pkg({
         name: hidden, official: true, installed: false, optional: true, removable: false, enabled: false,

@@ -1,16 +1,13 @@
 // @vitest-environment jsdom
-/** Original-byte actions and feedback survive the menu that initiated them. */
-import { Blob as NodeBlob } from 'node:buffer'
+/** Native opening and feedback survive the menu that initiated them. */
 import { Context } from '@deepseek-ai/cordis'
 import { afterEach, expect, it, onTestFinished, vi } from 'vitest'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { MenuRegistry } from '@deepseek-ai/dsh-client-ui-context-menu/src/client/registry.ts'
 import type { ContextMenus, ContextMenuTarget } from '@deepseek-ai/dsh-client-ui-context-menu/client'
-import type { FileActionSource, FileSaveResult } from '@deepseek-ai/dsh-client-ui-file-actions/client'
 import { OpenInAppPathController } from '../src/client/open-path.ts'
 import { OpenInAppController } from '../src/client/controller.ts'
-import { registerFileMenus } from '@deepseek-ai/dsh-client-ui-file-actions/src/client/context-menus.tsx'
 import { registerContextMenus } from '../src/client/context-menus.tsx'
 import type { OpenInAppToastSource } from '../src/client/open-toast.tsx'
 
@@ -18,7 +15,6 @@ const sessionId = SessionId('menu-actions')
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 async function boot() {
-  vi.stubGlobal('Blob', NodeBlob)
   const ctx = new Context()
   const notify = vi.fn<ContextMenus['notify']>(), failure = vi.fn(), writeText = vi.fn(async () => {})
   const report = vi.fn<OpenInAppToastSource['report']>()
@@ -34,13 +30,8 @@ async function boot() {
     },
     workspaceFiles: {
       stat: vi.fn(async () => ({ ok: true as const, value: { absolutePath: '/workspace/file.svg' } })),
-      readBytes: vi.fn(async () => ({ ok: true as const, value: { data: [...new TextEncoder().encode('<svg/>')] } })),
     },
   }
-  const save = vi.fn<(source: FileActionSource, mode: 'download' | 'saveAs') => Promise<FileSaveResult>>()
-    .mockResolvedValue({ status: 'saved', path: '/downloads/file.svg' })
-  const copyImage = vi.fn<(source: FileActionSource) => Promise<void>>().mockResolvedValue()
-  const fileActions = { save, copyImage, canSaveAs: true }
   const sessions = createSnapshotStore({ byId: { [sessionId]: { cwd: '/workspace' } } })
   const sidebar = { openResourceIn: vi.fn(), openTabIn: vi.fn() }
   const browserTab = vi.fn(() => ({}))
@@ -50,12 +41,10 @@ async function boot() {
   ctx.provide('remote', remote as never)
   ctx.provide('contextMenus', { register: registry.register.bind(registry), notify } as never)
   ctx.provide('sessions', { list: sessions } as never)
-  ctx.provide('fileActions', fileActions as never)
   ctx.provide('sidebarRight', sidebar as never)
   ctx.provide('sidebarRightTabs', { get: browserTab } as never)
   const fiber = ctx.plugin({ apply: (plugin: Context) => {
     registerContextMenus(plugin, paths, key => key, directories, report)
-    registerFileMenus(plugin, ctx.fileActions, key => key)
   } })
   await fiber.await()
   onTestFinished(async () => { registry.dispose(); await ctx.fiber.dispose() })
@@ -71,14 +60,13 @@ async function boot() {
     expect(action).toBeDefined()
     menu.select(id)
     menu.dispose()
-    await vi.waitFor(() => { expect(save.mock.settledResults.every(result => result.type !== 'incomplete')).toBe(true) })
     return action
   }
-  return { registry, resolve, choose, remote, fileActions, paths, directories, directoryFetch, sessions,
+  return { registry, resolve, choose, remote, paths, directories, directoryFetch, sessions,
     sidebar, browserTab, notify, failure, writeText, report }
 }
 
-it('routes file actions through an explicit host, the line, native association and original bytes', async () => {
+it('routes file actions through an explicit host, the line and native association', async () => {
   const h = await boot()
   // A menu raised inside a floating panel names that panel; the open names a host instead, never a pane.
   const file = { kind: 'file', value: { sessionId, path: 'file.svg', paneId: 'float7' as never, line: 24 } } as const
@@ -103,21 +91,11 @@ it('routes file actions through an explicit host, the line, native association a
   await h.choose(file, 'open-in-app.file/reveal')
   expect(h.remote.session.openWorkspacePath).toHaveBeenCalledWith({ path: '/workspace/file.svg', action: 'reveal' })
   await vi.waitFor(() => { expect(h.report).toHaveBeenLastCalledWith({ kind: 'revealed' }) })
-  await h.choose(file, 'file-actions.file/copyImage')
-  await vi.waitFor(() => { expect(h.notify).toHaveBeenCalledWith('menu.copied', true) })
-  const source = h.fileActions.copyImage.mock.calls[0]![0]
-  expect(await (await source.read!(new AbortController().signal)).text()).toBe('<svg/>')
-  h.remote.workspaceFiles.readBytes.mockResolvedValueOnce({ ok: false } as never)
-  await expect(source.read!(new AbortController().signal)).rejects.toThrow('Original file unavailable')
-  await h.choose(file, 'file-actions.file/saveAs')
-  await vi.waitFor(() => { expect(h.notify).toHaveBeenCalledWith('menu.saved', true, expect.objectContaining({ label: 'menu.reveal' })) })
   const simple = { kind: 'file', value: { sessionId: SessionId('absent'), path: '/file.unknown' } } as const
   h.remote.session.workspacePathApplications.mockResolvedValueOnce({ ok: true, value: [] })
   const menu = await h.resolve(simple)
   expect(menu.source.getSnapshot().find(item => item.id.endsWith('/open'))?.disabled).toBe(true)
   expect(menu.source.getSnapshot().some(item => item.id.endsWith('/copyImage'))).toBe(false)
-  expect(menu.source.getSnapshot().filter(item => item.id.startsWith('file-actions.')).map(item => item.id))
-    .toEqual(['file-actions.file/saveAs'])
   menu.select('open-in-app.file/sidebar')
   expect(h.sidebar.openResourceIn).toHaveBeenLastCalledWith(SessionId('absent'), expect.any(String), { destination: 'sidebar' })
   h.remote.session.workspacePathApplications.mockResolvedValueOnce({ ok: true, value: [] })
@@ -129,12 +107,12 @@ it('routes file actions through an explicit host, the line, native association a
 it('keeps copy-path available on failed metadata and reports native action failures', async () => {
   const h = await boot()
   const file = { kind: 'file', value: { sessionId, path: 'file.svg' } } as const
-  h.remote.workspaceFiles.stat.mockResolvedValueOnce({ ok: false } as never).mockResolvedValueOnce({ ok: false } as never)
+  h.remote.workspaceFiles.stat.mockResolvedValueOnce({ ok: false } as never)
   const menu = await h.resolve(file)
-  expect(menu.source.getSnapshot().find(item => item.id.endsWith('/saveAs'))?.disabled).toBe(true)
+  expect(menu.source.getSnapshot().find(item => item.id.endsWith('/sidebar'))?.disabled).toBe(true)
   menu.select('open-in-app.file/copyPath')
   expect(h.writeText).toHaveBeenCalledWith('/workspace/file.svg')
-  h.remote.workspaceFiles.stat.mockRejectedValueOnce(new Error('offline')).mockRejectedValueOnce(new Error('offline'))
+  h.remote.workspaceFiles.stat.mockRejectedValueOnce(new Error('offline'))
   expect((await h.resolve(file)).source.getSnapshot().find(item => item.id.endsWith('/sidebar'))?.disabled).toBe(true)
   h.remote.session.openWorkspacePath.mockResolvedValueOnce({ ok: false } as never)
   await h.choose(file, 'open-in-app.file/reveal')
@@ -142,7 +120,6 @@ it('keeps copy-path available on failed metadata and reports native action failu
   h.remote.session.workspacePathApplications.mockResolvedValueOnce({ ok: false } as never)
   expect((await h.resolve(file)).source.getSnapshot().find(item => item.id.endsWith('/open'))?.disabled).toBe(true)
   h.paths.desktop.set(false)
-  h.fileActions.canSaveAs = false
   const web = await h.resolve(file)
   expect(web.source.getSnapshot().some(item => item.id.endsWith('/saveAs'))).toBe(false)
   expect(web.source.getSnapshot().filter(item => ['/open', '/reveal'].some(suffix => item.id.endsWith(suffix)))
@@ -164,76 +141,13 @@ it('opens links in the registered browser, externally, and on the clipboard', as
   expect((await h.resolve(target)).source.getSnapshot()[0]?.disabled).toBe(true)
 })
 
-it('distinguishes completed, requested and cancelled saves and surfaces rejected saves', async () => {
-  const h = await boot()
-  const image = { kind: 'image', value: { url: 'https://example.com/original' } } as const
-  for (const [status, notice] of [['saved', 'menu.downloaded'], ['requested', 'menu.downloadStarted'], ['cancelled', undefined]] as const) {
-    h.fileActions.save.mockResolvedValueOnce(status === 'saved' ? { status, path: '/downloads/file.png' } : { status })
-    h.notify.mockClear()
-    await h.choose(image, 'file-actions.image/download')
-    if (notice === undefined) expect(h.notify).not.toHaveBeenCalled()
-    else await vi.waitFor(() => { expect(h.notify).toHaveBeenCalledWith(notice, true,
-      status === 'saved' ? expect.objectContaining({ label: 'menu.reveal' }) : undefined) })
-  }
-  h.fileActions.save.mockRejectedValueOnce(new Error('disk full'))
-  await h.choose(image, 'file-actions.image/saveAs')
-  await vi.waitFor(() => { expect(h.failure).toHaveBeenCalledWith('menu.saveFailed') })
-})
-
-it('uses original image reads and keeps menu reveal on the original after saving elsewhere', async () => {
+it('reveals original Host images and disables reveal for remote images', async () => {
   const h = await boot()
   const local = { kind: 'image', value: { sessionId, path: 'file.svg', url: 'https://example.com/file', mediaType: 'image/svg+xml' } } as const
-  await h.choose(local, 'file-actions.image/copy')
-  const source = h.fileActions.copyImage.mock.calls[0]![0]
-  expect(source.name).toBe('file.svg')
-  expect((await source.read!(new AbortController().signal)).type).toBe('image/svg+xml')
-  h.remote.workspaceFiles.readBytes.mockResolvedValueOnce({ ok: false } as never)
-  await expect(source.read!(new AbortController().signal)).rejects.toThrow('Original image unavailable')
   await h.choose(local, 'open-in-app.image/reveal')
   expect(h.remote.session.openWorkspacePath).toHaveBeenCalledWith({ path: '/workspace/file.svg', action: 'reveal' })
-  await h.choose(local, 'file-actions.image/saveAs')
-  const menu = await h.resolve(local)
-  expect(menu.source.getSnapshot().filter(item => item.id.endsWith('/reveal'))).toMatchObject([
-    { id: 'open-in-app.image/reveal', disabled: false },
-  ])
-  menu.select('open-in-app.image/reveal')
-  await vi.waitFor(() => { expect(h.remote.session.openWorkspacePath).toHaveBeenLastCalledWith({ path: '/workspace/file.svg', action: 'reveal' }) })
-  const unknown = { kind: 'image', value: { sessionId, path: 'file.unknown', url: 'data:image/png;base64,eA==' } } as const
-  await h.choose(unknown, 'file-actions.image/saveAs')
-  expect((await h.fileActions.save.mock.calls.at(-1)![0].read!(new AbortController().signal)).type).toBe('')
-  h.fileActions.canSaveAs = false
   const remote = await h.resolve({ kind: 'image', value: { url: 'https://example.com/file.png' } })
-  expect(remote.source.getSnapshot().some(item => item.id.endsWith('/saveAs'))).toBe(false)
-  expect(remote.source.getSnapshot().filter(item => item.id.endsWith('/reveal')).every(item => item.disabled)).toBe(true)
-})
-
-it.each(['darwin', 'win32'])('captures each completed destination in its %s toast action', async (platform) => {
-  const h = await boot()
-  const previous = document.documentElement.getAttribute('data-platform')
-  document.documentElement.setAttribute('data-platform', platform)
-  onTestFinished(() => {
-    if (previous === null) document.documentElement.removeAttribute('data-platform')
-    else document.documentElement.setAttribute('data-platform', previous)
-  })
-  const image = { kind: 'image', value: { url: 'https://example.com/original.png' } } as const
-  const actions: NonNullable<Parameters<ContextMenus['notify']>[2]>[] = []
-  for (const [mode, path] of [['download', '/downloads/original.png'], ['saveAs', '/elsewhere/renamed.png']] as const) {
-    h.fileActions.save.mockResolvedValueOnce({ status: 'saved', path })
-    await h.choose(image, `file-actions.image/${mode}`)
-    const action = h.notify.mock.lastCall![2]!
-    expect(action.label).toBe(platform === 'darwin' ? 'menu.finder' : 'menu.reveal')
-    actions.push(action)
-  }
-  await actions[0]!.run()
-  expect(h.remote.session.openWorkspacePath).toHaveBeenLastCalledWith({ path: '/downloads/original.png', action: 'reveal' }, expect.any(AbortSignal))
-  await actions[1]!.run()
-  expect(h.remote.session.openWorkspacePath).toHaveBeenLastCalledWith({ path: '/elsewhere/renamed.png', action: 'reveal' }, expect.any(AbortSignal))
-  expect((await h.resolve(image)).source.getSnapshot().filter(item => item.id.endsWith('/reveal'))).toMatchObject([
-    { id: 'open-in-app.image/reveal', disabled: true },
-  ])
-  h.remote.session.openWorkspacePath.mockResolvedValueOnce({ ok: false } as never)
-  await expect(actions[1]!.run()).rejects.toThrow('File location unavailable')
-  expect(actions[1]!.failureLabel).toBe('path.revealError')
+  expect(remote.source.getSnapshot()).toMatchObject([{ id: 'open-in-app.image/reveal', disabled: true }])
 })
 
 it('offers only folder reveal and path copy, retaining the captured directory', async () => {

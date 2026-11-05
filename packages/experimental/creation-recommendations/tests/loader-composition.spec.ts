@@ -20,7 +20,6 @@ import Tools from '@deepseek-ai/dsh-tools'
 import * as NativeExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import FsLocal from '@deepseek-ai/dsh-fs-local'
 import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
-import Access from '@deepseek-ai/dsh-api-remote-access'
 import * as ActionCards from '@deepseek-ai/dsh-action-cards'
 import type { SubagentActivation, SubagentActivationSpec } from '@deepseek-ai/dsh-subagent'
 import { MockAdapter, textResponse, toolCallResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
@@ -41,7 +40,7 @@ it.each(['portable-bundle', 'foreign-nested-row'] as const)('validates and insta
   await writeFile(join(base, 'cordis.patch.yml'), JSON.stringify([{ insert: [
     ['session', 'sessions'], ['projection', 'projections'], ['llm', 'llm'], ['prompt', 'prompt'], ['tools', 'tools'],
     ['executor', 'executor'], ['fs', 'fs'], ['working-directory', 'workingDirectory'], ['skills', 'skills'], ['tool-skill', 'toolSkill'],
-    ['agents', 'agents'], ['access', 'access'], ['manager', 'manager'], ['action-cards', 'actionCards'], ['recommendations', 'recommendations'],
+    ['agents', 'agents'], ['manager', 'manager'], ['action-cards', 'actionCards'], ['recommendations', 'recommendations'],
   ].map(([id, name]) => ({ id, name: 'cordis:' + name! })) }]))
   initProfile(dir, ['fixture-base'])
   const manifestPath = join(dir, 'package.json')
@@ -67,7 +66,7 @@ it.each(['portable-bundle', 'foreign-nested-row'] as const)('validates and insta
       if (scenario === 'foreign-nested-row') {
         await writeFile(join(spec.cwd!, 'cordis.patch.yml'), JSON.stringify([{ insert: [{
           id: instructions.packageName + ':group', name: instructions.packageName, group: true,
-          config: [{ id: 'access', name: instructions.packageName }],
+          config: [{ id: 'manager', name: instructions.packageName }],
         }] }]))
       } else {
         await rename(join(spec.cwd!, 'index.js'), join(spec.cwd!, 'runtime.mjs'))
@@ -78,7 +77,7 @@ it.each(['portable-bundle', 'foreign-nested-row'] as const)('validates and insta
     } })
     Object.assign(ctx.loader.builtins, { sessions: Sessions, projections: Projections, llm: Llm, prompt: SystemPrompt, tools: Tools,
       executor: NativeExecutor, fs: FsLocal, workingDirectory: WorkingDirectory, skills: Skills, toolSkill: SkillTool, agents: Agents,
-      access: Access, manager: PluginManager, actionCards: ActionCards, recommendations: Recommendations })
+      manager: PluginManager, actionCards: ActionCards, recommendations: Recommendations })
   })
   await ctx.plugin(Timer)
   await ctx.plugin(Hmr, { root: [], ignored: [], debounce: 0 })
@@ -106,13 +105,13 @@ it.each(['portable-bundle', 'foreign-nested-row'] as const)('validates and insta
   const receipt = () => ctx.actionCards.view(agent.session).decisions[callId]
   expect(ctx.actionCards.view(agent.session).proposals[callId]).toMatchObject({ action: 'create_personalized_page', title: 'Counter' })
   expect(starts).toHaveLength(0)
-  const access = [...ctx.loader.entries()].find(entry => entry.options.id === 'access')
+  const manager = [...ctx.loader.entries()].find(entry => entry.options.id === 'manager')
   expect(await ctx.actionCards.act(agent, callId, 'create', { slot: 'page' })).toEqual({ status: 'accepted' })
   if (scenario === 'foreign-nested-row') {
     await vi.waitFor(() => { expect(receipt()?.phase).toBe('failed') })
-    expect([...ctx.loader.entries()].find(entry => entry.options.id === 'access')).toBe(access)
-    expect(access?.options.name).toBe('cordis:access')
-    expect(access?.fiber).toBeDefined()
+    expect([...ctx.loader.entries()].find(entry => entry.options.id === 'manager')).toBe(manager)
+    expect(manager?.options.name).toBe('cordis:manager')
+    expect(manager?.fiber).toBeDefined()
     expect(readProfileManifest('test', dir).dsh?.profile?.bundles).toEqual(['fixture-base'])
     return
   }

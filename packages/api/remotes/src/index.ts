@@ -52,9 +52,8 @@ function remoteEventSource(ctx: Context): TypertRemoteEventSource {
     const disposers = API_REMOTE_FORWARDED_EVENTS.map((entry) => {
       const { event, mode } = entry
       if (mode === 'emit') {
-        const resources = 'resources' in entry ? entry.resources : undefined
         return ctx.on(event as never, ((...args: unknown[]) => {
-          queue.push({ event, args: assertJsonArgs(event, args), ...resources === undefined ? {} : { resources } })
+          queue.push({ event, args: assertJsonArgs(event, args) })
         }) as never)
       }
       return ctx.on(event as never, (function (

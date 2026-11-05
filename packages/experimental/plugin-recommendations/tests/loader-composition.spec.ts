@@ -17,7 +17,6 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import Tools from '@deepseek-ai/dsh-tools'
 import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import Skills from '@deepseek-ai/dsh-skill'
-import Access from '@deepseek-ai/dsh-api-remote-access'
 import * as ActionCards from '@deepseek-ai/dsh-action-cards'
 import * as Recommendations from '../src/index.ts'
 import { ACTION, logProposal } from './fixture.ts'
@@ -67,7 +66,7 @@ it.each(['normal', 'consumer-unload'] as const)('enables through the real Loader
     ctx.provide('appReady', { onReady: (listener) => { listener(); return () => {} } })
     Object.assign(ctx.loader.builtins, {
       sessions: Sessions, projections: Projections, llm: Llm, prompt: SystemPrompt, tools: Tools,
-      executor: NativeToolExecutor, skills: Skills, agents: Agents, loop: AgentLoop, access: Access, manager: PluginManager,
+      executor: NativeToolExecutor, skills: Skills, agents: Agents, loop: AgentLoop, manager: PluginManager,
       actionCards: ActionCards, recommendations: Recommendations,
     })
   })

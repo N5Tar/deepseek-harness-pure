@@ -9,8 +9,6 @@
  * Export discipline: packages/client/AGENTS.md.
  */
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-// Type-only: pulls the remoteAccess service merge (ctx.remoteAccess).
-import type {} from '@deepseek-ai/dsh-api-remote-access/client'
 // Type-only: pulls the ctx.remote merge and its fixed Host facts.
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
@@ -74,7 +72,7 @@ const NS = 'settings'
  * ui-settings' apply, whose activation order relative to this one is NOT
  * constrained; registrations depend on their slots through `slots.inject()`.
  */
-export const inject = ['slots', 'locale', 'connection', 'remote', 'remote.settings', 'configForms', 'shortcuts', 'modules', 'remoteAccess']
+export const inject = ['slots', 'locale', 'connection', 'remote', 'remote.settings', 'configForms', 'shortcuts', 'modules']
 
 /**
  * Register the `settings` dictionaries, the chrome content, and the General
@@ -204,8 +202,7 @@ export function apply(ctx: ClientContext): void {
       },
     },
   })
-  // The settings shell reads this host's configuration, so it follows access to its description.
-  ctx.remoteAccess.whenAccess('settings/describe', () =>
+  ctx.effect(() =>
     ctx.slots.inject('sidebar.settings', () => {
       const shellHandle = createSettingsShellStore()
       const shellInstance = shellHandle.create()

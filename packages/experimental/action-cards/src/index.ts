@@ -8,7 +8,6 @@ import { appendPluginRecord, SessionSeq, type Session } from '@deepseek-ai/dsh-s
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { ProjectionHandle } from '@deepseek-ai/dsh-session-projection'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'
-import type {} from '@deepseek-ai/dsh-api-remote-access'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import { actionCardProjection, PROPOSE_ACTION, type ActionCardState } from './projection.ts'
 import type { ActionCardDecision, ActionCardFields, ActionCardProposal, ActionCardResult, ActionCardView } from './types.ts'
@@ -66,8 +65,6 @@ export class ActionCardError extends HarnessError {}
 
 /** Shared checks one user action of a kind requires before the kind handles it. */
 export interface ActionCardVerb {
-  /** The connection must hold global Remote access, as for profile changes. */
-  readonly global?: true
   /** Refused while the Session sandbox mode is read-only. */
   readonly writes?: true
 }
@@ -159,7 +156,7 @@ function issuesOf(error: ZodError): string {
 
 /** Card tool, kind registry, Session projection, user actions and status notices. */
 export class ActionCards extends TypertRemoteService {
-  static inject = ['tools', 'agents', 'sessionProjections', 'remoteAccess']
+  static inject = ['tools', 'agents', 'sessionProjections']
   static Config = Config
   private projection!: ProjectionHandle<ActionCardState>
   private readonly kinds = new Map<string, RegisteredKind>()
@@ -348,7 +345,6 @@ export class ActionCards extends TypertRemoteService {
     if (verb === DISMISS) return this.coalesce(agent, callId, () => this.dismiss(agent, kind, proposal, payload))
     const policy = kind === undefined ? undefined : ownEntry(kind.verbs, verb)
     if (kind === undefined || policy === undefined) return Promise.resolve(refused('unavailable'))
-    if (policy.global === true && !this.ctx.remoteAccess.allows({ kind: 'global' })) return Promise.resolve(refused('access-denied'))
     return this.coalesce(agent, callId, () => this.perform(agent, kind, proposal, verb, policy, payload))
   }
 

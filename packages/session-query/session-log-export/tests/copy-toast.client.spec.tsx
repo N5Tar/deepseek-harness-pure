@@ -13,7 +13,6 @@ import { en } from '../src/client/locales.ts'
 const unused = (): never => { throw new Error('This isolated component does not consume framework hooks') }
 const standard: GlobalStandardProps = {
   useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused,
-  useSessionAccess: () => true, useRemoteAccess: () => true, useWorkspaceAccess: () => true,
   usePanelInfo: unused, useContextMenu: contextMenuHook(), useResource: unused, useWorkspaces: unused,
 }
 

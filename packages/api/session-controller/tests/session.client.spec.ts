@@ -550,12 +550,12 @@ describe('prompt and cancel errors', () => {
 
   it('lands an interrupt business failure in promptError with op=stop', async ({ mock, start }) => {
     const session = await sessionBench(mock, start, SID, { address: CHILD })
-    mock.remote.subagents.interruptByUser.mockResolvedValue(err(new RemoteError('remote-access/denied', 'nope', { action: 'subagents/interruptByUser', reason: 'no-allow' })))
+    mock.remote.subagents.interruptByUser.mockResolvedValue(err(new RemoteError('gateway/owner-required', 'nope', { endpoint: 'subagents/interruptByUser' })))
     await session.open()
     const cancelled = await session.cancel()
-    expect(cancelled).toMatchObject({ ok: false, error: { code: 'remote-access/denied' } })
+    expect(cancelled).toMatchObject({ ok: false, error: { code: 'gateway/owner-required' } })
     expect(session.getSnapshot().promptError).toMatchObject({
-      op: 'stop', error: { code: 'remote-access/denied' },
+      op: 'stop', error: { code: 'gateway/owner-required' },
     })
   })
 

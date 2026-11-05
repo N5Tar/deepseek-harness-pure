@@ -1,47 +1,17 @@
 /**
- * Generate the per-subsystem Cordis service/event reference regions from the
- * Typert catalog projection. Every harness `ctx.<key>` service and event scope
- * maps to exactly one `docs/subsystems/` page through the curated tables below;
- * the generator injects each page's Cordis API reference between its GENERATED markers —
- * into both language sides of the pair, localizing paired document paths for
- * the Chinese side while retaining every other byte — and re-records a pair's
- * `.i18n.yaml` only when nothing outside the region changed. The
- * projection enforces event modes, JSDoc parameter/return completeness, and
- * signature type-link coverage; the inherited (vendor) tier renders to
- * `docs/cordis-api/inherited.md`. `--check` verifies every generated artifact.
- *
- * Generated regions embed `file:line` source pointers, so inserting lines ABOVE a
- * recorded symbol makes the committed output stale even though nothing about the
- * symbol changed. Regenerate after editing any file this projection records — the
- * failure otherwise surfaces as the "reproduces every committed catalog artifact
- * byte for byte" test failing, which reads like a snapshot regression rather than
- * a missing regeneration.
+ * Generate the runtime Cordis service/event catalog from the Typert projection.
+ * Curated partition maps and an independent AST scan reject missing or stale
+ * service and event entries. No documentation pages are read or written.
+ * `--check` verifies the committed runtime catalog instead of writing it.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import {
-  projectCordisCatalog,
-  renderInheritedPage,
-  renderPageRegion,
-  REGION_BEGIN,
-  REGION_END,
-} from '@deepseek-ai/dsh-typert-generator'
+import { projectCordisCatalog } from '@deepseek-ai/dsh-typert-generator'
 import type { CordisCatalogPolicy } from '@deepseek-ai/dsh-typert-generator'
-import { renderCordisCoreApiPages } from './cordis-core-api.ts'
 import { contextKeyMap, contextMergeFiles, eventNameList } from './cordis-walk.ts'
-import {
-  parseTranslationPairingManifest,
-  translationPairSourcePredicate,
-} from './translation-pairing.ts'
-import { rewriteTranslationLinkLocales } from './translation-links.ts'
-
 const root = resolve(import.meta.dirname, '..')
-const SUBSYSTEMS_DIR = 'docs/subsystems'
-const OUT_INHERITED = 'docs/cordis-api/inherited.md'
 const OUT_RUNTIME_API = 'packages/extensions/tool-cordis/src/api-catalog.ts'
-
-export { REGION_BEGIN, REGION_END }
 
 /**
  * The owning subsystems page for every harness `ctx.<key>` service the
@@ -140,7 +110,6 @@ export const SERVICE_PAGE: Record<string, string> = {
   jobs: 'jobs.md',
   jobController: 'jobs.md',
   sessionTelemetry: 'session-telemetry.md',
-  liveshareShares: 'liveshare.md',
   agentTeams: 'agent-team.md',
   claudeCodeMods: 'claude-code-mods.md',
   tokenMeter: 'token-meter.md',
@@ -148,7 +117,6 @@ export const SERVICE_PAGE: Record<string, string> = {
   tools: 'tools.md',
   typert: 'typert.md',
   typertGateway: 'typert.md',
-  remoteAccess: 'typert.md',
   userQuestions: 'user-questions.md',
   web: 'web.md',
   workflowEngine: 'workflow.md',
@@ -181,7 +149,6 @@ export const SERVICE_PAGE: Record<string, string> = {
  */
 export const SERVICE_WALK_EXEMPTIONS: Record<string, string> = {
   contextMenus: 'client-side interface-typed menu registry — packages/client/ui-context-menu/README.md owns the API',
-  fileActions: 'client-side interface-typed file actions — packages/client/ui-file-actions/README.md owns the API',
   invocation: 'not a service: per-call accessor (RemoteInvocation | undefined) the Gateway derives for each Remote call — packages/api/gateway/README.md owns the contract',
   webTerminals: 'client-side terminal view models — packages/api/terminal-controller/README.md owns the API',
   appReady: 'not a service: launcher-provided successful-startup signal — packages/boot/cmdline/README.md owns the launcher contract',
@@ -361,25 +328,6 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   OfficeToPdfResult: 'office-to-pdf.md',
   OfficeToPdfPriority: 'office-to-pdf.md',
   OfficeToPdfGeneration: 'office-to-pdf.md',
-  CreatedShare: 'liveshare.md',
-  CreateShareRequest: 'liveshare.md',
-  OwnerIdentityRequest: 'liveshare.md',
-  OwnerIdentityStatus: 'liveshare.md',
-  OwnerRelayState: 'liveshare.md',
-  OwnerShareList: 'liveshare.md',
-  RelayConnectivityView: 'liveshare.md',
-  RelayPublishView: 'liveshare.md',
-  SetRelayRequest: 'liveshare.md',
-  SetShareCapabilitiesRequest: 'liveshare.md',
-  ShareAudit: 'liveshare.md',
-  ShareAuditRequest: 'liveshare.md',
-  ShareCapabilities: 'liveshare.md',
-  ShareCapabilityOffers: 'liveshare.md',
-  SharePermissions: 'liveshare.md',
-  StopShareRequest: 'liveshare.md',
-  StopShareResult: 'liveshare.md',
-  TestPublishRequest: 'liveshare.md',
-  UpdateSharePermissionsRequest: 'liveshare.md',
   Agent: 'core.md',
   AgentCancelCause: 'core.md',
   AgentFactory: 'core.md',
@@ -997,11 +945,6 @@ export const TYPE_LINK_EXEMPTIONS: Readonly<Record<string, string>> = {
   PeerAdmission: 'Peer admission outcome is owned by packages/client/connection/src/rpc.ts',
   ConnectionAdmission: 'physical socket admission and release are owned by packages/client/connection/src/rpc.ts',
   PeerScope: 'Peer scope contract is owned by packages/typert/protocol/src/types.ts',
-  RemoteAccessPolicy: 'access policy contract is owned by packages/api/remote-access/README.md',
-  RemoteAccessRequest: 'Gateway decision requests are owned by packages/api/remote-access/README.md',
-  RemoteAccessDecision: 'Gateway decisions are owned by packages/api/remote-access/README.md',
-  RemoteAccessFrame: 'access snapshot frames are owned by packages/api/remote-access/README.md',
-  RemoteAccessBaseline: 'access snapshot frames are owned by packages/api/remote-access/README.md',
   ConnectionIndexRequest: 'frontend authentication request is owned by packages/client/connection/src/rpc.ts',
   ConnectionIndexResponse: 'frontend authentication response is owned by packages/client/connection/src/rpc.ts',
   Profile: 'resolved profile layers are owned by packages/boot/app-boot/README.md',
@@ -1150,24 +1093,6 @@ export const CORDIS_CATALOG_POLICY: CordisCatalogPolicy = {
       },
     ],
   }],
-  inheritedEvents: [
-    { name: 'internal/plugin', summary: 'A plugin fiber was created.', source: 'vendor/cordis/src/events.ts:337' },
-    { name: 'internal/status', summary: 'A fiber changed lifecycle state.', source: 'vendor/cordis/src/events.ts:339' },
-    { name: 'internal/service', summary: 'A service binding was refreshed in the matching isolation scope.', source: 'vendor/cordis/src/events.ts:341' },
-    { name: 'internal/update', summary: 'Waterfall: apply resolved config; omitting next() keeps the current instance.', source: 'vendor/cordis/src/events.ts:348' },
-    { name: 'internal/commit', summary: 'Persist raw config from a programmatic update unless noSave is set.', source: 'vendor/cordis/src/events.ts:355' },
-    { name: 'internal/config', summary: 'Waterfall: resolve a candidate after injections are active without publishing it.', source: 'vendor/cordis/src/events.ts:362' },
-    { name: 'internal/get', summary: 'Waterfall: a service is being read from the store.', source: 'vendor/cordis/src/events.ts:364' },
-    { name: 'internal/set', summary: 'Waterfall: a service is being written to the store.', source: 'vendor/cordis/src/events.ts:366' },
-    { name: 'internal/listener', summary: 'A listener was registered.', source: 'vendor/cordis/src/events.ts:368' },
-    { name: 'internal/dispatch', summary: 'An event is being dispatched to listeners.', source: 'vendor/cordis/src/events.ts:370' },
-    { name: 'exit', summary: 'The process is exiting on a signal.', source: 'vendor/loader/src/index.ts:25' },
-    { name: 'loader/config-update', summary: 'The loader config tree changed.', source: 'vendor/loader/src/index.ts:26' },
-    { name: 'loader/entry-init', summary: 'A config entry is being initialized.', source: 'vendor/loader/src/index.ts:27' },
-    { name: 'loader/partial-dispose', summary: 'An entry is being partially disposed on reload.', source: 'vendor/loader/src/index.ts:28' },
-    { name: 'loader/patch-context', summary: 'A context is being patched during a reload.', source: 'vendor/loader/src/index.ts:41' },
-    { name: 'loader/volatile-update', summary: 'Volatile config values committed into the running fiber without a remount; dispatched to the owning fiber only.', source: 'vendor/loader/src/index.ts:34' },
-  ],
   inheritedServices: [
     { name: 'ctx.on / ctx.once', summary: 'Register an event listener (disposable).', source: 'vendor/cordis/src/events.ts:34' },
     { name: 'ctx.emit / ctx.parallel / ctx.serial / ctx.bail / ctx.waterfall', summary: 'Dispatch an event (sync / awaited / first-bail / short-circuit chain).', source: 'vendor/cordis/src/events.ts:34' },
@@ -1181,31 +1106,6 @@ export const CORDIS_CATALOG_POLICY: CordisCatalogPolicy = {
   ],
 }
 
-
-/**
- * Splice a page's generated Cordis API region into its Markdown content.
- * The page must contain exactly one `cordis-surface` marker region (the markers are
- * part of the hand-owned page skeleton once, then owned by the generator);
- * zero or several is a partition error the caller reports with the page path.
- * The match is on THIS generator's exact markers, not the generic region
- * grammar, so a page carrying only some other generator's region fails loud
- * instead of having that region overwritten.
- * @param content - the page's current full Markdown text.
- * @param region - the freshly rendered marker-delimited region.
- * @returns the page text with the region replaced.
- */
-export function spliceRegion(content: string, region: string): string {
-  const lines = content.split('\n')
-  const begins = lines.flatMap((line, index) => (line === REGION_BEGIN ? [index] : []))
-  const ends = lines.flatMap((line, index) => (line === REGION_END ? [index] : []))
-  if (begins.length !== 1 || ends.length !== 1) {
-    throw new Error(`expected exactly 1 cordis-surface region, found ${begins.length} BEGIN/${ends.length} END; add the BEGIN/END cordis-surface markers once`)
-  }
-  const begin = begins[0] ?? -1
-  const end = ends[0] ?? -1
-  if (end < begin) throw new Error('cordis-surface END marker precedes its BEGIN')
-  return [...lines.slice(0, begin), ...region.split('\n'), ...lines.slice(end + 1)].join('\n')
-}
 
 /** The declared-vs-rendered inputs {@link walkPartitionProblems} judges. */
 export interface WalkPartitionInput {
@@ -1227,19 +1127,6 @@ export interface WalkPartitionMaps {
   readonly serviceWalkExemptions: Readonly<Record<string, string>>
   readonly eventScopePage: Readonly<Record<string, string>>
   readonly eventWalkExemptions: Readonly<Record<string, string>>
-}
-
-/** Project paired Markdown destinations in one generated region to the page's locale. */
-export function localizePageRegion(region: string, pageRel: string, scanRoot: string = root): string {
-  if (!pageRel.endsWith('.zh.md')) return region
-  const manifest = parseTranslationPairingManifest(
-    readFileSync(resolve(scanRoot, 'scripts/translation-pairing.manifest.json'), 'utf8'),
-  )
-  return rewriteTranslationLinkLocales(region, {
-    repoRoot: scanRoot,
-    sourcePath: pageRel,
-    isTranslationPairSource: translationPairSourcePredicate(manifest),
-  }).content
 }
 
 /**
@@ -1313,14 +1200,10 @@ export function walkPartitionProblems(input: WalkPartitionInput, maps: WalkParti
 }
 
 /**
- * Compute every generated artifact: the inherited-tier page, the model-facing
- * runtime API module, plus, per mapped subsystems page, the pair's two updated
- * documents with the injected region. Fail-loud partition checks live here: an
- * unmapped service/event scope, a mapping whose page file does not exist, a
- * curated entry whose key/scope the projection no longer discovers, a declared
- * Context key or Events member the projection cannot see without a named walk
- * exemption, and a mapped page missing its markers are all aggregated errors.
- * @returns `[repo-relative path, exact content]` for every generated artifact.
+ * Compute the runtime catalog after validating service and event partitions.
+ * Missing mappings, stale mappings, and unexplained differences between the
+ * projection and the independent AST scan are aggregated into one failure.
+ * @returns the repository-relative output path and exact runtime module content.
  */
 export function computeOutputs(): [string, string][] {
   const { projector, model } = projectCordisCatalog(root, CORDIS_CATALOG_POLICY)
@@ -1351,51 +1234,16 @@ export function computeOutputs(): [string, string][] {
   })
   if (problems.length > 0) throw new Error(`gen-cordis-catalog: ${problems.length} partition violation(s):\n${problems.map(p => `  ${p}`).join('\n')}`)
 
-  const pages = [...new Set([...Object.values(SERVICE_PAGE), ...Object.values(EVENT_SCOPE_PAGE)])].sort()
-  const outputs: [string, string][] = [
-    [OUT_INHERITED, renderInheritedPage(CORDIS_CATALOG_POLICY)],
-    [OUT_RUNTIME_API, projector.renderRuntimeApi(model)],
-  ]
-  for (const page of pages) {
-    const region = renderPageRegion(
-      page,
-      services.filter(s => SERVICE_PAGE[s.key] === page),
-      events.filter(e => EVENT_SCOPE_PAGE[e.scope] === page),
-      CORDIS_CATALOG_POLICY,
-    )
-    for (const side of [page, page.replace(/\.md$/, '.zh.md')]) {
-      const rel = `${SUBSYSTEMS_DIR}/${side}`
-      const localizedRegion = localizePageRegion(region, rel)
-      let current: string
-      try {
-        current = readFileSync(resolve(root, rel), 'utf8')
-      } catch {
-        // Both pair sides must exist before a region can be injected; the
-        // pairing gate owns pair completeness, this generator names the miss.
-        problems.push(`${rel}: mapped subsystems page does not exist.`)
-        continue
-      }
-      try {
-        outputs.push([rel, spliceRegion(current, localizedRegion)])
-      } catch (error) {
-        problems.push(`${rel}: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    }
-  }
-  if (problems.length > 0) throw new Error(`gen-cordis-catalog: ${problems.length} page violation(s):\n${problems.map(p => `  ${p}`).join('\n')}`)
-  return outputs
+  return [[OUT_RUNTIME_API, projector.renderRuntimeApi(model)]]
 }
 
-/** CLI entry: default regenerates every artifact, `--check` fails if any is
+/** CLI entry: default regenerates the runtime catalog, `--check` fails if any is
  * stale. Guarded behind an entry-point check so importing this module for
  * tests neither regenerates the committed files nor calls process.exit.
  * @returns nothing; writes files or reports freshness through the process.
  */
 export function main(): void {
-  const outputs: [string, string][] = [
-    ...computeOutputs(),
-    ...renderCordisCoreApiPages(),
-  ]
+  const outputs = computeOutputs()
   if (process.argv.includes('--check')) {
     const stale: string[] = []
     for (const [out, content] of outputs) {
@@ -1411,22 +1259,22 @@ export function main(): void {
       if (committed !== content) stale.push(out)
     }
     if (stale.length === 0) {
-      console.log(`gen-cordis-catalog: ${outputs.length} generated file(s)/region(s) are up to date.`)
+      console.log(`gen-cordis-catalog: ${outputs.length} generated file(s) are up to date.`)
       process.exit(0)
     }
-    console.error(`gen-cordis-catalog: stale — ${stale.join(', ')}. Run \`pnpm run gen-cordis-catalog\` and commit the result.`)
+    console.error(`gen-cordis-catalog: stale — ${stale.join(', ')}. Run \`node --import tsx/esm scripts/gen-cordis-catalog.ts\` and commit the result.`)
     process.exit(1)
   }
 
-  let changedPages = 0
+  let changedArtifacts = 0
   for (const [out, content] of outputs) {
     const destination = resolve(root, out)
     if (existsSync(destination) && readFileSync(destination, 'utf8') === content) continue
     mkdirSync(dirname(destination), { recursive: true })
     writeFileSync(destination, content)
-    changedPages++
+    changedArtifacts++
   }
-  console.log(`gen-cordis-catalog: ${outputs.length} artifact(s) computed, ${changedPages} written.`)
+  console.log(`gen-cordis-catalog: ${outputs.length} artifact(s) computed, ${changedArtifacts} written.`)
 }
 
 if (process.argv[1] && import.meta.filename === resolve(process.argv[1])) {

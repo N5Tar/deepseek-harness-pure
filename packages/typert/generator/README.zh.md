@@ -41,7 +41,7 @@ files:
   - "lib/typert.host.d.ts"
 ```
 
-构建完成后，`lib/typert.host.js` 与 `lib/typert.host.d.ts` 即存在，[loader](../loader/README.zh.md) 会在 Loader 组合中注册该贡献。生成的声明文件把 `TYPERT` 暴露为 `unknown`，因此参与贡献的包永远不会依赖运行时注册表。当声明缺失、指向错误文件，或在没有 Remote 方法的情况下发布 Remote 产物时，生成器会使构建失败；不支持的 Zod 投影会以 `TypertEmitError` 指明具体构造并失败，而不会展平或弱化源类型。
+构建完成后，`lib/typert.host.js` 与 `lib/typert.host.d.ts` 即存在，[loader](../loader/README.zh.md) 会在 Loader 组合中注册该贡献。生成的声明文件把 `TYPERT` 暴露为 `unknown`，因此参与贡献的包永远不会依赖运行时注册表。当声明缺失、指向错误文件，或在没有 Remote 方法的情况下发布 Remote 产物时，生成器会使构建失败；不支持的 Zod 投影会以 `TypertEmitError` 指明具体构造并失败，而不会展平或弱化源类型。 装饰器选项接受端点名和直接方法的流模式；未知选项会使生成失败。
 
 <a id="ordinary-remote-metadata"></a>
 ### 普通 Remote 元数据
@@ -121,7 +121,7 @@ Host 与 Client 是两个独立的 TypeScript 程序。直接项目引用确定�
 
 运行时类型闭包索引导出的 workspace 声明和被引用的框架 enum。Vendor 声明不参与业务 API 发现；公共结果引用其中 enum 时，目录仍提供其定义。
 
-根导出包含本仓库 Cordis 目录使用的模型驱动提取逻辑、完整性检查与确定性文本渲染器。它们接受 `CordisCatalogPolicy`；由仓库持有的类型链接、基础类型／豁免分类与继承的 Cordis 条目仍位于 `scripts/gen-cordis-catalog.ts`，由调用方显式传入，因此本包只包含投影机制，不会隐式复制仓库的文档分类体系。
+根导出包含模型驱动提取逻辑、完整性检查与确定性的运行时 API 渲染器。它接受 `CordisCatalogPolicy`；运行时目录使用的类型分类与继承 Cordis 成员位于 `scripts/gen-cordis-catalog.ts`，由调用方显式传入。该脚本校验服务与事件分区，只生成运行时模块，不读取或写入文档页面。
 
 </details>
 

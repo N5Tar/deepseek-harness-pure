@@ -22,9 +22,8 @@ const dictionary: Record<string, string> = en
 const translate: SessionLogDownloadHeaderProps['t'] = key => dictionary[key] ?? key
 const unused = (): never => { throw new Error('This isolated component does not consume framework hooks') }
 const standard: GlobalStandardProps & SessionStandardProps = {
-  sessionId: SID, useSession: unused, useProjection: unused, useAccess: () => true,
+  sessionId: SID, useSession: unused, useProjection: unused,
   useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused,
-  useSessionAccess: () => true, useRemoteAccess: () => true, useWorkspaceAccess: () => true,
   useConversation: unused, useInput: unused, useChat: unused, useTrajectory: unused,
   usePanelInfo: unused, useContextMenu: contextMenuHook(), useResource: unused, useWorkspaces: unused,
   inputActions: { insertQuote: () => false, captureInsertion: unused, insertText: unused, setDraft: unused, persistDraft: unused,

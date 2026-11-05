@@ -1,8 +1,8 @@
 /** Context gestures against built plugins, seeded Sessions, and original files. */
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { chromium, type Browser, type Locator, type Page } from 'playwright'
-import { afterAll, beforeAll, describe, expect, it, onTestFailed, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
 import { createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
 import { createAssistantMessage, createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SESSION_FORMAT_VERSION, Session, SessionId } from '@deepseek-ai/dsh-session'
@@ -209,8 +209,7 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
     await page.getByRole('menuitem', { name: 'Copy file path', exact: true }).waitFor()
     await page.keyboard.press('End')
     expect(await page.getByRole('menuitem', { name: 'Save as…', exact: true }).count()).toBe(0)
-    expect(await page.getByRole('menuitem', { name: 'Download', exact: true }).evaluate(element => element === document.activeElement)).toBe(true)
-    await page.keyboard.press('ArrowUp')
+    expect(await page.getByRole('menuitem', { name: 'Download', exact: true }).count()).toBe(0)
     expect(await page.getByRole('menuitem', { name: 'Copy file path', exact: true }).evaluate(element => element === document.activeElement)).toBe(true)
     await page.keyboard.press('Enter')
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(join(scaffold.workspaceCwd, 'first.txt'))
@@ -251,20 +250,9 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
     expect(counts.every(count => count > 0)).toBe(true)
   })
 
-  it('preserves file line navigation, URL text, image format, and existing tab close actions', async () => {
+  it('preserves file line navigation, URL text, image reveal, and existing tab close actions', async () => {
     onTestFailed(() => saveFailureShot(page, 'context-menus-content'))
     const file = page.getByRole('button', { name: 'First file', exact: true })
-    await file.click({ button: 'right' })
-    await page.getByRole('menuitem', { name: 'Download', exact: true }).waitFor()
-    expect(await page.getByRole('menuitem', { name: 'Save as…', exact: true }).count()).toBe(0)
-    const fileDownloadPromise = page.waitForEvent('download')
-    await page.getByRole('menuitem', { name: 'Download', exact: true }).click()
-    const fileDownload = await fileDownloadPromise
-    expect(fileDownload.suggestedFilename()).toBe('first.txt')
-    expect(await readFile(await fileDownload.path(), 'utf8')).toBe('FIRST\nSECOND\nTHIRD\n')
-    const started = page.getByRole('alert').filter({ hasText: 'Download started' })
-    await started.waitFor()
-    expect(await started.getByRole('button', { name: /Show in/ }).count()).toBe(0)
     await file.click({ button: 'right' })
     await page.getByRole('menuitem', { name: 'Open in sidebar', exact: true }).click()
     await page.locator('[data-document-preview]').getByText('SECOND', { exact: true }).waitFor()
@@ -292,33 +280,14 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
     await page.getByRole('menuitem', { name: 'Copy link address', exact: true }).click()
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://example.com/path?q=1#fragment')
     await page.getByRole('img', { name: 'Original', exact: true }).click({ button: 'right' })
-    await page.getByRole('menuitem', { name: 'Download', exact: true }).waitFor()
+    await page.getByRole('menuitem', { name: 'Show in folder', exact: true }).waitFor()
     await expect((await menuLabels(page.getByRole('menu'))).join('\n') + '\n')
       .toMatchFileSnapshot(join(import.meta.dirname, 'expected/context-menus/image.txt'))
     expect(await page.getByRole('menuitem', { name: 'Show in folder', exact: true }).count()).toBe(1)
-    const downloadPromise = page.waitForEvent('download')
-    await page.getByRole('menuitem', { name: 'Download', exact: true }).click()
-    const download = await downloadPromise
-    expect(download.suggestedFilename().endsWith('.gif')).toBe(true)
-    await page.getByRole('alert').filter({ hasText: 'Download started' }).waitFor()
-    const path = await download.path()
-    expect(path).not.toBeNull()
-    if (path === null) throw new Error('Browser download unavailable')
-    expect(await readFile(path)).toEqual(GIF)
-    await page.getByRole('img', { name: 'Original', exact: true }).click({ button: 'right' })
-    await page.getByRole('menuitem', { name: 'Copy image', exact: true }).click()
-    await page.getByText('Copied', { exact: true }).waitFor()
-    expect(await page.evaluate(async () => (await navigator.clipboard.read()).some(item => item.types.includes('image/png')))).toBe(true)
+    await page.keyboard.press('Escape')
     await page.getByRole('img', { name: 'Remote', exact: true }).click({ button: 'right' })
     expect(await page.getByRole('menuitem', { name: 'Show in folder', exact: true }).isDisabled()).toBe(true)
-    const remoteDownloadPromise = page.waitForEvent('download')
-    await page.getByRole('menuitem', { name: 'Download', exact: true }).click()
-    const remoteDownload = await remoteDownloadPromise
-    expect(await readFile((await remoteDownload.path()))).toEqual(GIF)
-    await page.getByRole('img', { name: 'Remote', exact: true }).click({ button: 'right' })
-    await page.getByRole('menuitem', { name: 'Copy image', exact: true }).click()
-    await page.getByText('Copied', { exact: true }).waitFor()
-    expect(await page.evaluate(async () => (await navigator.clipboard.read()).some(item => item.types.includes('image/png')))).toBe(true)
+    await page.keyboard.press('Escape')
     await page.getByRole('button', { name: 'Second file', exact: true }).click()
     await page.locator('[data-document-preview]').getByText('SECOND FILE', { exact: true }).waitFor()
     const firstTab = page.locator('[role="tab"]').filter({ hasText: 'first.txt' }).first()
@@ -368,7 +337,7 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
       await page.emulateMedia({ colorScheme })
       await preview.getByRole('img').evaluate(element => element.dispatchEvent(new MouseEvent('contextmenu', { clientX: 1270, clientY: 735, bubbles: true })))
       const menu = page.getByRole('menu')
-      await menu.getByRole('menuitem', { name: 'Copy image', exact: true }).waitFor()
+      await menu.getByRole('menuitem', { name: 'Show in folder', exact: true }).waitFor()
       expect(await menu.getByRole('menuitem').evaluateAll(rows => rows.every(row => row.querySelector('svg[data-icon]')))).toBe(true)
       const box = await menu.boundingBox()
       expect(box).not.toBeNull()
@@ -384,52 +353,5 @@ describe.each(['MacIntel', 'Win32', 'Linux x86_64'])('web context menus on %s', 
     await page.keyboard.press('Escape')
     expect(await preview.count()).toBe(0)
     expect(tripwire.pageErrors).toEqual([])
-  })
-
-  it('offers completed Desktop destinations as toast text actions without enabling remote-image menu reveal', async () => {
-    const native = await browser.newPage({ viewport: { width: 1291, height: 768 }, locale: 'en-US' })
-    const opened = vi.spyOn(scaffold.ctx.sessionController, 'openWorkspacePath').mockResolvedValue({ opened: true })
-    try {
-      const destinations = { download: join(scaffold.workspaceCwd, 'downloaded.gif'), saveAs: join(scaffold.workspaceCwd, 'saved.txt') }
-      await native.addInitScript(({ platform, destinations }) => {
-        Object.defineProperty(navigator, 'platform', { value: platform })
-        Object.defineProperty(globalThis, 'dshDesktop', { value: { protocolVersion: 1, fileActions: {
-          save: async ({ mode }: { mode: 'download' | 'saveAs' }) => ({ status: 'saved', path: destinations[mode] }),
-        } } })
-      }, { platform, destinations })
-      await native.route('https://images.example/original.gif', route => route.fulfill({ body: GIF, contentType: 'image/gif' }))
-      await native.goto(scaffold.authenticatedUrl)
-      await native.evaluate((platform) => {
-        document.documentElement.dataset.platform = platform === 'MacIntel' ? 'darwin' : platform === 'Win32' ? 'win32' : 'linux'
-      }, platform)
-      const group = native.locator('[data-row-key^="workspace:"]').filter({ hasText: 'Ungrouped' })
-      if (await group.getAttribute('aria-expanded') !== 'true') await group.click()
-      await native.locator('[data-row-key="session:context-menu-first"]').click()
-      await native.getByText('CONTEXT_MENU_READY', { exact: true }).waitFor()
-      for (const [mode, label, text, theme] of [
-        ['download', 'Download', 'Download complete', 'light'],
-        ['saveAs', 'Save as…', 'Saved', 'dark'],
-      ] as const) {
-        await native.emulateMedia({ colorScheme: theme })
-        const trigger = mode === 'download'
-          ? native.getByRole('img', { name: 'Remote', exact: true })
-          : native.getByRole('button', { name: 'First file', exact: true })
-        await trigger.click({ button: 'right' })
-        await native.getByRole('menuitem', { name: label, exact: true }).click()
-        const notice = native.getByRole('alert').filter({ hasText: text })
-        const action = notice.getByRole('button', { name: platform === 'MacIntel' ? 'Show in Finder' : 'Show in folder', exact: true })
-        await action.click()
-        await notice.waitFor({ state: 'hidden' })
-        await expect.poll(() => opened.mock.calls.at(-1)?.[0]).toEqual({ path: destinations[mode], action: 'reveal' })
-      }
-      expect(opened).toHaveBeenCalledTimes(2)
-      await native.getByRole('img', { name: 'Remote', exact: true }).click({ button: 'right' })
-      const reveal = native.getByRole('menuitem', { name: 'Show in folder', exact: true })
-      await reveal.waitFor()
-      expect(await reveal.isDisabled()).toBe(true)
-    } finally {
-      await native.close()
-      opened.mockRestore()
-    }
   })
 })

@@ -34,16 +34,11 @@ const SECOND_MS = 1_000
 const MEASURE_STYLE: CSSProperties = { visibility: 'hidden', left: 0, top: 0 }
 
 /**
- * Current-Session reminder catalog with durable deletion, rendered only while
- * the current Peer may list this Session's reminders.
- * @param props - the Session seats, the injected catalog and verbs, and localized copy.
- * @returns the reminder catalog action, or nothing without access.
+ * Current-Session reminder catalog with durable deletion.
+ * @param props - Session data, injected operations, and localized copy.
+ * @returns the controls for the current Session.
  */
-export function ScheduleCatalogAction(props: ScheduleCatalogActionProps) {
-  return props.useAccess('schedule/list') ? <SessionScheduleCatalog {...props} /> : null
-}
-
-function SessionScheduleCatalog({
+export function ScheduleCatalogAction({
   sessionId, useSession, useCatalog, onDelete, onRetry, openTaskDetail, t,
 }: ScheduleCatalogActionProps) {
   const openState = useSession(snapshot => snapshot.openState)

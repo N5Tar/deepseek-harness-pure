@@ -27,7 +27,7 @@ This standalone bundle supplies an authenticated browser shell with language and
 
 Select this bundle as the profile's complete bundle list through the [profile mechanism](../../boot/app-boot/README.md). Do not stack it with the full base or Web bundles. Keep the profile and Harness home separate from existing product data.
 
-The [patch](cordis.patch.yml) binds loopback on an OS-assigned port. Its runtime publishes an authenticated URL only after launcher readiness and never opens a browser automatically. Authentication still uses managed local credentials; absence of account business services does not remove browser access checks.
+The [patch](cordis.patch.yml) binds loopback on an OS-assigned port. Its runtime publishes an authenticated URL only after launcher readiness and never opens a browser automatically. Authentication still uses managed local credentials; absence of account business services does not remove browser access checks. The Gateway accepts only owner Peers; this bundle provides no guest sharing or per-resource access policy.
 
 Profile overrides replace a row's entire configuration. Appearance and language preferences persist through the profile settings document. The default Root is supplied by [ui-shell](../../client/ui-shell/README.md).
 

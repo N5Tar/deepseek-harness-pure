@@ -21,7 +21,7 @@ import type { FileDragActions, MarkdownFileMentions, MarkdownLabels } from '@dee
 import type { ContextMenuTriggerProps } from '@deepseek-ai/dsh-client-ui-context-menu/client'
 import type { ChatKey } from '../locale.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
-// Type-only: the Session-scope access Hook (`useAccess`) the Chat entries read.
+// Type-only: the Session-scoped standard props the Chat entries read.
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type { createChatStore } from '../stores.ts'
 import type { ChatPresentationPolicy } from '../presentation-policy.ts'

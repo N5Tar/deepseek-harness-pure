@@ -10,7 +10,6 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   collectEvents as collectEventsWithPolicy,
   collectServices as collectServicesWithPolicy,
-  renderPageRegion,
 } from '../src/cordis-catalog.ts'
 import type {
   CordisCatalogPolicy,
@@ -22,7 +21,6 @@ const TEST_POLICY: CordisCatalogPolicy = {
   linkedTypePages: { SessionEvent: 'core.md' },
   foundationTypeNames: new Set(['AbortSignal', 'Promise', 'Readonly']),
   typeLinkExemptions: { PresetSpec: 'fixture deployment metadata' },
-  inheritedEvents: [],
   inheritedServices: [],
 }
 
@@ -32,14 +30,6 @@ function collectEvents(root: string): EventEntry[] {
 
 function collectServices(root: string): ServiceEntry[] {
   return collectServicesWithPolicy(root, TEST_POLICY)
-}
-
-function renderEvents(events: EventEntry[], onPage = 'shell.md'): string {
-  return renderPageRegion(onPage, [], events, TEST_POLICY)
-}
-
-function renderServices(services: ServiceEntry[], onPage = 'shell.md'): string {
-  return renderPageRegion(onPage, services, [], TEST_POLICY)
 }
 
 const TYPE_FIXTURES = [
@@ -132,7 +122,6 @@ describe.skip('gen-cordis-catalog collectEvents', { timeout: 60_000 }, () => {
     expect(events).toHaveLength(1)
     expect(events[0]).toMatchObject({ name: 'fix/happened', scope: 'fix', mode: 'emit', doc: 'A thing happened.' })
     expect(events[0]?.jsDoc).toBe('/**\n * A thing happened.\n * @param id - which thing.\n * @mode emit\n */')
-    expect(renderEvents(events)).toContain("```ts cordis-catalog\n/**\n * A thing happened.\n * @param id - which thing.\n * @mode emit\n */\n'fix/happened'(id: string): void\n```")
   })
 
   it('classifies a trailing-next signature as a waterfall', () => {
@@ -154,9 +143,6 @@ describe.skip('gen-cordis-catalog collectEvents', { timeout: 60_000 }, () => {
       '    /**\n     * Carry linked and foundation types.\n     * @param value - the linked value.\n     * @param preset - deployment metadata documented outside the subsystems catalog.\n     * @param signal - cancellation.\n     * @mode parallel\n     */\n    \'fix/typed\'<T extends SessionEvent>(value: Readonly<T>, preset: PresetSpec, signal: AbortSignal): Promise<T>',
     ))
     expect(events).toHaveLength(1)
-    expect(renderEvents(events)).toContain('Types: [SessionEvent](core.md)')
-    expect(renderEvents(events, 'core.md')).not.toContain('Types: [SessionEvent]')
-    expect(renderEvents(events)).not.toContain('[PresetSpec]')
   })
 
   it('aggregates every unclassified signature type with its source and remediation', () => {
@@ -265,7 +251,6 @@ export class FixService {
       signature: 'run(id: string): string',
       jsDoc: '/**\n * Do the thing.\n * @param id - which thing to do.\n * @returns the outcome of doing it.\n */',
     })
-    expect(renderServices(services)).toContain('```ts cordis-catalog\n/**\n * Do the thing.\n * @param id - which thing to do.\n * @returns the outcome of doing it.\n */\nrun(id: string): string\n\n/** Fire and forget (void needs no @returns). */\npoke(): void')
   })
 
   it('hard-errors on an unclassified service-method signature type', () => {

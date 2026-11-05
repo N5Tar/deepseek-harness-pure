@@ -67,7 +67,6 @@ Web 应用 bundle 挂载此客户端插件。外部客户端插件在 `dsh.clien
 ## 进一步探索
 
 - [Slots](../ui-slots/README.zh.md) — 组件贡献。
-- [文件操作](../ui-file-actions/README.zh.md) — 原始内容传输。
 - [本地打开](../ui-open-in-app/README.zh.md) — 内置资源操作。
 
 -----

@@ -25,7 +25,7 @@ Use `dsh-agent` to create or resume live agents, send follow-up or steering inpu
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount `dsh-agent` with `dsh-session-projection`: it provides `ctx.agents`, the `Agent` handle, and `turnBoundaryOf(session)` for recorded turn and step positions. Creating or resuming an Agent also requires a driver to register a factory; the shipped driver is `dsh-agent-loop`. [Session model selection](#model-selection) is available on each handle as `agent.model`.
+Mount `dsh-agent` with `dsh-session-projection`: it provides `ctx.agents`, the `Agent` handle, and `turnBoundaryOf(session)` for recorded turn and step positions. Creating or resuming an Agent also requires a driver to register a factory; the shipped driver is `dsh-agent-loop`. [Session model selection](#model-selection) is available on each handle as `agent.model`. When Typert is mounted, the registry contributes live Agent lookup and Host Context resolution by Session id; these providers do not authorize Remote callers.
 
 ### Create or resume an agent
 

@@ -27,9 +27,6 @@
       "path": "../../util/package-manifest"
     },
     {
-      "path": "../../api/remote-access/tsconfig.host.json"
-    },
-    {
       "path": "../../skill/skill"
     },
     {

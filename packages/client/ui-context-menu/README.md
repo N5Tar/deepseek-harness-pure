@@ -67,7 +67,6 @@ The registry separates resolution and callback lifetimes from presentation. The 
 ## Further Exploration
 
 - [Slots](../ui-slots/README.md) — component contributions.
-- [File actions](../ui-file-actions/README.md) — original content transfer.
 - [Open in app](../ui-open-in-app/README.md) — shipped resource actions.
 
 -----

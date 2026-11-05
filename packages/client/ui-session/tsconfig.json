@@ -15,9 +15,6 @@
       "path": "../../api/remotes/tsconfig.client.json"
     },
     {
-      "path": "../../api/remote-access/tsconfig.client.json"
-    },
-    {
       "path": "../../api/session-controller/tsconfig.client.json"
     },
     {

@@ -113,7 +113,7 @@ class Reader {
   readonly closed = this.completion.promise
   private readonly abort = (): void => { this.end() }
 
-  constructor(readonly allowed: (id: SessionId) => boolean, private readonly signal: AbortSignal) {
+  constructor(private readonly signal: AbortSignal) {
     signal.addEventListener('abort', this.abort, { once: true })
   }
 
@@ -194,12 +194,12 @@ class Run {
     }
   }
 
-  /** The known states of every change request that some Session the reader may read binds. */
-  visible(allowed: (id: SessionId) => boolean): ForgeChangeRequestListState[] {
+  /** The known states of every change request that a listed Session binds. */
+  visible(): ForgeChangeRequestListState[] {
     const states: ForgeChangeRequestListState[] = []
-    for (const [url, ids] of this.sessionsOf) {
+    for (const url of this.sessionsOf.keys()) {
       const state = this.states.get(url)
-      if (state !== undefined && [...ids].some(allowed)) states.push(state)
+      if (state !== undefined) states.push(state)
     }
     return states
   }
@@ -236,7 +236,7 @@ class Run {
       ids.add(id)
       this.sessionsOf.set(url, ids)
       const state = this.states.get(url)
-      if (state !== undefined) for (const reader of this.readers) if (reader.allowed(id)) reader.push(state)
+      if (state !== undefined) for (const reader of this.readers) reader.push(state)
       this.poll(url, ids)
     }
   }
@@ -256,7 +256,7 @@ class Run {
     if (this.stopped || sameState(this.states.get(url), state)) return
     this.states.set(url, state)
     this.write(() => this.storage.table.put(storedKey(url), state))
-    for (const reader of this.readers) if ([...ids].some(reader.allowed)) reader.push(state)
+    for (const reader of this.readers) if (ids.size > 0) reader.push(state)
   }
 
   private write(operation: () => Promise<unknown>): void {
@@ -278,23 +278,22 @@ export class ChangeRequestStates {
   constructor(private readonly sources: ChangeRequestStateSources) {}
 
   /**
-   * Stream the known states the reader may see first, then each state that
+   * Stream the known states of listed Sessions first, then each state that
    * changes or becomes visible to it. The stream ends when `signal` aborts or
    * the hub is disposed.
-   * @param allowed - whether the reader may read a Session.
    * @param signal - ends the stream.
    * @returns frames in publication order.
    */
-  async *stream(allowed: (id: SessionId) => boolean, signal: AbortSignal): AsyncIterable<ForgeChangeRequestStatesFrame> {
+  async *stream(signal: AbortSignal): AsyncIterable<ForgeChangeRequestStatesFrame> {
     signal.throwIfAborted()
     if (this.disposed) return
-    const reader = new Reader(allowed, signal)
+    const reader = new Reader(signal)
     this.readers.add(reader)
     try {
       const run = await Promise.race([this.ensureRun(), reader.closed.then(() => undefined)])
       // A run that the hub stopped while it started leaves nothing to read.
       if (run === undefined) return
-      yield { type: 'baseline', states: run.visible(allowed) }
+      yield { type: 'baseline', states: run.visible() }
       yield* reader.frames()
     } finally {
       reader.dispose()

@@ -1439,19 +1439,14 @@ class FaceAnalyzer {
     return found
   }
 
-  /**
-   * Read the options object of `@Remote` or `@RemoteScope`. `resources`
-   * accepts any expression: its readers run only at runtime, where the
-   * Gateway reads them from the prototype descriptor, so generation records
-   * nothing for them.
-   */
+  /** Read the endpoint and stream options of `@Remote` or `@RemoteScope`. */
   private remoteOptions(
     argument: ts.Expression,
     decorator: 'Remote' | 'RemoteScope',
   ): { readonly exportName?: string; readonly mode?: 'stream' } {
     const requirement = decorator === 'Remote'
-      ? 'Remote() options require name, mode: "stream", or resources'
-      : 'RemoteScope() options require name or resources'
+      ? 'Remote() options require name or mode: "stream"'
+      : 'RemoteScope() options require name'
     if (!ts.isObjectLiteralExpression(argument) || argument.properties.length === 0) this.fail(argument, requirement)
     let options: { readonly exportName?: string; readonly mode?: 'stream' } = {}
     for (const property of argument.properties) {
@@ -1463,7 +1458,7 @@ class FaceAnalyzer {
         const value = stringLiteralValue(property.initializer)
         if (value === undefined || !isRemoteSegment(value)) this.fail(property, `${decorator}() name must be an endpoint segment`)
         options = { ...options, exportName: value }
-      } else if (name !== 'resources') {
+      } else {
         this.fail(property, requirement)
       }
     }

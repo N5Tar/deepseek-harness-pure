@@ -96,7 +96,7 @@ class PersonalizedPages {
       invitation: 'End with at most one short invitation in the user’s language, in the first person: after they click Create below, '
         + 'you will build it in the background as a plugin page that stays available, without blocking the chat; '
         + 'the build takes minutes and many tokens.',
-      verbs: { create: { global: true, writes: true }, undo: { global: true }, cancel: {}, restore: { global: true } },
+      verbs: { create: { writes: true }, undo: {}, cancel: {}, restore: {} },
       openPhases: ['cancelled', 'failed', 'interrupted', 'unconfirmed'],
       statusGuidance: 'Cancelled means a started background creation was stopped before installation. '
         + 'Cancelled, failed or interrupted runs can be retried from their existing card; no new proposal is needed. '

@@ -1,7 +1,6 @@
 import { Context } from '@deepseek-ai/cordis'
 import type { Fiber } from '@deepseek-ai/cordis'
 import TypertGateway from '@deepseek-ai/dsh-api-gateway'
-import RemoteAccessService from '@deepseek-ai/dsh-api-remote-access'
 import type { PeerId, PeerScope } from '@deepseek-ai/dsh-typert-protocol'
 import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -79,7 +78,6 @@ function answer(query: ReturnType<typeof start>) {
 
 async function connectGatewayClient(): Promise<AbortController> {
   await ctx.plugin(TypertRegistry)
-  await ctx.plugin(RemoteAccessService)
   await ctx.plugin(TypertGateway)
   ctx.effect(() => ctx.typertGateway.registerRemoteEvents(async function* (signal) {
     await new Promise<void>((resolve) => { signal.addEventListener('abort', () => { resolve() }, { once: true }) })
@@ -110,7 +108,6 @@ describe('Client inspect completion', () => {
 
   it('does not dispatch a query when the Gateway has no connected Client', async () => {
     await ctx.plugin(TypertRegistry)
-    await ctx.plugin(RemoteAccessService)
     await ctx.plugin(TypertGateway)
     const query = start()
     expect(requests).toEqual([])

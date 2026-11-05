@@ -28,13 +28,10 @@ it('refuses unknown cards, closed owners, verbs of removed kinds and undeclared 
   expect(f.act).not.toHaveBeenCalled()
 })
 
-it('applies the shared access and read-only checks the kind declares, then hands typed details to the kind', async () => {
+it('applies the shared read-only checks the kind declares, then hands typed details to the kind', async () => {
   const f = await fixture()
   f.propose()
-  const access = vi.spyOn(f.ctx.remoteAccess, 'allows').mockReturnValue(false)
-  expect(await f.ctx.actionCards.act(f.agent, callId, 'publish')).toEqual({ status: 'refused', reason: 'access-denied' })
   expect(await f.ctx.actionCards.act(f.agent, callId, 'start', { note: 'x' })).toEqual({ status: 'settled', decision: { callId, action: ACTION, phase: 'start' } })
-  access.mockRestore()
   expect(f.act).toHaveBeenCalledWith(f.agent, { callId, turn: 1, ...proposal }, 'start', { note: 'x' })
   const resolve = vi.fn(() => ({ mode: 'read-only', workspaceRoot: '/' }))
   f.ctx.provide('sandboxPolicy', { resolve })

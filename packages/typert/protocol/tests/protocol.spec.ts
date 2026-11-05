@@ -12,7 +12,6 @@ import {
   type TypertContext,
   type TypertForwardableEvent,
   type TypertForwardableEventEntry,
-  type TypertResource,
   type TypertLookup,
   type TypertRemoteEvent,
 } from '@deepseek-ai/dsh-typert-protocol'
@@ -70,11 +69,6 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertContextMap {
     metaFixture: TypertContext<string>
     otherFixture: TypertContext<string>
-  }
-
-  interface TypertResourceMap {
-    /** Test-only resource kind read from fixture event payloads. */
-    'meta-fixture-id': TypertResource<string>
   }
 
   interface TypertRemoteEventSelection extends
@@ -251,7 +245,7 @@ describe('typert-protocol Remote declarations', () => {
       follow(): void {}
     }
     const initializers: Array<(this: Jobs) => void> = []
-    Remote<Jobs, unknown[], unknown>({ mode: 'stream' })(Reflect.get(Jobs.prototype, 'follow'), methodContext('follow', initializers))
+    Remote({ mode: 'stream' })(Reflect.get(Jobs.prototype, 'follow'), methodContext('follow', initializers))
     const jobs = new Jobs()
     for (const initialize of initializers) initialize.call(jobs)
     expect(remoteMethods(jobs)).toEqual([
@@ -315,7 +309,7 @@ describe('typert-protocol Remote declarations', () => {
     expect(() => Remote({ mode: 'stream', extra: true } as unknown as { mode: 'stream' })).toThrow('Remote options require')
     const bogusMode: string = 'duplex'
     expect(() => Remote({ mode: bogusMode } as { mode: 'stream' }))
-      .toThrow('Remote options require name, mode: "stream", or resources')
+      .toThrow('Remote options require name or mode: "stream"')
     expect(() => Remote({})).toThrow('Remote options require')
     expect(() => RemoteScope('' as 'metaFixture')).toThrow('Scope key')
     expect(() => RemoteScope('metaFixture', 'bad/name')).toThrow('export name')
@@ -443,23 +437,11 @@ describe('typert-protocol Remote declarations', () => {
       .not.toExtend<TypertForwardableEventEntry>()
   })
 
-  it('types the resource readers of an emit entry by its own event parameters', () => {
-    const entries = [
-      {
-        event: 'meta-fixture/forwardable',
-        mode: 'emit',
-        resources: { 'meta-fixture-id': (value) => { expectTypeOf(value).toEqualTypeOf<string>(); return value } },
-      },
-      { event: 'meta-fixture/waterfall', mode: 'waterfall' },
-    ] as const satisfies readonly TypertForwardableEventEntry[]
-    const wrong = [{
-      event: 'meta-fixture/forwardable',
-      mode: 'emit',
-      // @ts-expect-error -- a reader returns the kind's identity type, not the payload's length.
-      resources: { 'meta-fixture-id': value => value.length },
-    }] as const satisfies readonly TypertForwardableEventEntry[]
-    expect(entries[0].resources['meta-fixture-id']('s1')).toBe('s1')
-    expect(wrong).toHaveLength(1)
+  it('rejects resource options on Remote methods and scopes', () => {
+    // @ts-expect-error -- resource authorization is not a decorator option.
+    expect(() =>{  Remote({ resources: {} }) }).toThrow('Remote options require name or mode: "stream"')
+    // @ts-expect-error -- scoped methods accept only an endpoint name.
+    expect(() => RemoteScope('metaFixture', { resources: {} })).toThrow('RemoteScope options require name')
   })
 
   it('derives Client Context arguments from the selected Cordis waterfall declaration', () => {

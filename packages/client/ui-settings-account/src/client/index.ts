@@ -8,7 +8,6 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
-import type {} from '@deepseek-ai/dsh-api-remote-access/client'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { AccountView, AccountDetails } from '@deepseek-ai/dsh-deepseek-account/types'
 import type { OnboardingChange } from './onboarding-contract.ts'
@@ -42,7 +41,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 }
 
 /** Services required by account settings. */
-export const inject = ['slots', 'locale', 'remote', 'remote.account', 'remote.session', 'theme', 'configForms', 'remoteAccess']
+export const inject = ['slots', 'locale', 'remote', 'remote.account', 'remote.session', 'theme', 'configForms']
 /** Register account UI in Desktop and plain Web clients. @param ctx - client plugin context. */
 export function apply(ctx: Context): void {
   const desktop = 'dshDesktop' in globalThis
@@ -117,21 +116,13 @@ export function apply(ctx: Context): void {
     return request
   }
   ctx.effect(() => () => { revision++ }, 'account: details request lifetime')
-  // The account stream, and the reads it starts, follow access to this host's account state.
-  ctx.remoteAccess.whenAccess('account/watch', function* () {
+  ctx.effect(function* () {
     const stream = ctx.remote.$stream<AccountView>({
       name: 'account', open: signal => ctx.remote.account.watch(signal), ended: () => new Error('account stream ended'),
     })
-    // Read across closures: the disposer ends this grant while the frame loop awaits.
-    const grant = { ended: false }
-    // Withdrawing access invalidates the reads this grant started, closes the
-    // pending authorization tab, and clears the account view and the sign-in
-    // dialog state, synchronously, so the next grant starts from no account
-    // state. `notices.end()` disposes this generation's notice lifetime, which a
-    // frame of this stream begins; the notice controller stays outside and
-    // begins again under the next grant.
+    const lifetime = { ended: false }
     yield () => {
-      grant.ended = true
+      lifetime.ended = true
       revision++
       refreshing = undefined
       avatar.reset()
@@ -143,8 +134,7 @@ export function apply(ctx: Context): void {
     }
     void (async () => {
       for await (const frame of stream) {
-        // A frame the stream delivered before the revocation is not this grant's to apply.
-        if (grant.ended) return
+        if (lifetime.ended) return
         revision++
         refreshing = undefined
         avatar.reset()
@@ -167,7 +157,7 @@ export function apply(ctx: Context): void {
         })()
         void refresh()
       }
-    })().catch(() => { if (!grant.ended) publish({ ...snapshot, failed: true }) })
+    })().catch(() => { if (!lifetime.ended) publish({ ...snapshot, failed: true }) })
   })
   const nativePlatform = (globalThis as typeof globalThis & { dshPlatform?: PlatformBridge }).dshPlatform
   // One request channel for the single native Platform view. It always exists
@@ -310,10 +300,10 @@ export function apply(ctx: Context): void {
       }),
     }, DesktopOnboardingEntry))
   }
-  ctx.remoteAccess.whenAccess('account/watch', () => ctx.slots.inject('settings.models.sign-in', () => ctx.slots.register({
+  ctx.effect(() => ctx.slots.inject('settings.models.sign-in', () => ctx.slots.register({
     name: 'settings.models.sign-in', locale: 'settings.account', inject: () => operations,
   }, AccountOnboarding)))
-  ctx.remoteAccess.whenAccess('account/watch', () => ctx.slots.inject('shell.quota-notice', () => ctx.slots.register({
+  ctx.effect(() => ctx.slots.inject('shell.quota-notice', () => ctx.slots.register({
     name: 'shell.quota-notice', locale: 'settings.account',
     select: owner => owner.code === 'ACCOUNT_QUOTA' ? owner : null,
     inject: (): AccountQuotaNoticeInjected => ({
@@ -330,10 +320,10 @@ export function apply(ctx: Context): void {
       }),
     }, AccountPlatformHost))
   }
-  ctx.remoteAccess.whenAccess('account/watch', () => ctx.slots.inject('settings.launcher', () => ctx.slots.register({
+  ctx.effect(() => ctx.slots.inject('settings.launcher', () => ctx.slots.register({
     name: 'settings.launcher', locale: 'settings.account', inject: () => operations,
   }, AccountMenu)))
-  ctx.remoteAccess.whenAccess('account/watch', () => ctx.slots.inject('settings.section', () => {
+  ctx.effect(() => ctx.slots.inject('settings.section', () => {
     let unregister: (() => void) | undefined
     const update = () => {
       if (snapshot.view?.status === 'credential-stored') {

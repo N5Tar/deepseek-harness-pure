@@ -37,7 +37,6 @@ import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import type {} from '@deepseek-ai/dsh-client-ui-tool/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
-import type {} from '@deepseek-ai/dsh-api-remote-access/client'
 import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type { RemoteFailure, RemoteResult } from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-connection/client'
@@ -78,7 +77,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 /** Required services for catalogs, ambient Session marks, the right Sidebar, Remote queries, linked-Session navigation, and access. */
 export const inject = [
   'slots', 'locale', 'remote', 'remote.schedule', 'conversation', 'uiConversation', 'uiWorkspace', 'sessions',
-  'workspaces', 'sidebarRightTabs', 'sidebarRight', 'remoteAccess',
+  'workspaces', 'sidebarRightTabs', 'sidebarRight',
 ]
 
 async function settle<T>(call: () => Promise<RemoteResult<T>>): Promise<RemoteResult<T> | undefined> {
@@ -100,7 +99,7 @@ function inputCorrection(error: RemoteFailure): 'host.notFuture' | 'host.invalid
 /**
  * Register the Host task page, the Session-header reminder catalog, the
  * right-Sidebar page that shows one task's detail, and the transcript card of
- * one created task while the current Peer may read the task catalog.
+ * one created task.
  * @param ctx - browser services used by these contributions.
  */
 export function apply(ctx: ClientContext): void {
@@ -122,7 +121,7 @@ export function apply(ctx: ClientContext): void {
   // Definition publishes the settled result and the tail list entry below
   // renders the card beneath the closing prose.
   ctx.uiConversation.events.register(scheduleTurnDefinition)
-  ctx.remoteAccess.whenAccess('schedule/catalog', function* () {
+  ctx.effect(function* () {
     const manager = createCatalogSource<ScheduleCatalogEntry>({
       list: () => ctx.remote.schedule.catalog(),
       remove: async (id): Promise<RemoteResult<ScheduleDeleteResult>> => {

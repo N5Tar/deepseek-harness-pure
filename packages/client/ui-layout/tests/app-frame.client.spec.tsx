@@ -2,7 +2,7 @@
 import { contextMenuHook } from '@deepseek-ai/dsh-client-test-runtime'
 /** Frame interactions with a real store and explicitly driven browser measurements. */
 import type { GlobalStandardProps, RenderOpts } from '@deepseek-ai/dsh-client-ui-slots'
-import { allowAllAccess, bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
 import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
@@ -103,7 +103,6 @@ function mountFrame(windowWidth = frameWidth, content?: AppFrameProps['renderSlo
       useSessionRetainInfo={() => undefined}
       useContextMenu={contextMenuHook()} useResource={useResource}
       useWorkspaces={sel => sel(workspaceState)}
-      {...allowAllAccess}
       t={key => key === 'brand.localBuild' ? 'DSH Local Build' : key}
     />
   )

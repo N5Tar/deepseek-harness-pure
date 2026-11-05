@@ -9,7 +9,6 @@ import { appendPluginRecord, SessionId, type SessionEvent } from '@deepseek-ai/d
 import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
 import Skills from '@deepseek-ai/dsh-skill'
 import * as SkillTool from '@deepseek-ai/dsh-tool-skill'
-import RemoteAccess from '@deepseek-ai/dsh-api-remote-access'
 import ActionCards from '@deepseek-ai/dsh-action-cards'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { BundleInfo, ChangeResult } from '@deepseek-ai/dsh-plugin-manager/types'
@@ -52,7 +51,6 @@ export async function fixture(initial?: PageCardState) {
   onTestFinished(async () => { await ctx.fiber.dispose(); await rm(directory, { recursive: true, force: true }) })
   await mountAgentLoopTestDependencies(ctx, { workingDirectory: true })
   const harness = await mountAgentLoopTestHarness(ctx)
-  await ctx.plugin(RemoteAccess)
   await ctx.plugin(Skills)
   await ctx.plugin(SkillTool)
   await ctx.plugin(ActionCards)

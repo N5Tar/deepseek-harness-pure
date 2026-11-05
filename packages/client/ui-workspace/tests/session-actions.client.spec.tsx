@@ -16,7 +16,7 @@ import type { SessionStatusSnapshot } from '@deepseek-ai/dsh-client-ui-session/c
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { GlobalStandardProps, PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import { allowAllAccess, bindSnapshotSelector, makeTranslate, SlotTestRuntime } from '@deepseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector, makeTranslate, SlotTestRuntime } from '@deepseek-ai/dsh-client-test-runtime'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { registerToasts } from '../src/client/toast/register.ts'
 import { ArchiveToastEntry } from '../src/client/toast/Toast.tsx'
@@ -81,7 +81,6 @@ const standard: GlobalStandardProps = {
   usePanelInfo,
   useContextMenu: contextMenuHook(), useResource,
   useWorkspaces: hook(workspaces),
-  ...allowAllAccess,
 }
 
 type ActionRowProps = PropsRuntime<'sidebar.workspaces.session.row.action'> & PropsLocale<'workspace'>
@@ -120,17 +119,6 @@ describe('pin action', () => {
     expect(pin.pinSession).toHaveBeenCalledOnce()
   })
 
-  it('offers neither toggle while the access snapshot excludes it for this Session', () => {
-    const useSessionAccess = vi.fn((_id: SessionId, endpoint: string) => endpoint !== 'workspace/pinSession')
-    const button = render(<PinSessionRowButton {...actionRow} {...pinShare()} useSessionAccess={useSessionAccess} />)
-    expect(button.container.innerHTML).toBe('')
-    button.unmount()
-    // A pinned row asks for its unpin endpoint instead.
-    const pinned = render(<PinSessionRowButton {...actionRow} {...pinShare(['one'])} useSessionAccess={useSessionAccess} />)
-    expect(useSessionAccess).toHaveBeenLastCalledWith(sid('one'), 'workspace/unpinSession')
-    expect(pinned.getByRole('button', { name: '取消置顶' })).toBeTruthy()
-  })
-
   it('offers nothing on an archived Session', () => {
     const pin = pinShare(['one'], ['one'])
     const button = render(<PinSessionRowButton {...actionRow} {...pin} />)
@@ -141,16 +129,6 @@ describe('pin action', () => {
 describe('archive action', () => {
   const archiveShare = (archived: readonly string[] = []) => ({
     useArchived: hook(idSet(...archived)), archiveSession: vi.fn(), unarchiveSession: vi.fn(),
-  })
-
-  it('offers no archive button without access but checks restore separately', () => {
-    const useSessionAccess = vi.fn((_id: SessionId, endpoint: string) => endpoint !== 'workspace/archiveSession')
-    const button = render(<ArchiveSessionRowButton {...actionRow} {...archiveShare()} useSessionAccess={useSessionAccess} />)
-    expect(button.container.innerHTML).toBe('')
-    button.unmount()
-    const archived = render(<ArchiveSessionRowButton {...actionRow} {...archiveShare(['one'])} useSessionAccess={useSessionAccess} />)
-    expect(useSessionAccess).toHaveBeenLastCalledWith(sid('one'), 'workspace/unarchiveSession')
-    expect(archived.getByRole('button')).toBeTruthy()
   })
 
   it('row button archives and restores', () => {

@@ -33,7 +33,7 @@ function state(number: number): ForgeChangeRequestListState {
 }
 
 /** A panel Remote with one loaded Session, the Sessions the Host lists, their cached summaries, and stored states. */
-async function composed(options: { readonly remoteAccess?: (id: SessionId) => boolean; readonly storage?: DomainFacility } = {}) {
+async function composed(options: { readonly storage?: DomainFacility } = {}) {
   const cwd = await mkdtemp(join(tmpdir(), 'forge-states-'))
   cleanups.push(() => rm(cwd, { recursive: true, force: true }))
   const b = await bench(cwd)
@@ -59,10 +59,6 @@ async function composed(options: { readonly remoteAccess?: (id: SessionId) => bo
       : undefined,
   })
   provide(b.ctx, 'storageDomain', options.storage ?? { open: async () => ({ table: () => table, close: async () => {} }) })
-  if (options.remoteAccess !== undefined) {
-    const allows = options.remoteAccess
-    provide(b.ctx, 'remoteAccess', { allows: ({ id }: { readonly id: SessionId }) => allows(id) })
-  }
   return { b, cold, records, put }
 }
 
@@ -143,17 +139,6 @@ describe('forgePanel.changeRequestStates', () => {
     // A second stream shares the run and starts from the states the first one saw.
     expect(await reader(b).until(states => states.has(pullUrl(9)))).toEqual(await r.until(() => true))
     expect(b.provider.fetches.flat().filter(number => number === 9)).toHaveLength(1)
-  })
-
-  it('sends only the states of change requests that a Session the caller may read binds', async () => {
-    const { b, cold } = await composed({ remoteAccess: id => id === cold.id })
-    b.ctx.forgeSession.track(b.session, pullUrl(7))
-    const r = reader(b)
-
-    const states = await r.until(seen => seen.has(pullUrl(8)))
-    b.ctx.forgeSession.track(b.session, pullUrl(9))
-    await vi.waitFor(() => { expect(b.provider.fetches.flat()).toEqual(expect.arrayContaining([7, 8, 9])) })
-    expect([...states.keys()]).toEqual([pullUrl(8)])
   })
 
   it('warns when storing a state fails and still sends it', async () => {

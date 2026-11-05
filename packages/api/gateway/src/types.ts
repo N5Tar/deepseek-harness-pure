@@ -4,7 +4,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { PeerScope, RemoteUplinkWindow, TypertResourceReader } from '@deepseek-ai/dsh-typert-protocol'
+import type { PeerScope, RemoteUplinkWindow } from '@deepseek-ai/dsh-typert-protocol'
 import type { RemoteEventAgentId, RemoteEventHostInfo } from './stream-protocol.ts'
 
 /** One Remote method request after a carrier has decoded its envelope. */
@@ -22,7 +22,7 @@ export interface InvokeRemoteRequest {
   readonly uplink?: AsyncIterable<unknown>
   /** Carrier-provided frame capacity; absent for carriers without an encoded-frame inbox limit. */
   readonly uplinkWindow?: RemoteUplinkWindow | undefined
-  /** Peer the call speaks for; every carrier and in-process caller names it explicitly. */
+  /** Live owner Peer the call speaks for; non-owner principals fail with `gateway/owner-required`. */
   readonly peer: PeerScope
   /** Carrier or direct-caller cancellation injected only into cancellation-aware methods. */
   readonly signal?: AbortSignal
@@ -34,12 +34,6 @@ export interface TypertRemoteEventFrame {
   readonly event: string
   /** Original event argument list after the owner validates it for JSON transport. */
   readonly args: readonly unknown[]
-  /**
-   * Readers of the resources the arguments carry, keyed by resource kind and
-   * called with the arguments as positional parameters. Absent or empty for
-   * a notification that touches the global resource.
-   */
-  readonly resources?: Readonly<Record<string, TypertResourceReader>>
 }
 
 /** Live Host values used to project one scoped Remote Event. */
@@ -136,6 +130,7 @@ export type TypertGatewayErrorCode =
   | 'gateway/lookup-not-found'
   | 'gateway/lookup-unavailable'
   | 'gateway/method-unavailable'
+  | 'gateway/owner-required'
   | 'gateway/peer-disposed'
   | 'gateway/protocol'
   | 'gateway/provider-mismatch'

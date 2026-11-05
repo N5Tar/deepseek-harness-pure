@@ -19,7 +19,6 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import Tools from '@deepseek-ai/dsh-tools'
 import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import Skills from '@deepseek-ai/dsh-skill'
-import Access from '@deepseek-ai/dsh-api-remote-access'
 import * as ActionCards from '@deepseek-ai/dsh-action-cards'
 import * as Pages from '@deepseek-ai/dsh-creation-recommendations'
 import * as Plugins from '@deepseek-ai/dsh-plugin-recommendations'
@@ -84,7 +83,7 @@ it('addresses every row through its own id and switches the shared card service 
   }
   await bundle(dir, 'fixture-base', [
     ['session', 'sessions'], ['projection', 'projections'], ['llm', 'llm'], ['prompt', 'prompt'], ['tools', 'tools'],
-    ['executor', 'executor'], ['skills', 'skills'], ['agents', 'agents'], ['access', 'access'], ['manager', 'manager'],
+    ['executor', 'executor'], ['skills', 'skills'], ['agents', 'agents'], ['manager', 'manager'],
   ].map(([id, name]) => ({ id, name: `cordis:${name!}` })))
   // The shipped rows keep their ids; each name serves that row's package source through a Loader builtin.
   await bundle(home, manifest.name, rows.map(row => ({ id: row.id, name: `cordis:${row.id}` })))
@@ -102,7 +101,7 @@ it('addresses every row through its own id and switches the shared card service 
     ctx.provide('subagents', {})
     Object.assign(ctx.loader.builtins, {
       sessions: Sessions, projections: Projections, llm: Llm, prompt: SystemPrompt, tools: Tools, executor: NativeToolExecutor,
-      skills: Skills, agents: Agents, access: Access, manager: PluginManager,
+      skills: Skills, agents: Agents, manager: PluginManager,
       ...Object.fromEntries(rows.map(row => [row.id, MODULES[row.name]])),
     })
   })

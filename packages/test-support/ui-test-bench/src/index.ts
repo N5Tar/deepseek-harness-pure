@@ -32,7 +32,6 @@ import type {
 } from '@deepseek-ai/dsh-client-ui-slots'
 import { registerDomSnapshotSerializer } from './snapshot.ts'
 import { TestRemote } from './remote.ts'
-import { allowAllAccessPlugin } from './access.ts'
 
 export { domSnapshotSerializer, registerDomSnapshotSerializer } from './snapshot.ts'
 export { stubConfigForm } from './config-form.ts'
@@ -40,8 +39,6 @@ export type { StubConfigForm } from './config-form.ts'
 export { RemoteError, TestRemote } from './remote.ts'
 export { contextMenuHook } from './context-menu.ts'
 export { makeTranslate } from './translate.ts'
-export { allowAllAccess, allowAllAccessPlugin, StaticRemoteAccess, staticAccessPlugin } from './access.ts'
-export type { AccessStandardProps, StaticAccessPlugin } from './access.ts'
 export { usePinnedBrowserLanguages } from './locale-env.ts'
 
 /** Act wrapper every registration, render, and disposal runs inside. */
@@ -234,7 +231,7 @@ export class SlotTestBench {
 
   /**
    * Assemble a bench: real Context, mounted SlotRegistry, and the installed
-   * production renderer, with the allow-all access service.
+   * production renderer.
    * @returns the ready bench.
    */
   static async create(): Promise<SlotTestBench> {
@@ -243,7 +240,6 @@ export class SlotTestBench {
     const fiber = ctx.plugin(SlotRegistry)
     await fiber.await()
     const bench = new SlotTestBench(ctx, ctx.get('slots') as SlotRegistry)
-    await ctx.plugin(allowAllAccessPlugin).await()
     return bench
   }
 

@@ -10,9 +10,9 @@ import { SessionForkError } from '@deepseek-ai/dsh-api-session-controller/client
 import type { WorkspaceId, WorkspaceSnapshot, WorkspaceView } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type { HostObservable, PropsRenderSlots, StoredEntry } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsRenderSlots, StoredEntry } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ShortcutCommand } from '@deepseek-ai/dsh-client-shortcuts/client'
-import { RemoteError, StaticRemoteAccess, TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
+import { RemoteError, TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { apply, inject } from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type { WorkspaceBrowserInjected, WorkspacePickerInjected } from '@deepseek-ai/dsh-client-ui-workspace/client'
@@ -55,9 +55,7 @@ const workspaceState = (
   items, archivedSessionIds, pinnedSessionIds, state: 'idle', phase: 'ready', error: null,
 })
 
-const ALLOWED: HostObservable<boolean> = createSnapshotStore(true)
-
-async function bench(access: 'fake' | 'static' = 'fake') {
+async function bench() {
   const ctx = new Context()
   const commands = new Map<string, ShortcutCommand>()
   ctx.provide('shortcuts', {
@@ -72,11 +70,6 @@ async function bench(access: 'fake' | 'static' = 'fake') {
   ctx.provide('contextMenus', { register: menuRegistry.register.bind(menuRegistry), resolve: menuRegistry.resolve.bind(menuRegistry), active: createSnapshotStore(null), open: vi.fn(), close: vi.fn() } as never)
   ctx.provide('uiConversation', {})
   await ctx.plugin(SlotRegistry).await()
-  const accessSource = vi.fn((_kind: string, _id: string, _action: string): HostObservable<boolean> => ALLOWED)
-  const stopGuard = vi.fn()
-  const whenResourceAccess = vi.fn((): () => void => stopGuard)
-  if (access === 'static') new StaticRemoteAccess(ctx)
-  else ctx.provide('remoteAccess', { source: accessSource, whenAccess: vi.fn(() => () => {}), whenResourceAccess })
   const create = vi.fn(async (input: { name: string } | { path: string }) => ({
     workspaceId: 'ws-new' as never,
     path: 'name' in input ? `/projects/${input.name}` : input.path,
@@ -169,7 +162,7 @@ async function bench(access: 'fake' | 'static' = 'fake') {
   locale.setLocale('zh')
   ctx.provide('locale', locale)
   return {
-    ctx, slots: ctx.get('slots') as SlotRegistry, locale, create, rename, commands, accessSource, whenResourceAccess, stopGuard,
+    ctx, slots: ctx.get('slots') as SlotRegistry, locale, create, rename, commands,
     retain, using, selectPanel, search, renameSession, binding, fork, pickDirectory, pinSession, unpinSession,
     workspacesSubscribe, initializeDefault, history, scope, sessionOf,
     setWorkspaces: (snapshot: WorkspaceSnapshot): void => { workspaceSnapshot = snapshot },
@@ -242,39 +235,8 @@ describe('ui-workspace apply', () => {
 
   it('declares the services it drives', () => {
     expect(inject).toEqual(['contextMenus',
-      'slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts', 'remoteAccess',
+      'slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts',
     ])
-  })
-
-  it('publishes the Workspace access Hook over the remoteAccess service', async () => {
-    const b = await bench()
-    onTestFinished(() => b.ctx.fiber.dispose())
-    const provideRoot = vi.spyOn(b.slots, 'provideRoot')
-    await b.ctx.plugin({ inject: [...inject], apply }).await()
-    const keyed = provideRoot.mock.calls.map(([contribution]) => contribution.keyedHooks?.['workspaceAccess']).find(Boolean)
-    // `useWorkspaceAccess(workspaceId, action)` reads the Workspace resource's answer; a call without an action names no source.
-    expect(keyed?.('w1', 'workspace/follow')).toBe(ALLOWED)
-    expect(b.accessSource).toHaveBeenCalledWith('workspace', 'w1', 'workspace/follow')
-    expect(keyed?.('w1')).toBeUndefined()
-    // `whenAccess` follows the same Workspace resource through the service's resource form.
-    const guarded = vi.fn(() => () => {})
-    expect(b.ctx.uiWorkspace.whenAccess('w1' as WorkspaceId, 'workspace/follow', guarded)).toBe(b.stopGuard)
-    expect(b.whenResourceAccess).toHaveBeenCalledWith('workspace', 'w1', 'workspace/follow', guarded)
-  })
-
-  it('hangs Workspace-guarded effects on the calling plugin, so they leave when it unloads', async () => {
-    const b = await bench('static')
-    onTestFinished(() => b.ctx.fiber.dispose())
-    await b.ctx.plugin({ inject: [...inject], apply }).await()
-    const dispose = vi.fn()
-    const caller = b.ctx.plugin({
-      inject: ['uiWorkspace'],
-      apply: (callerCtx: Context) => { callerCtx.uiWorkspace.whenAccess('w1' as WorkspaceId, 'workspace/follow', () => dispose) },
-    })
-    await caller.await()
-    expect(dispose).not.toHaveBeenCalled()
-    await caller.dispose()
-    expect(dispose).toHaveBeenCalledOnce()
   })
 
   it('reports a default Workspace creation failure through the shared notice overlay', async () => {
@@ -956,11 +918,6 @@ it('captures Workspace menu requests, rechecks mutable access, and withdraws reg
   removed.select('workspace.delete/delete')
   expect(browser.hooks.workspaceActionRequest.getSnapshot()).toBeNull()
   b.setWorkspaces(workspaceState([workspace('alpha', [])]))
-  const denied = b.ctx.contextMenus.resolve(target)
-  await denied.ready
-  b.accessSource.mockReturnValueOnce(createSnapshotStore(false))
-  denied.select('workspace.delete/delete')
-  expect(browser.hooks.workspaceActionRequest.getSnapshot()).toBeNull()
   const deletion = b.ctx.contextMenus.resolve(target)
   await deletion.ready
   deletion.select('workspace.delete/delete')

@@ -50,7 +50,6 @@
     "@deepseek-ai/dsh-session": "workspace:*",
     "@deepseek-ai/dsh-plugin-manager": "workspace:*",
     "@deepseek-ai/dsh-package-manifest": "workspace:*",
-    "@deepseek-ai/dsh-api-remote-access": "workspace:*",
     "@deepseek-ai/dsh-skill": "workspace:*"
   },
   "dependencies": {

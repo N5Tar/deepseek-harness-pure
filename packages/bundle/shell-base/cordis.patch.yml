@@ -10,8 +10,6 @@
       name: '@deepseek-ai/dsh-typert-registry'
     - id: typert-loader
       name: '@deepseek-ai/dsh-typert-loader'
-    - id: remote-access
-      name: '@deepseek-ai/dsh-api-remote-access'
     - id: typert-gateway
       name: '@deepseek-ai/dsh-api-gateway'
     - id: settings-controller

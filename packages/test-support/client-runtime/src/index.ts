@@ -32,7 +32,7 @@ import type {
   StoredFactory, StoreInstanceLike,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import {
-  createSlotRenderer, registerDomSnapshotSerializer, TestRemote, allowAllAccessPlugin,
+  createSlotRenderer, registerDomSnapshotSerializer, TestRemote,
 } from '@deepseek-ai/dsh-client-ui-test-bench'
 import { TestSessions } from './sessions.ts'
 import { TestWorkspaces } from './workspaces.ts'
@@ -41,11 +41,11 @@ import type { Stabilizer } from './fixtures.ts'
 export type { UseSession } from '@deepseek-ai/dsh-client-ui-session/client'
 export {
   domSnapshotSerializer, registerDomSnapshotSerializer, stubConfigForm, RemoteError, TestRemote,
-  contextMenuHook, makeTranslate, allowAllAccess, allowAllAccessPlugin, StaticRemoteAccess,
-  staticAccessPlugin, usePinnedBrowserLanguages, bindSnapshotSelector, createSlotRenderer,
+  contextMenuHook, makeTranslate,
+  usePinnedBrowserLanguages, bindSnapshotSelector, createSlotRenderer,
 } from '@deepseek-ai/dsh-client-ui-test-bench'
 export type {
-  StubConfigForm, AccessStandardProps, StaticAccessPlugin,
+  StubConfigForm,
 } from '@deepseek-ai/dsh-client-ui-test-bench'
 export { FixtureSession, TestSessions } from './sessions.ts'
 export { TestWorkspaces } from './workspaces.ts'
@@ -267,7 +267,6 @@ export class SlotTestRuntime {
     const fiber = ctx.plugin(SlotRegistry)
     await fiber.await()
     const runtime = new SlotTestRuntime(ctx, ctx.get('slots') as SlotRegistry)
-    await ctx.plugin(allowAllAccessPlugin).await()
     await ctx.plugin({ inject: [...uiSessionInject], apply: applyUiSession }).await()
     return runtime
   }

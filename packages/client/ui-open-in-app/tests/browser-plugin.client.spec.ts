@@ -90,7 +90,6 @@ async function bench() {
   ctx.provide('shortcuts', { register: (command: ShortcutCommand) => { commands.set(command.id, command); return () => { commands.delete(command.id) } }, catalog: createSnapshotStore([]) })
   ctx.provide('locale', new LocaleRuntime(ctx))
   ctx.provide('remote', remote as never)
-  ctx.provide('fileActions', {} as never)
   ctx.provide('sidebarRight', {} as never)
   ctx.provide('sidebarRightTabs', {} as never)
   ctx.provide('remote.workspaceFiles', {} as never)

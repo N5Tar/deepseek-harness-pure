@@ -103,7 +103,7 @@ UI 远程类型与测试依赖可能交叉，每个分支开始前核实。遇�
 
 第 01 项在 `pure/settings` 完成，基点为 `bb2dbed99f0992fbe1c8570a36cfb91660f69ec8`，实现提交为 `662ad5a3d1`，已快进合入主干。
 
-第 02 项在 `pure/connection` 完成，基点为 `babab2764becfd190041446c961934ba5e8970f1`，实现提交为 `44d90704e4`，已按用户授权快进合入主干。后续项为 `pure/ui-test-runtime`，尚未创建分支或开始实施。
+第 02 项在 `pure/connection` 完成，基点为 `babab2764becfd190041446c961934ba5e8970f1`，实现提交为 `44d90704e4`，已按用户授权快进合入主干。第 03 项已在 `pure/ui-test-runtime` 实施，基点为 `3720bf415f`，已有本地提交 `120af6519a`，未推送或合并；完整验收尚未通过。
 
 ## 第 01 项执行记录
 
@@ -145,6 +145,35 @@ Connection 通过只读 maxRequestBodyBytes 公开共享 HTTP 路由的缓冲容
 
 新增测试覆盖：测试台组装时无业务服务、root 注册经生产入口渲染并在 fiber 释放后移除、缺失必需服务时挂载立即失败、销毁幂等，以及一道依赖守卫断言上述五个底座包及其编译引用不含 Session/Workspace/子代理测试栈。
 
-验证：新包 3 个测试文件、14 个测试通过；`client-runtime` 与底座包合计 16 个文件、144 个测试通过（另 1 个预期失败）；底座四包 1439 个测试通过，另有 4 个先前已记录的 `ui-shell` 样式失败未变。完整构建与产物装配验证进行中。
+验证：新包 3 个测试文件、14 个测试通过；`client-runtime` 与底座包合计 16 个文件、144 个测试通过（另 1 个预期失败）；底座四包 1439 个测试通过，另有 4 个先前已记录的 `ui-shell` 样式失败未变。
+
+构建复核：在 master（`3720bf415f`）执行 `pnpm run clean` 后运行 `node --import tsx/esm scripts/compile-referenced-projects.ts host-libraries`，Host 编译出现 6 个 TS2339 错误：`packages/api/remote-access/src/client/state.ts` 的 121、199、200 行缺少 `id`，`packages/client/ui-file-actions/src/client/context-menus.tsx` 的 22、38、53 行缺少 `Context.remote`。返回第 03 项分支执行 `pnpm run build` 后复现相同 6 个错误，结果为 2 项通过、1 项失败、7 项跳过，退出码为 1。master 基线命令经过管道过滤，外层退出码为 0，但编译器明确报告退出码 2，不能视为成功。
+
+当前结论：这 6 个编译错误不是第 03 项新引入，但仍阻止完整构建、构建后检查和新产物装配验收，不能将本分支标为全部通过或可合并。下一步需定位并修复该编译基线问题，再完成构建与产物验证；本轮没有推送或合并，也没有开始第 04 项。
 
 保留事项：`SlotTestBench.declare`/`renderSlot` 在无 Session 适配器下的自动 frame 路径存在差异，本模块未把它作为底座用例依赖；该路径与含 Session 版本共用渲染器行为，留待渲染器模块核对。
+## 第 03 项后续：退役细粒度授权与文件操作
+
+用户确认底座只服务本机所有者后，原先的 6 个编译错误按“删除功能而不是修旧产品”处理：直接退役产生错误的两个产品包，不再为旧机制打补丁。
+
+已删除整包：`packages/api/remote-access`（角色、绑定、策略、资源解析、访问快照与全部 access Hook）、`packages/client/ui-file-actions`（原文件另存、下载与图片剪贴板操作）以及随之失去意义的访客分享 `packages/experimental/liveshare` 与其协议包。相关桌面 IPC、preload、菜单、Web e2e 场景与 expected 文本同步清理。
+
+Gateway 不再注入 `remoteAccess`：分发入口统一要求存活的 owner Peer，`gateway/owner-required`（details 含 `{ endpoint }`）在参数解码、lookup 解析和处理器激活之前拒绝非 owner，已释放 Peer 继续返回 `gateway/peer-disposed`。该检查覆盖 unary、stream、`$events` 与 `$events/result`。连接身份验证、浏览器 Cookie 鉴权、请求信任校验与 Peer 生命周期未被削弱，也没有改为全部放行。
+
+`@Remote`、`@RemoteScope`、`TypertResourceMap`、`typert.resources` 注册表与转发事件的 `resources` readers 已无消费者，按“需要当前所有者与需求”规则一并删除；lookup、Context、invocation 与 principal 能力保留。`principalOf` 的独立测试移到 `packages/typert/protocol/tests/principal.spec.ts`。
+
+文档工具链仍在退役状态：`scripts/gen-cordis-catalog.ts` 只产出运行时 catalog，不再读写 `docs/`；`packages/typert/generator` 的 Markdown 页面渲染与对应 fixture 已删除；运行时 catalog 与 partition 校验保留，并新增聚焦生成测试。`apps/web` 的插件管理 e2e 删除只服务于已删分享包的可见性场景，通用 hidden-until-running 覆盖仍由既有 bundle 集合承担。
+
+验证：`pnpm run build` 10 项全部通过；Gateway 与 typert 套件 713 通过、28 跳过；`ui-workspace` 501 通过；底座四包与测试台 1457 通过、4 项先前记录的 `ui-theme` 样式失败未变；真实 Loader 组合 `shell-base` e2e 通过（401/303/200 鉴权、18 行激活、无业务服务）；第 03 项测试台与 `client-runtime` 相关套件保持通过。
+
+保留事项：`packages/boot/plugin-manager` 有一个与本轮无关、依赖本机 pnpm 版本的既有失败用例；4 个 `ui-theme` 样式失败仍在 Shell 模块处理范围内。本轮未提交、未推送、未合并。
+
+### Agent Notes 退役整理（2026-11-05）
+
+已归档三组完整中英双语与 sidecar：[whenAccess](../../../.agents/notes/archived/architecture/2026-10-21-when-access.md)、[LiveShare 协议与 owner 界面](../../../.agents/notes/archived/feature/2026-09-13-liveshare-protocol-and-owner-surfaces.md)、[LiveShare 插件方法目录](../../../.agents/notes/archived/feature/2026-11-02-liveshare-plugin-method-catalog.md)。这些链接仅引用历史设计，不代表底座仍支持相应功能。归档正文不变，仅添加归档日期并更新哈希，纳入冻结清单。
+
+[Peer/principal 笔记](../../../.agents/notes/implemented/architecture/2026-10-12-peer-principal-and-remote-access.md) 属于部分退役：显式调用方身份、Peer 生命周期、消息来源与防伪造规则仍有消费者，因此保持 active，删除已退役 RBAC 接口说明并指向本节的移除决策。[Remote 双向流笔记](../../../.agents/notes/implemented/architecture/2026-09-19-remote-duplex-stream.md) 同步改为当前 owner-only 准入说明。没有删除 substantive 决策 triplet，也没有修改既有冻结档案。
+
+提交阶段发现 pre-commit 与 pre-merge-commit 仍调用已删除的 `scripts/verify-translation-pairing.ts`。经用户确认，移除这两处失效 hook；归档、staged lint、空白、provider metadata、vendor guard 与 pre-push typecheck 保留。
+
+归档验证器通过，新增封存 9 个文件、既有封存哈希不变；归档聚焦测试 17 项通过。`doc-sync`、`test:docs` 与 `verify-translation-pairing` 入口已随文档工具链退役，未恢复；active 两组双语记录使用现存 pairing helper 重算。

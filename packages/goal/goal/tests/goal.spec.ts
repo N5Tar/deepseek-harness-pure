@@ -191,7 +191,6 @@ describe('GoalService creation and replay', () => {
     const goals = new GoalService(ctx)
     const marker = remoteMethods(goals).find(method => method.method === 'get')
     expect(marker).toMatchObject({ method: 'get' })
-    expect(marker?.resources).toBeUndefined()
   })
 
   it('rejects invalid direct configuration', async () => {

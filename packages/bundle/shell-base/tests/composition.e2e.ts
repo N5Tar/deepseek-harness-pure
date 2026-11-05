@@ -14,7 +14,6 @@ import * as ConfigEditor from '@deepseek-ai/dsh-config-editor'
 import * as Settings from '@deepseek-ai/dsh-settings'
 import * as Typert from '@deepseek-ai/dsh-typert-registry'
 import * as TypertLoader from '@deepseek-ai/dsh-typert-loader'
-import * as RemoteAccess from '@deepseek-ai/dsh-api-remote-access'
 import * as Gateway from '@deepseek-ai/dsh-api-gateway'
 import * as SettingsController from '@deepseek-ai/dsh-api-settings-controller'
 import * as ShellRemotes from '@deepseek-ai/dsh-api-shell-remotes'
@@ -36,7 +35,6 @@ const implementations: Record<string, unknown> = {
   '@deepseek-ai/dsh-settings': Settings,
   '@deepseek-ai/dsh-typert-registry': Typert,
   '@deepseek-ai/dsh-typert-loader': TypertLoader,
-  '@deepseek-ai/dsh-api-remote-access': RemoteAccess,
   '@deepseek-ai/dsh-api-gateway': Gateway,
   '@deepseek-ai/dsh-api-settings-controller': SettingsController,
   '@deepseek-ai/dsh-api-shell-remotes': ShellRemotes,

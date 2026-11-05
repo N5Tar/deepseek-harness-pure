@@ -3,7 +3,7 @@ import { contextMenuHook } from '@deepseek-ai/dsh-client-test-runtime'
 /** Cleanup errors remain reachable after the terminal tab has disappeared. */
 import { afterEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, within } from '@testing-library/react'
-import { allowAllAccess, makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
+import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import type { TerminalCloseFailure } from '@deepseek-ai/dsh-api-terminal-controller/client'
 import type { WebTerminalId } from '@deepseek-ai/dsh-api-terminal-controller/types'
 import { TerminalCleanup } from '../src/client/TerminalCleanup.tsx'
@@ -18,7 +18,6 @@ const standard: Omit<CleanupProps, 'useCloseFailures' | 'retryClose' | 't'> = {
   useWorkspaces: unusedHook,
   useContextMenu: contextMenuHook(),
   useResource: unusedHook,
-  ...allowAllAccess,
 }
 
 it('stays absent for ordinary closes and offers a retry only after cleanup fails', () => {

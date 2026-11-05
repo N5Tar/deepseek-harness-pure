@@ -2,7 +2,7 @@
 import { contextMenuHook } from '@deepseek-ai/dsh-client-test-runtime'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { allowAllAccess, makeTranslate, RemoteError, sessionSnapshot } from '@deepseek-ai/dsh-client-test-runtime'
+import { makeTranslate, RemoteError, sessionSnapshot } from '@deepseek-ai/dsh-client-test-runtime'
 import type {
   SessionListState, SessionSummary, SessionSnapshot,
 } from '@deepseek-ai/dsh-api-session-controller/client'
@@ -113,7 +113,6 @@ function props(
     useSessionRetainInfo: unused,
     useWorkspaces: unused,
     useResource: unused,
-    ...allowAllAccess,
     useContextMenu: contextMenuHook(),
     useProjection: unused,
     useConversation: unused,

@@ -24,7 +24,6 @@ import type { ISessions, SessionForkError } from '@deepseek-ai/dsh-api-session-c
 import type {
   IWorkspaces, SessionActivity, WorkspaceArchiveError, WorkspaceId, WorkspaceSnapshot,
 } from '@deepseek-ai/dsh-api-workspace-controller/client'
-import type { RemoteEndpoint } from '@deepseek-ai/dsh-api-remote-access/client'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { HostObservable, SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
@@ -73,8 +72,6 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface GlobalStandardProps {
     /** Selector hook over the pure Workspace Controller snapshot. */
     useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>
-    /** Whether the current Peer may call `action` on one Workspace resource. */
-    useWorkspaceAccess: (workspaceId: WorkspaceId, action: RemoteEndpoint) => boolean
   }
 
   interface LocaleNamespaceMap {
@@ -101,7 +98,7 @@ const NS = 'workspace'
  * declaration through `slots.inject()` instead of assuming order.
  */
 export const inject = ['contextMenus',
-  'slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts', 'remoteAccess',
+  'slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout', 'shortcuts',
 ]
 
 /**
@@ -127,11 +124,6 @@ export function apply(ctx: Context): void {
   )
   ctx.slots.provideRoot({
     hooks: { workspaces: workspaces.list },
-    keyedHooks: {
-      workspaceAccess: (workspaceId, action) => action === undefined
-        ? undefined
-        : ctx.remoteAccess.source('workspace', workspaceId, action),
-    },
   })
   ctx.effect(() => ctx.locale.register(NS, { zh, en, ja, es, fr, de, ru, pt }), 'ui-workspace: dictionaries')
   const shortcutControls = createWorkspaceShortcutControls()
@@ -265,7 +257,7 @@ export function apply(ctx: Context): void {
   const workspaceActionRequest = createSnapshotStore<WorkspaceActionRequest | null>(null)
   const requestWorkspaceAction = (workspaceId: WorkspaceId, displayTitle: string, action: 'rename' | 'delete'): void => {
     const workspace = workspaces.list.getSnapshot().items.find(row => row.workspaceId === workspaceId)
-    if (workspace === undefined || !ctx.remoteAccess.source('workspace', workspaceId, `workspace/${action}`).getSnapshot()) return
+    if (workspace === undefined) return
     workspaceActionRequest.set({ action, workspaceId, displayTitle, storedTitle: workspace.title })
   }
   ctx.slots.inject('contextMenu.icon', function* () {
@@ -278,14 +270,12 @@ export function apply(ctx: Context): void {
   })
   ctx.effect(() => ctx.contextMenus.register({
     id: 'workspace.rename', target: 'workspace', order: 100,
-    resolve: ({ workspaceId, displayTitle }) => ctx.remoteAccess.source('workspace', workspaceId, 'workspace/rename').getSnapshot()
-      ? [{ id: 'rename', label: ctx.locale.bind(NS)('rename'), icon: { key: 'workspace.rename' }, run: () => { requestWorkspaceAction(workspaceId, displayTitle, 'rename') } }] : [],
+    resolve: ({ workspaceId, displayTitle }) => [{ id: 'rename', label: ctx.locale.bind(NS)('rename'), icon: { key: 'workspace.rename' }, run: () => { requestWorkspaceAction(workspaceId, displayTitle, 'rename') } }],
   }), 'workspace: rename menu action')
   ctx.effect(() => ctx.contextMenus.register({
     id: 'workspace.delete', target: 'workspace', order: 300,
-    resolve: ({ workspaceId, displayTitle }) => ctx.remoteAccess.source('workspace', workspaceId, 'workspace/delete').getSnapshot()
-      ? [{ id: 'delete', label: ctx.locale.bind(NS)('delete.workspace'), icon: { key: 'workspace.delete' }, danger: true, separatorBefore: true,
-        run: () => { requestWorkspaceAction(workspaceId, displayTitle, 'delete') } }] : [],
+    resolve: ({ workspaceId, displayTitle }) => [{ id: 'delete', label: ctx.locale.bind(NS)('delete.workspace'), icon: { key: 'workspace.delete' }, danger: true, separatorBefore: true,
+      run: () => { requestWorkspaceAction(workspaceId, displayTitle, 'delete') } }],
   }), 'workspace: delete menu action')
   const browserInjected = (): WorkspaceBrowserInjected => ({
     openWorkspaceMenu: (workspaceId, path, displayTitle, point, mode) => {

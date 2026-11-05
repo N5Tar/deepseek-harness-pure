@@ -188,13 +188,13 @@ export interface PeerScope {
   readonly principal: Principal
   /** Aborted once the Peer is disposed. */
   readonly signal: AbortSignal
-  /** Participation in forwarded interactions; independent of RBAC. */
+  /** Participation in forwarded interactions; independent of caller identity. */
   readonly interactions: 'answer' | 'none'
   dispose(): Promise<void>
 }
 ```
 
-`@deepseek-ai/dsh-client-connection` 实现唯一的 Peer 类 `Peer(owner, { principal, interactions? })`，用 `createScope(owner, peer)` 建立，与 Agent 建自己的 scope 是同一机制：Peer 对象就是 ScopeKey，`peer.ctx` 承接连接期效果，scope 结束时 `peer.signal` 中止，`dispose()` 让 fiber 静默。Connection 在服务 apply 时以 owner principal 创建 `connection.browserPeer`；principal、`createPeer()` 与访问检查归 [Peer 身份属性与 Remote 方法级访问控制](../../implemented/architecture/2026-10-12-peer-principal-and-remote-access.zh.md)。
+`@deepseek-ai/dsh-client-connection` 实现唯一的 Peer 类 `Peer(owner, { principal, interactions? })`，用 `createScope(owner, peer)` 建立，与 Agent 建自己的 scope 是同一机制：Peer 对象就是 ScopeKey，`peer.ctx` 承接连接期效果，scope 结束时 `peer.signal` 中止，`dispose()` 让 fiber 静默。Connection 在服务 apply 时以 owner principal 创建 `connection.browserPeer`；principal、`createPeer()` 与访问检查归 [Peer principal 与显式调用方身份](../../implemented/architecture/2026-10-12-peer-principal-and-remote-access.zh.md)。
 
 | 成员 | 语义 |
 | --- | --- |
@@ -203,7 +203,7 @@ export interface PeerScope {
 
 网关 `handleUpgrade(req, socket, head, peer)` 为该 socket 绑一个固定 Peer 的 opener，并在 `peer.ctx.effect` 里登记 socket 关闭；scope 已失效时改为直接以 1001 关闭 socket。`InvokeRemoteRequest.peer`、`RemoteStreamOpener` 与 `wireStream.open` 的 `peer` 形参均为 required，每个进程内调用方都显式给出 Peer，网关不自建 Peer。按 id 查 Peer、Peer 的开关事件，都等第一个需要它们的消费者出现时再加。
 
-Peer 携带自己的 principal；该 principal 能调用什么，由 [Peer 身份属性与 Remote 方法级访问控制](../../implemented/architecture/2026-10-12-peer-principal-and-remote-access.zh.md) 定义的 role、binding 与 policy 判定。
+Peer 携带自己的 principal；[Gateway](../../../../packages/api/gateway/README.zh.md) 在分派调用或事件前要求存活的 owner Peer。[Peer principal](2026-10-12-peer-principal-and-remote-access.zh.md) 负责调用方身份与生命周期；不存在逐资源 RBAC。
 
 ### Client 面
 
@@ -571,7 +571,7 @@ for await (const reply of stream) replies.push(reply)   // ['> a', '> b']
 
 **客户端 `send` 放在生成方法返回的 `AsyncIterable` 上。** `AsyncIterable` 上挂方法不常规；句柄类型 `RemoteStreamHandle` 显式扩展它。
 
-**照搬 Access 机制。** 访问控制是业务语义，`vouch` 与 `remote/invoke` waterfall 为它服务；本 Note 只需要"这条流是谁的"，`PeerScope` 就够。方法级访问控制后来归入 [Peer 身份属性与 Remote 方法级访问控制](../../implemented/architecture/2026-10-12-peer-principal-and-remote-access.zh.md)，该部分由其 supersede。
+**在流传输层复制访问控制。** 流需要 Peer 来确定归属与生命周期，不需要第二套授权机制。调用准入由 [Gateway](../../../../packages/api/gateway/README.zh.md) 的 owner 检查负责。
 
 **继续用 unary RPC 做上行。** 每次上行一次 HTTP 往返、一次鉴权、一次查找；两条载体没有顺序关系，只能靠客户端串行化；没有 EOF；取消不覆盖两半；每个功能各造一套关联键。
 

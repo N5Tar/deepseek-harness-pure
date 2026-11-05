@@ -41,7 +41,7 @@ files:
   - "lib/typert.host.d.ts"
 ```
 
-After the build, `lib/typert.host.js` and `lib/typert.host.d.ts` exist and the [loader](../loader/README.md) registers the contribution in Loader compositions. The generated declaration file exposes `TYPERT` as `unknown`, so contributing packages never depend on the runtime registry. The generator fails the build when a declaration is missing, points at the wrong file, or publishes Remote artifacts without Remote methods; unsupported Zod projections fail with a `TypertEmitError` naming the construct instead of flattening or weakening the source type.
+After the build, `lib/typert.host.js` and `lib/typert.host.d.ts` exist and the [loader](../loader/README.md) registers the contribution in Loader compositions. The generated declaration file exposes `TYPERT` as `unknown`, so contributing packages never depend on the runtime registry. The generator fails the build when a declaration is missing, points at the wrong file, or publishes Remote artifacts without Remote methods; unsupported Zod projections fail with a `TypertEmitError` naming the construct instead of flattening or weakening the source type. Decorator options accept endpoint names and direct stream mode; unknown options fail generation.
 
 <a id="ordinary-remote-metadata"></a>
 ### Ordinary Remote metadata
@@ -121,7 +121,7 @@ Host and Client are independent TypeScript programs. Direct project references e
 
 The runtime type closure indexes exported workspace declarations and referenced framework enums. Vendored declarations stay outside business API discovery; their enums remain available when a public result refers to them.
 
-The root export includes the model-driven extraction, completeness checks, and deterministic text renderers used by this repository's Cordis catalogs. They accept a `CordisCatalogPolicy`; repository-owned type links, foundation and exemption classifications, and inherited Cordis entries stay in `scripts/gen-cordis-catalog.ts` and are passed in explicitly, so this package contains projection mechanics, not a hidden copy of the repository's documentation taxonomy.
+The root export includes model-driven extraction, completeness checks, and the deterministic runtime API renderer. It accepts `CordisCatalogPolicy`; type classifications and inherited Cordis members used by the runtime catalog stay in `scripts/gen-cordis-catalog.ts` and are passed in explicitly. That script validates service and event partitions and emits only the runtime module; it does not read or write documentation pages.
 
 </details>
 

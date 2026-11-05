@@ -17,17 +17,14 @@ import css from '../rows/Rows.module.css'
 import browserCss from '../rows/WorkspaceBrowser.module.css'
 
 /**
- * Hover button (order 100): archive, or restore an archived row. Absent while the Session's access
- * snapshot excludes that toggle.
- * @param props - owner share, the access Hook, and the archive share.
- * @returns the button, or nothing when the caller may not toggle this Session's archival.
+ * Hover button (order 100): archive, or restore an archived row.
+ * @param props - owner share and the archive share.
+ * @returns the archive or restore button.
  */
 export function ArchiveSessionRowButton({
-  sessionId, useArchived, useSessionAccess, archiveSession, unarchiveSession, t,
+  sessionId, useArchived, archiveSession, unarchiveSession, t,
 }: SessionRowActionProps<ArchiveSessionInjected>) {
   const archived = useArchived(set => set.has(sessionId))
-  const allowed = useSessionAccess(sessionId, archived ? 'workspace/unarchiveSession' : 'workspace/archiveSession')
-  if (!allowed) return null
   return (
     <Tooltip label={t(archived ? 'actions.unarchive' : 'actions.archive')} side="bottom" align="end" delayMs={500} portal>
       <button

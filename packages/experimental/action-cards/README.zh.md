@@ -35,7 +35,7 @@ kind: "package-reference"
 
 ### 注册卡片种类
 
-种类所在的包注入 `actionCards`，并在自己的插件中调用 `ctx.actionCards.register(kind)`；该插件卸载时种类随之移除，此后对其卡片的操作会以 unavailable 拒绝，只有“暂不需要”仍可忽略尚未开始的卡片。种类需要给出：动作名、提议该动作的 Skill、被接受的调用结果交给模型的结尾邀请指引、卡片 `details` 的 zod 校验、接受的用户操作及各自需要的共享检查（`global` 表示需要全局 Remote 权限，`writes` 表示只读会话中拒绝）、仍可忽略卡片的已记录阶段、可选的状态说明、状态通知要报告的决定数据字段、可选的 `reconcile`（每次操作前根据会话之外的状态更新卡片的已记录决定），以及处理 `dismiss` 以外所有操作的处理器。处理器用 `ctx.actionCards.record()` 记录每个新决定（该方法拒绝没有种类注册过的动作和推导得出的 `replaced` 阶段），并返回 `accepted`、带当前决定的 `settled`、`refused` 或 `unconfirmed`。
+种类所在的包注入 `actionCards`，并在自己的插件中调用 `ctx.actionCards.register(kind)`；该插件卸载时种类随之移除，此后对其卡片的操作会以 unavailable 拒绝，只有“暂不需要”仍可忽略尚未开始的卡片。种类需要给出：动作名、提议该动作的 Skill、被接受的调用结果交给模型的结尾邀请指引、卡片 `details` 的 zod 校验、接受的用户操作及各自需要的共享检查（`writes` 表示只读会话中拒绝）、仍可忽略卡片的已记录阶段、可选的状态说明、状态通知要报告的决定数据字段、可选的 `reconcile`（每次操作前根据会话之外的状态更新卡片的已记录决定），以及处理 `dismiss` 以外所有操作的处理器。处理器用 `ctx.actionCards.record()` 记录每个新决定（该方法拒绝没有种类注册过的动作和推导得出的 `replaced` 阶段），并返回 `accepted`、带当前决定的 `settled`、`refused` 或 `unconfirmed`。
 
 ### 卡片规则
 
@@ -57,7 +57,7 @@ kind: "package-reference"
 
 `actionCards` 会话投影（状态版本 2）把每个 `propose_action` 调用与其成功结果配对，从 `plugin:action-cards/decision` 读取决定，从收件箱拼接事件累计排队到下一轮的消息供工具上限使用，并保留尚未报告的决定，直到 `through` 覆盖它们的状态通知写入日志。投影的客户端视图 `{ proposals, decisions }` 不进入会话摘要。
 
-Remote `act(sessionId, callId, verb, payload?)` 先检查服务所有者、在线根 Agent 和卡片；“暂不需要”在种类未注册时也继续处理，其他操作还需要种类、操作和 Remote 权限。然后同一张卡片共用一次处理。种类的 `reconcile` 先运行，之后再次检查在线根 Agent；已忽略或已替换的卡片原样返回，“暂不需要”被记录，写入类操作在只读会话中被拒绝，其余操作在该 Agent 的发起方作用域内交给种类处理器。`record()` 也接受种类已注销的动作，因为 Cordis 并发释放插件的各个 effect，卸载中的种类仍要记录已开始工作的结果。一个 `agent/pre-step` 监听器在后续监听器准备好本步之后追加状态通知。
+Gateway 只接纳 owner Peer。Remote `act(sessionId, callId, verb, payload?)` 先检查服务生命周期、在线根 Agent 和卡片；“暂不需要”在种类未注册时也继续处理，其他操作还需要种类和操作。然后同一张卡片共用一次处理。种类的 `reconcile` 先运行，之后再次检查在线根 Agent；已忽略或已替换的卡片原样返回，“暂不需要”被记录，写入类操作在只读会话中被拒绝，其余操作在该 Agent 的发起方作用域内交给种类处理器。`record()` 也接受种类已注销的动作，因为 Cordis 并发释放插件的各个 effect，卸载中的种类仍要记录已开始工作的结果。一个 `agent/pre-step` 监听器在后续监听器准备好本步之后追加状态通知。
 
 | 源码 | 内容 |
 |---|---|
@@ -123,7 +123,7 @@ Latest status of action cards from user actions and background work. These are s
 - PTC 预设不会展示卡片：从代码中发起的 Skill 加载和调用既不会激活工具，也到达不了工具，因为日志把它们记为程序派发而不是工具调用。
 - 卡片只在主对话中提供。subagent（包括 Creator 子 Agent）加载 Skill 不会激活任何东西，其调用也会被拒绝，因为只有在线的根 Agent 才能对卡片进行操作。
 - 所有种类合计每轮只展示一张卡片。任何种类的新卡片都会替换此前所有尚未开始的卡片，因此第二个种类的卡片会替换第一个种类尚未开始的卡片。
-- 用户操作的拒绝原因有意设计为普通字符串：服务定义 `closing`、`not-live-root`、`unknown`、`unavailable`、`access-denied` 和 `read-only`，各种类可以添加自己的原因，浏览器端正文为已知原因显示文案，其余按 unavailable 处理。
+- 用户操作的拒绝原因有意设计为普通字符串：服务定义 `closing`、`not-live-root`、`unknown`、`unavailable` 和 `read-only`，各种类可以添加自己的原因，浏览器端正文为已知原因显示文案，其余按 unavailable 处理。
 - 每个种类在两端各自校验 `details`：Host 端的 schema 在模型提议时和每次操作前校验，浏览器端正文用自己的 schema 校验，因此两个 schema 要一起修改。
 
 <a id="dev-note"></a>

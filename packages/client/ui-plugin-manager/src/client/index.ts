@@ -16,8 +16,6 @@ import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-// Type-only: the ctx.remoteAccess Context merge.
-import type {} from '@deepseek-ai/dsh-api-remote-access/client'
 // Type-only: the ctx.remote Context merge and the forwarded-event key face.
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 // Type-only: the forwarded events' own declaration (`$on`'s key face resolves
@@ -82,13 +80,12 @@ export const NS = 'pluginManager'
 /** The id shared by the sidebar entry and the main panel it opens. */
 export const PANEL_ID = 'plugins' as MainPanelId
 
-/** Services required by the sidebar registration, the Remote methods, and access; the inventory says whether the Host manages a profile. */
-export const inject = ['slots', 'locale', 'remote', 'remote.pluginManager', 'remote.pluginInventory', 'remote.pluginRegistryProbe', 'configForms', 'layout', 'remoteAccess']
+/** Services required by the sidebar registration, the Remote methods, the inventory says whether the Host manages a profile. */
+export const inject = ['slots', 'locale', 'remote', 'remote.pluginManager', 'remote.pluginInventory', 'remote.pluginRegistryProbe', 'configForms', 'layout']
 
 /**
  * Contribute the Plugins entry to the sidebar with the management page it
- * opens, and keep it current on the Host's change events, while the current
- * Peer may list the installed bundles.
+ * opens, and keep it current on the Host's change events.
  * @param ctx - the browser plugin context.
  */
 export function apply(ctx: ClientContext): void {
@@ -103,7 +100,7 @@ export function apply(ctx: ClientContext): void {
   // page declares here, so the page never names a configurable plugin.
   const configLedger = configLedgerSource(ctx)
   const face = controller.inject(configLedger, tabLedgerSource(ctx), text => ctx.locale.resolveText(text))
-  ctx.remoteAccess.whenAccess('pluginManager/listBundles', function* () {
+  ctx.effect(function* () {
     // The Host says when what is installed, enabled, or composed changed — from
     // this page, the CLI, or another browser — and streams install output.
     // A page never rendered holds no snapshot to refresh.
@@ -112,7 +109,6 @@ export function apply(ctx: ClientContext): void {
       controller.details.reset()
       if (controller.getSnapshot().status !== 'idle') void controller.load()
     }
-    // Host changes made while access was withdrawn reached no subscription below.
     refresh()
     yield ctx.remote.$on('plugin-manager/changed', refresh)
     yield ctx.remote.$on('plugin-manager/install-log', (chunk) => { controller.appendLog(chunk) })

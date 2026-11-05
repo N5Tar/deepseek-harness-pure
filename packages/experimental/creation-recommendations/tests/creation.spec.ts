@@ -190,10 +190,8 @@ describe('interface creation', () => {
     const cleanup = Promise.withResolvers<undefined>()
     onTestFinished(() => { cleanup.resolve(undefined) })
     f.dispose.mockImplementation(async () => { f.result.resolve({ output: [], stopReason: 'aborted' }); await cleanup.promise })
-    const access = vi.spyOn(f.ctx.remoteAccess, 'allows').mockReturnValue(false)
     const cancelling = f.act('cancel')
     await vi.waitFor(() => { expect(spec.signal.aborted).toBe(true) })
-    access.mockRestore()
     expect(f.act('create')).toBe(cancelling)
     expect(f.current()?.phase).toBe('creating')
     expect(f.manager.installBundle).not.toHaveBeenCalled()
@@ -247,15 +245,12 @@ describe('interface creation', () => {
     expect(f.startActivation).not.toHaveBeenCalled()
   })
 
-  it('refuses clicks from non-root or unauthorized connections', async () => {
+  it('refuses clicks from non-root Agents', async () => {
     const f = await fixture()
     await f.propose()
     const liveAgent = vi.spyOn(f.ctx.agents, 'get').mockReturnValue(undefined)
     expect(await f.act('create')).toEqual({ status: 'refused', reason: 'not-live-root' })
     liveAgent.mockRestore()
-    vi.spyOn(f.ctx.remoteAccess, 'allows').mockReturnValue(false)
-    expect(await f.act('create')).toEqual({ status: 'refused', reason: 'access-denied' })
-    expect(await f.act('restore')).toEqual({ status: 'refused', reason: 'access-denied' })
     expect(f.startActivation).not.toHaveBeenCalled()
   })
 
@@ -263,7 +258,6 @@ describe('interface creation', () => {
     const f = await fixture()
     await f.propose()
     expect(await f.act('create', 'unknown-location')).toEqual({ status: 'refused', reason: 'invalid-location' })
-    vi.spyOn(f.ctx.remoteAccess, 'allows').mockReturnValue(false)
     expect(await f.act('dismiss', 'unknown-location', '   ')).toEqual(settled('dismissed', { slot: proposal.details.slot }))
     expect(f.startActivation).not.toHaveBeenCalled()
   })
@@ -642,9 +636,6 @@ describe('interface creation', () => {
     expect(f.manager.installBundle).toHaveBeenCalledExactlyOnceWith(directory)
     await f.act('undo')
     expect(f.current()).toMatchObject({ phase: 'removed', application: 'applied' })
-    const access = vi.spyOn(f.ctx.remoteAccess, 'allows').mockReturnValue(false)
-    expect(await f.act('restore')).toEqual({ status: 'refused', reason: 'access-denied' })
-    access.mockRestore()
     let installing: unknown
     f.manager.installBundle.mockImplementationOnce(async (path: string) => {
       installing = f.current()

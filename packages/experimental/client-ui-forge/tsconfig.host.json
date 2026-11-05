@@ -25,9 +25,6 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../api/remote-access/tsconfig.host.json"
-    },
-    {
       "path": "../../core/agent"
     },
     {

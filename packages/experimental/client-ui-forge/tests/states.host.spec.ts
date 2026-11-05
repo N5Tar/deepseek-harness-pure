@@ -91,9 +91,9 @@ function fixture(sessions: readonly ListedSession[], stored: readonly ForgeChang
 }
 
 /** One stream of the hub, read frame by frame. */
-function reader(hub: ChangeRequestStates, allowed: (id: SessionId) => boolean = () => true) {
+function reader(hub: ChangeRequestStates) {
   const aborter = new AbortController()
-  const iterator = hub.stream(allowed, aborter.signal)[Symbol.asyncIterator]()
+  const iterator = hub.stream(aborter.signal)[Symbol.asyncIterator]()
   cleanups.push(() => { aborter.abort() })
   return {
     async next(): Promise<ForgeChangeRequestStatesFrame | undefined> {
@@ -150,18 +150,6 @@ describe('ChangeRequestStates', () => {
     expect(await r.next()).toEqual({ type: 'changed', states: [state(9, { draft: true })] })
     f.bind(S1, [])
     expect([...f.watchers.keys()]).toEqual([])
-  })
-
-  it('sends a stream only the states of change requests that a Session it may read binds, including ones bound later', async () => {
-    const f = fixture([{ id: S1, urls: [url(7)] }, { id: S2, urls: [url(8)] }], [state(7), state(8)])
-    const r = reader(f.hub, id => id === S1)
-
-    expect(await r.next()).toEqual({ type: 'baseline', states: [state(7)] })
-    f.poll(8, { checksRollup: 'failure' })
-    f.poll(7, { checksRollup: 'pending' })
-    expect(await r.next()).toEqual({ type: 'changed', states: [state(7, { checksRollup: 'pending' })] })
-    f.bind(S1, [url(7), url(8)])
-    expect(await r.next()).toEqual({ type: 'changed', states: [state(8, { checksRollup: 'failure' })] })
   })
 
   it('stores and sends nothing for failed polls and polls that change nothing', async () => {
@@ -273,7 +261,7 @@ describe('ChangeRequestStates', () => {
   it('ends a stream cancelled after its baseline and releases its watches', async () => {
     const f = fixture([{ id: S1, urls: [url(7)] }])
     const aborter = new AbortController()
-    const stream = f.hub.stream(() => true, aborter.signal)[Symbol.asyncIterator]()
+    const stream = f.hub.stream(aborter.signal)[Symbol.asyncIterator]()
     await stream.next()
     aborter.abort()
     try {
@@ -410,7 +398,7 @@ describe('ChangeRequestStates', () => {
   it('keeps other readers live when a reader aborts between frames', async () => {
     const f = fixture([{ id: S1, urls: [url(7)] }])
     const aborter = new AbortController()
-    const first = f.hub.stream(() => true, aborter.signal)[Symbol.asyncIterator]()
+    const first = f.hub.stream(aborter.signal)[Symbol.asyncIterator]()
     const second = reader(f.hub)
     await first.next()
     await second.next()

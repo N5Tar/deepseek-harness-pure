@@ -6,30 +6,29 @@ import clsx from 'clsx'
 import type { PinSessionInjected, SessionRowActionProps } from '../contract/slots.ts'
 import css from '../rows/Rows.module.css'
 
-type PinState = Pick<SessionRowActionProps<PinSessionInjected>, 'sessionId' | 'usePinned' | 'useArchived' | 'useSessionAccess'>
+type PinState = Pick<SessionRowActionProps<PinSessionInjected>, 'sessionId' | 'usePinned' | 'useArchived'>
 
-/** The row's pin and archive membership, one Set lookup each, and whether its access allows the toggle. */
-function usePinState({ sessionId, usePinned, useArchived, useSessionAccess }: PinState) {
+/** The row's pin and archive membership, one Set lookup each. */
+function usePinState({ sessionId, usePinned, useArchived }: PinState) {
   const pinned = usePinned(set => set.has(sessionId))
   return {
     pinned,
     archived: useArchived(archived => archived.has(sessionId)),
-    allowed: useSessionAccess(sessionId, pinned ? 'workspace/unpinSession' : 'workspace/pinSession'),
   }
 }
 
 /**
  * Hover button (order 200), also visible without hover when pinned; absent on
- * archived rows and while the Session's access snapshot excludes that toggle.
+ * archived rows.
  * Tooltip forwards the class to the button. Keep that button directly inside
  * the display-contents slot anchor so hoverless rows can retain the Unpin action.
- * @param props - owner share, the access Hook, and the pin share.
- * @returns the button, or null for an archived or refused Session.
+ * @param props - owner share and the pin share.
+ * @returns the button, or null for an archived Session.
  */
 export function PinSessionRowButton(props: SessionRowActionProps<PinSessionInjected>) {
   const { sessionId, pinSession, unpinSession, t } = props
-  const { pinned, archived, allowed } = usePinState(props)
-  if (archived || !allowed) return null
+  const { pinned, archived } = usePinState(props)
+  if (archived) return null
   return (
     <Tooltip label={t(pinned ? 'actions.unpin' : 'actions.pin')} side="bottom" align="end" delayMs={500} portal>
       <button
