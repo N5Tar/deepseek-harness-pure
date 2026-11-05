@@ -143,8 +143,6 @@
     "verify-export-jsdoc": "tsx scripts/verify-export-jsdoc.ts",
     "gen-workflow-guest": "tsx scripts/gen-workflow-guest.ts",
     "verify-workflow-guest": "tsx scripts/gen-workflow-guest.ts --check",
-    "gen-plugin-packages": "tsx scripts/gen-plugin-packages.ts",
-    "verify-plugin-packages": "tsx scripts/gen-plugin-packages.ts --check",
     "persistence-changes": "tsx scripts/persistence-changes.ts",
     "persistence-review": "tsx scripts/persistence-review.ts",
     "verify-persistence-changes": "tsx scripts/persistence-changes.ts --check",
@@ -170,8 +168,6 @@
     "dev:web": "tsx scripts/dev-web.ts --poll",
     "dev:bundle-registry": "tsx scripts/dev-bundle-registry.ts",
     "postinstall": "node scripts/install-lefthook.mjs",
-    "gen-official-bundle-catalog": "tsx scripts/gen-official-bundle-catalog.ts",
-    "verify-official-bundle-catalog": "tsx scripts/gen-official-bundle-catalog.ts --check",
     "verify-product-use": "tsx scripts/verify-product-use.ts"
   },
   "devDependencies": {

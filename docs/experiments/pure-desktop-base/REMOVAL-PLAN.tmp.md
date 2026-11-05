@@ -340,3 +340,16 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 即：合并退役 ≈ 删 60+ 包 + 重写 `client/web` 的模块种子 + 重写测试支撑 + 裁 BFF 装配 + 清理 `apps/web`。这是数小时的连续工作，无法在“每轮结束必须绿”的约束下完成；本轮已再次回退，主干保持可构建（HEAD `17041d2815`）。
 
 **简化方案（建议）**：纯桌面底座不需要 `apps/web` 这个 Vite 应用。可直接删除 `apps/web` 与 `client/web` 的产品模块种子，只保留 `shell-base` 所需的底座 UI，再删 AI UI 包——覆盖面积大幅缩小，且与“纯桌面”目标一致。
+
+### 内核化阶段执行记录（按用户指示的 kernel-first 路线）
+
+已完成：
+- 新建 `apps/kernel`：一个 Cordis 根、单页 `/`、设置 `/api/settings`、插件清单 `/api/modules` 与 `/ui/*` 客户端模块装配；Loader 从 `<DSH_HOME>/kernel/plugins.json` 挂载插件；内置示例插件与客户端模块各一。
+- Electron 以 `DSH_DESKTOP_KERNEL=1` 在主进程内启动内核并直接加载其页面；`apps/desktop-host` 同样支持该模式。
+- 产品表面退役：删除 `apps/web`、全部产品 bundle（`base`/`web-app`/`headless`/`sdk-app`/`sdk-minimal`）、47 个 AI 客户端 UI 包、218 个宿主产品包，以及对应清单依赖、tsconfig 引用、vitest/lefthook 产品检查。
+- 保留底座：`shell-base`、`boot/*`、`settings`、`credentials*`、`typert/*`、`api/{gateway,settings-controller,shell-remotes}`、`host/*`、16 个 `client/*`、`util/*`，以及传输契约仍引用的类型包（`agent`/`session`/`scope`/`llm`/`tools`/`sandbox`/`storage`/`subprocess`/`workspace`/`attachment`/`user-approval`/`system-prompt`/`agent-preset-registry`）。
+- vendor 本地修改新增 V31：`FiberState` 由 `const enum` 改为普通 `enum`，修复打包后 Loader 的运行时导入。
+
+未完成 / 需要决策：传输层（`client/connection`、`api/gateway`）的类型仍引用上述会话/模型契约包，删除它们需要把传输契约改写为无会话模型（原计划中的 B 路线）。当前状态下这些包只参与类型检查，不被内核装配。
+
+验证：`build:artifacts` 8/8、`build:check` 2/2、内核测试 8/8、Electron 内核模式端到端通过。
