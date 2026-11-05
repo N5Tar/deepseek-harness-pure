@@ -27,12 +27,6 @@
       "path": "../../packages/boot/cmdline"
     },
     {
-      "path": "../../packages/bundle/base"
-    },
-    {
-      "path": "../../packages/bundle/headless"
-    },
-    {
       "path": "../../packages/bundle/web-app"
     },
     {

@@ -20,12 +20,8 @@ describe('Official on-demand catalog', () => {
 })
 
 describe('Shipped profile templates', () => {
-  it('keeps the minimal SDK and desktop shell independent of base', () => {
+  it('ships only the Cordis shell template after the product bundles retired', () => {
     expect(PROFILE_TEMPLATES).toEqual({
-      web: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'] },
-      headless: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-headless'] },
-      sdk: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-app'] },
-      'sdk-minimal': { bundles: ['@deepseek-ai/dsh-sdk-minimal'] },
       shell: { bundles: ['@deepseek-ai/dsh-shell-base'] },
     })
   })
