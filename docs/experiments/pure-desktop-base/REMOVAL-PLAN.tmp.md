@@ -306,3 +306,11 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 结论：第 10 项的每个功能组都以「命令注册表 + 组合层行 + UI + SDK 契约测试 + 应用层」五件套出现，必须按功能组一次性成组删除；尝试只删包必然中断。实测后已回退，主干保持可构建。
 
 下一步（下一轮）：以 `plan` 为样板完成第一组成组删除（含上述五处），验证 `build:check` 与定向测试后再复制到 `todo`、`goal`、`schedule`、`workflow`、`team`、`subagent` 各组。
+
+### 路线 A 的实测结论：功能与其测试不可分离
+
+按五件套成组删除 `plan`（命令注册表 + 组合层行 + UI 包 + 清单依赖 + 根 tsconfig 引用）后做完整重建：host compiler 失败，随后 `build:check` 暴露大量客户端测试引用——`packages/client/ui-conversation/tests/conversation-assembler.client.spec.ts` 331 处、`ui-chat` 113/90/48 处、`ui-workspace` 77/48、`ui-sidebar-right` 76/59、`ui-input-trigger` 72、`ui-trajectory` 60/52、`ui-settings-general` 50 等。原因：`plan-mode` 不只是插件，它通过声明合并提供 `plan/mode` 会话事件与 `plan` 投影，AI 界面测试大量断言这些类型。
+
+因此路线 A 并不比 08 更“安全”：它把同一批 AI 界面测试的改写提前，且删到第 10 项时仍要处理 UI 测试。两种路线最终都收敛为“一次性退役整个 AI 界面 + 其测试与投影”。
+
+已回退，主干保持可构建（HEAD `e432da63f9`）。建议改为：把 08/10/11/12 合并为一次「AI 表面退役」，在获得授权的多轮红灯窗口内完成，避免反复试探与回退。
