@@ -96,8 +96,8 @@ function mountFrame(windowWidth = frameWidth, content?: AppFrameProps['renderSlo
       useStore={useStore}
       actions={instance.actions}
       renderSlot={renderSlot}
-      useSessions={useSessions}
       usePanelInfo={usePanelInfo}
+      useSessions={useSessions}
       useFoldedLandscape={bindSnapshotSelector(foldedLandscape)}
       useSessionStatus={useSessionStatus}
       useSessionRetainInfo={() => undefined}
@@ -194,19 +194,6 @@ describe('AppFrame', () => {
     expect(document.title).toBe('DSH Local Build')
   })
 
-  it('follows the selected durable Session title', () => {
-    vi.stubEnv('DSH_CLIENT_TITLE', 'Product')
-    selectedSessionTitle = 'First'
-    const { rerenderFrame } = mountFrame()
-    expect(document.title).toBe('First — Product')
-    selectedSessionTitle = 'Revised'
-    rerenderFrame()
-    expect(document.title).toBe('Revised — Product')
-    selectedSession = undefined
-    rerenderFrame()
-    expect(document.title).toBe('Product')
-  })
-
   it('renders owner props for the default sidebar and prospective right panel', () => {
     const { frame, rightOwner, sidebarOwner, slotCalls } = mountFrame()
     expect(tracks(frame)).toEqual([280, 0])
@@ -292,7 +279,7 @@ describe('AppFrame', () => {
       expect(instance.getSnapshot().layoutInfo).toBe(layoutInfo)
       expect(tracks(frame)).toEqual([280, 0])
       expect(selectedSession).toBe(sessionId)
-      expect(document.title).toBe(panelId === null ? 'Session title — DSH Local Build' : 'DSH Local Build')
+      expect(document.title).toBe('DSH Local Build')
     }
   })
 })

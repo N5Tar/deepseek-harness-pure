@@ -128,7 +128,6 @@ function DragHandle(props: { side: 'sidebar' | 'rightbar'; left: number; onStart
 /** The three-column frame (see module doc). */
 export function AppFrame({
   useStore,
-  useSessions,
   usePanelInfo,
   useFoldedLandscape,
   actions,
@@ -304,11 +303,7 @@ export function AppFrame({
       data-dragging={dragging || undefined}
       data-animating={animateTracks || undefined}
     >
-      <DocumentTitle
-        productTitle={productTitle}
-        useSessions={useSessions}
-        usePanelInfo={usePanelInfo}
-      />
+      <DocumentTitle productTitle={productTitle} />
       {drawer && <div className={css.drawerMask} data-sidebar-mask aria-hidden="true"
         onClick={drawerOpen ? () => { actions.toggleSidebar() } : undefined} />}
       <div className={css.sidebarCol}
