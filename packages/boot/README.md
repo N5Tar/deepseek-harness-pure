@@ -1,45 +1,22 @@
 ---
-description: "The boot package group: how dsh app bins start — environment loading, profile and patch layers, clear startup failures, and app-owned command lines."
+description: "The boot packages of the Cordis desktop base."
 kind: "package-group"
 ---
 
-# boot/ — shared app-bin boot glue
+# Boot
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-The boot group launches profile applications and manages their installed composition. `app-boot` resolves configuration and starts the Loader, `cmdline` supplies application arguments, and `plugin-manager` exposes current-profile operations shared with the CLI. Each package README owns its details.
+This group holds the boot packages the base keeps. Each entry links to the package README that owns its behavior, lifecycle, and failure contracts.
 
-## Table of Contents
-
-- [Packages](#packages)
-- [Related documentation](#related-documentation)
-- [Dev Note](#dev-note)
-
-<a id="packages"></a>
 ## Packages
 
-| Package | Role | ctx key |
-|---|---|---|
-| [`app-boot`](app-boot/README.md) | Boots a dsh app from a `cordis.yml`: loads `.env`, applies profile and patch layers, and reports startup failures clearly | (library for the bins) |
-| [`cmdline`](cmdline/README.md) | Lets the app own its flags, `--help`, and exit code; passes everything after the launcher's flags through verbatim | `cmdlineArgs`, `appExit` |
-| [`hmr`](hmr/README.md) | Coordinates module and configuration reloads with package mutations | `hmr` |
-| [`config-editor`](config-editor/README.md) | Persists active profile configuration through Loader reconciliation | `configEditor` |
-| [`plugin-manager`](plugin-manager/README.md) | Manages current-profile plugins and bundle packages through shared CLI operations | `pluginManager` |
-| [`plugin-market`](plugin-market/README.md) | Reads the plugin indexes the user configures for Discover and the `plugin_market` tool | `pluginMarket` |
-
-<a id="related-documentation"></a>
-## Related documentation
-
-- [dsh app](../../apps/cli/README.md) — the `dsh` bin that consumes these helpers for its boot sequence.
-- [Profile bundles](../bundle/README.md) — installable patch layers that `dsh --profile` compositions mount.
-- [dsh-home-paths](../util/home-paths/README.md) — the harness-home resolver both packages build on.
-- [dsh-cmdline](cmdline/README.md) — how an app owns its flag family instead of the launcher.
-
-- Profile management — service methods and result records.
-
-<a id="dev-note"></a>
-## Dev Note
-
-None.
+| Package | Owns |
+| --- | --- |
+| [app-boot](./app-boot/README.md) | Shared boot glue for the app bins: .env loading, fail-loud Loader guards, snapshot-aware config resolution, and the Loader boot sequence |
+| [cmdline](./cmdline/README.md) | Immutable command-line handoff from a dsh launcher to any app plugin that injects cmdlineArgs |
+| [config-editor](./config-editor/README.md) | Persist plugin configuration through profile patches and Loader reconciliation |
+| [hmr](./hmr/README.md) | Coordinated module and profile configuration hot reload |
+| [plugin-manager](./plugin-manager/README.md) | Current-profile plugin and bundle management shared by dsh CLI, Web and agent tools |

@@ -37,7 +37,7 @@ Edit this package when the installation's bundle selection or the plugin manager
 <a id="plugin-manager-lists"></a>
 ### Plugin manager lists
 
-`PROTECTED_PLUGINS` names the plugin packages the [plugin manager](../../boot/plugin-manager/README.md) keeps read-only because management needs them; a bundle that contains one is a management bundle. Removing a name drops only this `management-required` refusal; the manager's own entry, installation-carried bundles, and unaddressable rows stay protected by their own rules. The [Web plugin page](../../client/ui-plugin-manager/README.md) hides the `HIDDEN_BUNDLES`, ranks the `EXTENSION_BUNDLES` first in their order, keeps the `MORE_BUNDLES` off its main list until the profile enables them, and marks the `EXPERIMENTAL_BUNDLES` with the Experimental badge.
+`PROTECTED_PLUGINS` names the plugin packages the [plugin manager](../../boot/plugin-manager/README.md) keeps read-only because management needs them; a bundle that contains one is a management bundle. Removing a name drops only this `management-required` refusal; the manager's own entry, installation-carried bundles, and unaddressable rows stay protected by their own rules. The Web plugin page hides the `HIDDEN_BUNDLES`, ranks the `EXTENSION_BUNDLES` first in their order, keeps the `MORE_BUNDLES` off its main list until the profile enables them, and marks the `EXPERIMENTAL_BUNDLES` with the Experimental badge.
 
 ### On-demand bundles
 
@@ -70,8 +70,6 @@ Repository checks read the lists in `src/bundles.ts` as TypeScript literals with
 ## Further Exploration
 
 - [dsh-app-boot](../../boot/app-boot/README.md) — profile loading that applies the templates and retired list.
-- [Shipped optional bundles](../../../.agents/notes/implemented/process/2026-09-15-shipped-optional-bundles.md) — why the installation owns the optional list.
-- [Official on-demand bundles](../../../.agents/notes/implemented/architecture/2026-10-05-official-on-demand-bundles.md) — the offline catalog decision.
 
 -----
 

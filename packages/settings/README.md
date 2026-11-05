@@ -1,44 +1,18 @@
 ---
-description: "Schema-derived forms for live plugin configuration."
+description: "The settings packages of the Cordis desktop base."
 kind: "package-group"
 ---
 
-# settings/ — plugin configuration forms
+# Settings
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-Edit live plugin configuration through forms derived from each plugin’s Config schema. The active profile patch stores edits, and Loader applies them. Plugins read their own volatile references.
+This group holds the settings packages the base keeps. Each entry links to the package README that owns its behavior, lifecycle, and failure contracts.
 
-## Table of Contents
-
-- [Packages](#packages)
-- [Related documentation](#related-documentation)
-- [Dev Note](#dev-note)
-
-<a id="packages"></a>
 ## Packages
 
-The package README owns the form behavior; the settings reference documents its types.
-
-| Package | Purpose | ctx key |
-|---|---|---|
-| [`settings`](settings/README.md) | Config projection and revisioned form edits | `settings` |
-
-<a id="related-documentation"></a>
-## Related documentation
-
-- Settings reference — descriptors and edits.
-- [Configuration editor](../boot/config-editor/README.md) — profile persistence.
-- [Volatile configuration](../../vendor/loader/README.md) — updates without remounting.
-
-<a id="dev-note"></a>
-## Dev Note
-
-<details>
-<summary>Working context for maintainers — click to expand</summary>
-
-None.
-
-</details>
+| Package | Owns |
+| --- | --- |
+| [settings](./settings/README.md) | Abstract user-settings seam (ctx.settings) for the DeepSeek Harness |

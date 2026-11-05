@@ -81,7 +81,7 @@ Mount one executor in the deployment, preset, or Agent scope. The nearest scope 
 - name: '@deepseek-ai/dsh-tool-executor-native'
 ```
 
-Agent-step concurrency uses the [agent-loop configuration](../agent-loop/README.md). See the [native](../tool-executor-native/README.md) or [PTC](../tool-executor-ptc/README.md) package for executor settings. Custom providers implement only `describe(definitions)` and `execute(batch)`; the shared pipeline is optional. The registry selects the current scoped executor separately for prompt descriptions and each `ctx.tools.execute()` batch. An accepted batch settles through its selected provider even if that provider unloads; settlement may include cancellation errors according to the provider’s disposal policy. New batches reject until a replacement is registered.
+Agent-step concurrency uses the agent-loop configuration. See the native or PTC package for executor settings. Custom providers implement only `describe(definitions)` and `execute(batch)`; the shared pipeline is optional. The registry selects the current scoped executor separately for prompt descriptions and each `ctx.tools.execute()` batch. An accepted batch settles through its selected provider even if that provider unloads; settlement may include cancellation errors according to the provider’s disposal policy. New batches reject until a replacement is registered.
 
 ### Restrict tools per agent
 
@@ -95,7 +95,6 @@ A tool’s `projectContent` installs execution-prepared content before post-exec
 
 ### Host presentation descriptors
 
-A tool can retain pure `presentCall()` and `presentResult()` methods for Host-local consumers. The built-in Web Client does not consume those values. It selects a renderer through `tool.call.toolview` and derives card props from raw call arguments, result content, failure state, and persisted metadata. The [Client-derived presentation decision](../../../.agents/notes/implemented/architecture/2026-08-23-client-derived-tool-presentation.md) owns this transport split.
 
 -----
 
@@ -129,7 +128,7 @@ Each typed invocation materializes and freezes parsed arguments, assigns an opaq
 
 ### PTC mode
 
-The [PTC executor](../tool-executor-ptc/README.md) owns program transport, SDK generation, nested dispatch, and image context.
+The PTC executor owns program transport, SDK generation, nested dispatch, and image context.
 
 <a id="extension-points"></a>
 ### Extension points
@@ -149,8 +148,7 @@ The package-level contract is enough for most consumers; read these when you nee
 - Generated tool catalog — the shipped tools' schemas the model receives.
 - Tool execution pipeline — the pipeline visualized.
 - Adding a tool cookbook — step-by-step tool authoring.
-- [Tool testkit](../../test-support/tool-testkit/README.md) — tool-definition and execution fixtures for tests and benchmarks.
-- [Cooperative cancellation Agent Note](../../../.agents/notes/implemented/architecture/2026-07-19-cooperative-tool-cancellation.md) — the full cancellation contract.
+- Tool testkit — tool-definition and execution fixtures for tests and benchmarks.
 - [Core group map](../README.md) — how the core packages compose.
 
 -----
@@ -194,7 +192,6 @@ Append-only; newly visible content follows the reusable request prefix and does 
 These limits define when the registry needs special care. They are current package constraints, not a task backlog.
 
 - **Concurrency policy is not an event gate** — `executionMode()` reads the resolved tool definition directly; plugins can only declare a classifier on definitions they own.
-- **`tools/pre-execute` deliberately cannot rewrite `exec.arguments`** — logged and rendered args would desync from what ran; the rewrite design is [a proposed Agent Note](../../../.agents/notes/proposed/feature/2026-06-30-pre-tool-input-rewrite.md).
 - **Caller-defined subagent and workflow structured outputs remain object-rooted** — this is a consumer-level guard; the shared schema vocabulary and tool outputs support every JSON root.
 - **`timeoutMs` on a definition is declarative only** — the registry never enforces deadlines; enforcement requires the `@deepseek-ai/dsh-tool-call-timeout-policy` wrapper.
 

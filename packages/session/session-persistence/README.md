@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This package lets applications persist and resume session event logs through a backend-independent API. Readers can create, open, inspect, list, append to, read, flush, and close stored sessions while preserving contiguous append-only history. A completed flush is the durability barrier; readers never receive torn tails or invalid records, and only one writer per session is allowed within a backend instance. Use the shipped [JSONL backend](../session-persistence-jsonl/README.md) for one compressed log per session, or implement another backend with the same observable guarantees.
+This package lets applications persist and resume session event logs through a backend-independent API. Readers can create, open, inspect, list, append to, read, flush, and close stored sessions while preserving contiguous append-only history. A completed flush is the durability barrier; readers never receive torn tails or invalid records, and only one writer per session is allowed within a backend instance. Use the shipped JSONL backend for one compressed log per session, or implement another backend with the same observable guarantees.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Mount one persistence backend to make sessions durable. The backend registers it
 
 ### Choosing a backend
 
-The seam ships the [JSONL](../session-persistence-jsonl/README.md) backend: one append-only `.jsonl.zstd` log per session. A third-party backend may implement the service directly; the [backend contract](#understand-the-implementation) below is what it must honor.
+The seam ships the JSONL backend: one append-only `.jsonl.zstd` log per session. A third-party backend may implement the service directly; the [backend contract](#understand-the-implementation) below is what it must honor.
 
 ### What the service provides
 
@@ -105,7 +105,6 @@ Each `session/event` for the writer's session copies into that handle's internal
 
 ### Stored-record validation
 
-The seam's shared helpers validate current logical records identified by `SESSION_FORMAT_VERSION`, and appends write only the current format ([rationale](../../../.agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.md)). Historical decoding and immutable successor publication belong inside each provider before it returns a handle. Every backend runs `storage-contract` validation on handle reads and write-open priming, refusing an unknown event type as `SessionFormatUnsupportedError` and a malformed current record as `SessionPersistenceCorruptionError`, with the raw-log `SessionLocation` attached when the backend keeps one artifact per session.
 
 </details>
 -----
@@ -116,9 +115,8 @@ The seam's shared helpers validate current logical records identified by `SESSIO
 Read these pages when the package-level contract is not enough. They move from the shared durability model to the shipped backends and the decision evidence.
 
 - Session persistence subsystem — the full service contract, handle semantics, flush checkpoint, crash recovery, and generated Cordis API.
-- [Handle-based persistence Agent Note](../../../.agents/notes/implemented/architecture/2026-08-27-handle-based-session-persistence.md) — the seam design and its ownership model.
-- [JSONL persistence backend](../session-persistence-jsonl/README.md) — the shipped per-session-file backend.
-- [Session checkpoint policy](../session-checkpoint-policy/README.md) — the plugin that flushes through `session/flush` at semantic boundaries.
+- JSONL persistence backend — the shipped per-session-file backend.
+- Session checkpoint policy — the plugin that flushes through `session/flush` at semantic boundaries.
 - [Session package map](../README.md) — adjacent persistence, projection, title, and telemetry packages.
 
 -----

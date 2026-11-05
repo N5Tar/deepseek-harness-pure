@@ -3,23 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/subprocess/README.md
 /:
-  en: 8a625c05bd33b1ae
-  zh: ca401fbbcb64368f
-/subprocess-subprocess-capability-family:
-  en: 5e231b038b3a2641
-  zh: 4cc7da13fb30c672
-/subprocess-subprocess-capability-family/summary:
-  en: cccfd01eaced10a3
-  zh: b7372e340927a6ea
-/subprocess-subprocess-capability-family/table-of-contents:
-  en: 1eb35b015a6c423f
-  zh: a8a3dceee2c9e943
-/subprocess-subprocess-capability-family/packages:
-  en: a8043895aaaef16a
-  zh: 2171b5d972662b0d
-/subprocess-subprocess-capability-family/related-documentation:
-  en: 6ad442808d72f9a0
-  zh: 482e8a1b15f4c7ba
-/subprocess-subprocess-capability-family/dev-note:
-  en: 5de1d6304e00c58f
-  zh: 8d8225361cfa29e5
+  en: fbbfe730a0457aa8
+  zh: fbefb2f293acaeed
+/subprocess:
+  en: e8ddbc3068ad34f4
+  zh: 7516b5f3032b1ee3
+/subprocess/summary:
+  en: 14ebe8dfb32a3f0f
+  zh: dd3b7f1c0545960a
+/subprocess/packages:
+  en: bacc0f217d1b6221
+  zh: cddcebec13c8387d

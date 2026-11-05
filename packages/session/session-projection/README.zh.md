@@ -78,7 +78,6 @@ const todo = projections.todo()
 
 每个读取函数保存确切的 Session，并将读取委托给原句柄的 `stateOf(session)`，保留就绪要求、null 和 undefined 值、状态引用及同步失败。创建读取函数不读取状态、不准备 Session、不执行存储 I/O，也不创建状态缓存。读取函数不拥有注册或释放职责。原句柄仍负责释放；注销或版本替换后，读取函数仍读取原有单元。同一句柄可为多个 Session 独立创建读取函数。注册和 Session 准备仍由原所有者完成；客户端快照保持独立。
 
-持有投影状态的领域将 `sessionProjections` 声明为 Cordis 服务依赖，并在内部保留句柄。消费方注入该领域服务并使用其方法，例如 `ctx.agents.turnBoundaryOf(session)`，无需导入定义或保留投影读取句柄。可选贡献方可以在 `ctx.inject(['sessionProjections'], …)` 下注册。载体使用 `ctx.get('sessionProjections')`，注册表缺席时省略自己的块或帧。
 
 <a id="deprecated-plugin-compatibility"></a>
 ### 已弃用的插件兼容接口
@@ -97,7 +96,7 @@ const todo = projections.todo()
 
 ### 持久检查点
 
-系统通过 `checkpoint(session)` 为每个单元的状态创建检查点，client-visible 与 host-only 一视同仁；同级包 [session-projection-cache](../session-projection-cache/README.zh.md) 持久化这些检查点，使冷读跳过全量日志加载。检查点水位使用 `SessionSeqCursor`（空日志为 `-1`），回放起点使用 `SessionLogOffset`；`restoreFloor` 与 `restore` 实现读取流程，且不会混淆已有事件与日志间隙。`restore` 只折叠在线单元，因此它刷新后的行不含已释放单元，用这些行回写会丢弃这些单元已存储的行。
+系统通过 `checkpoint(session)` 为每个单元的状态创建检查点，client-visible 与 host-only 一视同仁；同级包 session-projection-cache 持久化这些检查点，使冷读跳过全量日志加载。检查点水位使用 `SessionSeqCursor`（空日志为 `-1`），回放起点使用 `SessionLogOffset`；`restoreFloor` 与 `restore` 实现读取流程，且不会混淆已有事件与日志间隙。`restore` 只折叠在线单元，因此它刷新后的行不含已释放单元，用这些行回写会丢弃这些单元已存储的行。
 
 ### Session 摘要
 
@@ -143,9 +142,8 @@ Session 摘要包含每个已注册客户端视图，但排除 `SessionProjectio
 
 - 会话投影子系统——投影单元约定、驱动语义与生成的服务 API。
 - 会话持久化子系统——投影折叠其上的事件日志。
-- [会话投影缓存](../session-projection-cache/README.zh.md)——让冷读跳过全量日志加载的持久检查点。
+- 会话投影缓存——让冷读跳过全量日志加载的持久检查点。
 - [会话包映射](../README.zh.md)——相邻的持久化、标题与遥测包。
-- [会话投影 RFC](../../../.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.zh.md)——投影与命令日志的设计理由。
 
 -----
 

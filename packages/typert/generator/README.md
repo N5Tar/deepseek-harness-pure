@@ -136,7 +136,6 @@ Read these pages when the package-level contract is not enough; they move from t
 - [Typert protocol](../protocol/README.md) — the declarations generated artifacts extend and consume.
 - [Typert registry](../registry/README.md) — the runtime store the emitted artifacts feed.
 - API Gateway reference — how generated Remote descriptors are invoked end to end.
-- [Compiler-independent model Agent Note](../../../.agents/notes/implemented/architecture/2026-07-27-compiler-independent-typert-model.md) — the model design, alternatives, and consequences.
 
 -----
 

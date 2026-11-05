@@ -25,14 +25,11 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-将 `dsh-agent` 与 `dsh-session-projection` 一起挂载：它提供 `ctx.agents`、`Agent` 句柄，以及读取已记录轮次和步骤位置的 `turnBoundaryOf(session)`。创建或恢复 Agent 还需要驱动器注册工厂；随附驱动器是 `dsh-agent-loop`。 [Session 模型选择](#model-selection) 通过每个句柄的 `agent.model` 提供。 Typert 挂载时，注册表按 Session id 提供在线 Agent 查找与 Host Context 解析；这些提供方不负责 Remote 调用方授权。
 
 ### 创建或恢复 agent
 
-`ctx.agents.create()` 在一个身份下构建全新 agent 与会话；`ctx.agents.resume()` 加载持久化会话并在此基础上重建 agent。两者都委托给已注册工厂，并返回 `AgentHandle`——唯一能拆除该 agent 的对象。发布和失败清理的时序见 [`AgentFactory`](src/index.ts)。`get(id)` 与 `list()` 用于查找实时 agent。[subagent 服务](../../subagent/subagent/README.zh.md) 拥有委派执行和运行时树成员关系。
 
 ```text
-const handle = await ctx.agents.create({
   sessionId,
   agentOptions: { provider: 'deepseek', model: 'deepseek-chat' },
 })
@@ -127,11 +124,9 @@ await handle.agent.whenIdle()
 
 ### 发起方作用域
 
-每个驱动器在 `ctx.agents.withInitiator(agent, ...)` 内运行其完整生命周期，因此继承的异步链会观察到该 agent；`withoutInitiator()` 为共享定时器等无关的进程本地工作隐藏它。该边界只是进程本地归因——环境中的身份既不是存活证明，也不是授权，显式身份在 worker、进程、持久化与 wire 边界保持权威。Teardown 拒绝新边界，让返回 Promise 的边界排空，然后禁用底层存储。[发起方作用域决策](../../../.agents/notes/implemented/architecture/2026-07-15-agent-initiator-scope.zh.md) 拥有详细约定。
 
 ### 所有权不变式
 
-`AgentHandle` disposer 是一项能力：在消费方中，只有其持有者能拆除该 agent。已注册的工厂提供方是结构化共同拥有者，因为作用域 agent 依赖该提供方的服务 API；提供方卸载会停止并排空它创建的每个实时句柄。`ctx.agents.get(id)` 仍返回裸 `Agent`——句柄只暴露给创建它的消费方。
 
 </details>
 
@@ -143,9 +138,8 @@ await handle.agent.whenIdle()
 包级约定对大多数消费方已经足够；需要周边领域与设计原理时再阅读以下页面。
 
 - Core 子系统——循环图、`Agent` 句柄、拦截决策与生成的服务 API。
-- [agent-loop 包](../agent-loop/README.zh.md)——创建、驱动并拆除 agent 的默认驱动器。
+- agent-loop 包——创建、驱动并拆除 agent 的默认驱动器。
 - 会话子系统——句柄背后的持久日志与派生历史。
-- [发起方作用域 Agent Note](../../../.agents/notes/implemented/architecture/2026-07-15-agent-initiator-scope.zh.md)——边界与 teardown 约定。
 - [core 分组地图](../README.zh.md)——core 各包如何组合。
 
 -----

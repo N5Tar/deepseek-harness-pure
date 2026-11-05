@@ -1,67 +1,33 @@
 ---
-description: "Package map for shared utilities: atomic file writes, branded ids, deques, JSON values, harness home paths, launch environment, native commands, output retention, time and zone vocabulary, timeouts, and official package lists."
+description: "The util packages of the Cordis desktop base."
 kind: "package-group"
 ---
 
-# util/ — shared utilities
+# Utilities
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-The `util/` group gives capability packages shared mechanical primitives instead of duplicate implementations. It covers atomic writes, branded ids, deques, lossless JSON values, UUIDs, Harness-home paths, launch environments, outbound proxy policy, native commands, output retention, time-zone, instant, and span vocabulary, and timeout handling. Every root entry here is a library: it registers no product service or event, and the consuming capability retains the business semantics. The exception is `official-bundles`: instead of a mechanical primitive, it holds the installation's and the plugin manager's official package lists as data their consumers apply.
+This group holds the util packages the base keeps. Each entry links to the package README that owns its behavior, lifecycle, and failure contracts.
 
-## Table of Contents
-
-- [Packages](#packages)
-- [Related documentation](#related-documentation)
-- [Dev Note](#dev-note)
-
------
-
-<a id="packages"></a>
 ## Packages
 
-Each package provides one primitive or one data set; open a package page for how to use it.
-
-| Package | Role |
-|---|---|
-| [`brand/`](brand/README.md) | Nominal string types and their stateless constructor |
-| [`package-manifest/`](package-manifest/README.md) | Shared TypeScript declarations for package manifests |
-| [`plugin-detail/`](plugin-detail/README.md) | Selects plugin detail documents and reads them from local packages and npm file CDNs |
-| [`plugin-market-index/`](plugin-market-index/README.md) | Validates plugin market index format 1 and builds pinned install arguments |
-| [`official-bundles/`](official-bundles/README.md) | Lists the official bundle and plugin packages the installation ships, offers, installs on demand, retires, and the plugin manager protects or presents |
-| [`crypto/`](crypto/README.md) | Mints RFC 9562 v4 UUIDs from the cross-runtime `crypto.getRandomValues` primitive |
-| [`deque/`](deque/README.md) | Provides amortized constant-time queue operations with bounded vacant storage |
-| [`chunked-list/`](chunked-list/README.md) | Retains immutable list versions with bounded append copying and checkpoint validation |
-| [`values/`](values/README.md) | Validates, snapshots, compares, and freezes lossless JSON-compatible values |
-| [`home-paths/`](home-paths/README.md) | Resolves the single Harness home and joins shared user-data paths |
-| [`http-proxy/`](http-proxy/README.md) | Resolves one outbound proxy policy and installs it for `fetch`, SDK agents, and spawned children |
-| [`launch-environment/`](launch-environment/README.md) | Frozen launch environment that remembers which layer supplied each value |
-| [`atomic-write/`](atomic-write/README.md) | Atomic file replacement and cross-process writer locking |
-| [`lazy-require/`](lazy-require/README.md) | Loads CommonJS-compatible Host dependencies on first use with caller-relative resolution |
-| [`native-command/`](native-command/README.md) | Runs host-native commands directly, never through a shell string |
-| [`workspace-path/`](workspace-path/README.md) | Provides browser-safe Workspace path and display helpers |
-| [`code-language/`](code-language/README.md) | Maps a filename suffix to the syntax-highlighting language that the Code preview, diff review, and the read card render |
-| [`output-retention/`](output-retention/README.md) | Bounds model-facing output and reports exact omission metadata |
-| [`time/`](time/README.md) | Parses strict instants, local calendars, and caller-reported IANA zones, and holds a millisecond span |
-| [`timeout/`](timeout/README.md) | Deadline arithmetic, signal fusion, and timeout-versus-cancel classification |
-
------
-
-<a id="related-documentation"></a>
-## Related documentation
-
-- [Root package map](../README.md) — where `util/` sits among all package groups.
-- Generated configuration catalog — the library-package index this group forms part of.
-- Adding a package cookbook — how a new shared primitive lands in this group.
-
-<a id="dev-note"></a>
-## Dev Note
-
-<details>
-<summary>Working context for maintainers — click to expand</summary>
-
-None.
-
-</details>
+| Package | Owns |
+| --- | --- |
+| [atomic-write](./atomic-write/README.md) | Zero-dependency atomic file replacement: exclusive-create random-suffix temp + rename carrying the caller-stated permissions (writeFileAtomic) |
+| [brand](./brand/README.md) | Stateless branded primitive types for the DeepSeek Harness |
+| [util-code-language](./code-language/README.md) | Single file-extension to syntax-highlighting language table shared by Client code surfaces and the Host read card |
+| [util-crypto](./crypto/README.md) | Zero-dependency browser-safe UUID and byte-encoding helpers |
+| [deque](./deque/README.md) | Zero-dependency circular deque with amortized constant-time end operations and bounded vacant storage |
+| [util-file-drag](./file-drag/README.md) | Shared file drag names and native transfer requests |
+| [home-paths](./home-paths/README.md) | Shared filesystem path helpers for the DeepSeek Harness |
+| [http-proxy](./http-proxy/README.md) | Process-wide outbound HTTP proxy policy for DeepSeek Harness: resolve it from the launch environment and install it as undici's global dispatcher |
+| [launch-environment](./launch-environment/README.md) | Immutable DeepSeek Harness launch environment that records which layer supplied each value |
+| [native-command](./native-command/README.md) | Host-native command and path-opening utilities with shell-free execution, cancellation, desktop detection, and WSL handoff |
+| [official-bundles](./official-bundles/README.md) | Installation-owned lists of official dsh bundles (shipped profile templates, optional, on-demand, and retired bundles) and the plugin manager's protected and presented packages |
+| [package-manifest](./package-manifest/README.md) | Shared type declarations for package.json.dsh configuration fields |
+| [plugin-detail](./plugin-detail/README.md) | Plugin detail documents: meta.detail or README selection, image paths, and local and npm CDN file sources |
+| [timeout](./timeout/README.md) | Zero-dependency timeout/deadline primitive: clampTimeout, deadline, timeoutOf, TimeoutReason (timing + classification only, no termination) |
+| [util-values](./values/README.md) | Duplicate-install-safe value primitives for the DeepSeek Harness |
+| [util-workspace-path](./workspace-path/README.md) | Browser-safe Workspace path and display helpers |

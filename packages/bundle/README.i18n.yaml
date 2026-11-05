@@ -3,23 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/bundle/README.md
 /:
-  en: de4fb0291736852d
-  zh: 5529332ef61fee96
-/bundle-profile-plugin-bundles:
-  en: 976582e78790d02d
-  zh: d454446fdc2d839a
-/bundle-profile-plugin-bundles/summary:
-  en: 957c2f3067576dd7
-  zh: 35472bcfcb657eb6
-/bundle-profile-plugin-bundles/table-of-contents:
-  en: 09848f4d056e4fc1
-  zh: 8df6139cff0288f6
-/bundle-profile-plugin-bundles/packages:
-  en: f966dbe5c16709b8
-  zh: 5d664dc3792d44ec
-/bundle-profile-plugin-bundles/related-documentation:
-  en: 29a969a46018d862
-  zh: bb0be22dd0273886
-/bundle-profile-plugin-bundles/dev-note:
-  en: b75c8458928b72b9
-  zh: 003ba4e17b4b5269
+  en: 67e829b137aea492
+  zh: 53517b9ee02cff5d
+/bundles:
+  en: 5a5c36029cdf05d8
+  zh: 554a8ae465e33965
+/bundles/summary:
+  en: 5e3abb328caef864
+  zh: 89d9af5a6e662287
+/bundles/packages:
+  en: e072a65e2712f9d1
+  zh: 567f41abe67cc3c5

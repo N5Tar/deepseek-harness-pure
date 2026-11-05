@@ -25,14 +25,11 @@ Use `dsh-agent` to create or resume live agents, send follow-up or steering inpu
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount `dsh-agent` with `dsh-session-projection`: it provides `ctx.agents`, the `Agent` handle, and `turnBoundaryOf(session)` for recorded turn and step positions. Creating or resuming an Agent also requires a driver to register a factory; the shipped driver is `dsh-agent-loop`. [Session model selection](#model-selection) is available on each handle as `agent.model`. When Typert is mounted, the registry contributes live Agent lookup and Host Context resolution by Session id; these providers do not authorize Remote callers.
 
 ### Create or resume an agent
 
-`ctx.agents.create()` builds a fresh agent and session under one identity; `ctx.agents.resume()` loads a persisted session and rebuilds the agent on it. Both delegate to the registered factory and return an `AgentHandle` — the only object that can tear that agent down. See [`AgentFactory`](src/index.ts) for publication and failure-cleanup timing. `get(id)` and `list()` find live agents. The [subagent service](../../subagent/subagent/README.md) owns delegated execution and runtime tree membership.
 
 ```text
-const handle = await ctx.agents.create({
   sessionId,
   agentOptions: { provider: 'deepseek', model: 'deepseek-chat' },
 })
@@ -127,11 +124,9 @@ The registry also answers the Workspace registry's archive admission ([seam](../
 
 ### Initiator scope
 
-Each driver runs its complete lifetime inside `ctx.agents.withInitiator(agent, ...)`, so inherited async chains observe that agent; `withoutInitiator()` hides it for unrelated process-local work such as shared timers. The boundary is process-local attribution only — ambient presence is neither liveness proof nor authorization, and explicit identity stays authoritative at worker, process, persistence, and wire boundaries. Teardown rejects new boundaries, lets returned-Promise boundaries drain, then disables the underlying storage. The [initiator-scope decision](../../../.agents/notes/implemented/architecture/2026-07-15-agent-initiator-scope.md) owns the detailed contract.
 
 ### Ownership invariants
 
-The `AgentHandle` disposer is a capability: among consumers, only its holder can tear the agent down. The registered factory provider is a structural co-owner, because scoped agents depend on that provider's service API; provider unload stops and drains every live handle it made. `ctx.agents.get(id)` still returns a bare `Agent` — the handle is exposed only to the consumer that created it.
 
 </details>
 
@@ -143,9 +138,8 @@ The `AgentHandle` disposer is a capability: among consumers, only its holder can
 The package-level contract is enough for most consumers; read these when you need the surrounding domain and the design rationale.
 
 - Core subsystem — the loop map, `Agent` handle, interception decisions, and generated service API.
-- [agent-loop package](../agent-loop/README.md) — the default driver that creates, drives, and disposes agents.
+- agent-loop package — the default driver that creates, drives, and disposes agents.
 - Session subsystem — the durable log and derived history behind the handle.
-- [Initiator-scope Agent Note](../../../.agents/notes/implemented/architecture/2026-07-15-agent-initiator-scope.md) — the boundary and teardown contract.
 - [Core group map](../README.md) — how the core packages compose.
 
 -----

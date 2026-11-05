@@ -34,7 +34,7 @@ The Host validates private message fields before dispatch. Shutdown awaits profi
 <a id="verification"></a>
 ## Verification
 
-The keyless [built Host test](../desktop/tests/shell-host.e2e.ts) uses a private temporary home and no product CLI link to check readiness, real service absence, settings persistence, graceful restart, and fatal configuration diagnostics. It requires built artifacts and does not open Electron or contact a model. [Isolation tests](tests/dependency-isolation.spec.ts) reject product dependencies and obsolete source entrypoints.
+The keyless built Host test uses a private temporary home and no product CLI link to check readiness, real service absence, settings persistence, graceful restart, and fatal configuration diagnostics. It requires built artifacts and does not open Electron or contact a model. [Isolation tests](tests/dependency-isolation.spec.ts) reject product dependencies and obsolete source entrypoints.
 
 <a id="dev-note"></a>
 ## Dev Note

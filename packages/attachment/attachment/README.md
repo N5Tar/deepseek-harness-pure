@@ -94,7 +94,7 @@ The service family runs one admission-and-storage flow: every entry point enforc
 For the full service contract and payload types, read the subsystem reference; for the storage that backs this capability, read the local backend.
 
 - Attachment subsystem reference — service contract, payload types, and the `ctx.attachments` Cordis surface.
-- [Local filesystem backend](../attachment-local/README.md) — where your attached images are stored on this machine.
+- Local filesystem backend — where your attached images are stored on this machine.
 - Capability seams — how this capability family is split into roles.
 
 -----

@@ -170,9 +170,7 @@ Gateway 不再注入 `remoteAccess`：分发入口统一要求存活的 owner Pe
 
 ### Agent Notes 退役整理（2026-11-05）
 
-已归档三组完整中英双语与 sidecar：[whenAccess](../../../.agents/notes/archived/architecture/2026-10-21-when-access.md)、[LiveShare 协议与 owner 界面](../../../.agents/notes/archived/feature/2026-09-13-liveshare-protocol-and-owner-surfaces.md)、[LiveShare 插件方法目录](../../../.agents/notes/archived/feature/2026-11-02-liveshare-plugin-method-catalog.md)。这些链接仅引用历史设计，不代表底座仍支持相应功能。归档正文不变，仅添加归档日期并更新哈希，纳入冻结清单。
 
-[Peer/principal 笔记](../../../.agents/notes/implemented/architecture/2026-10-12-peer-principal-and-remote-access.md) 属于部分退役：显式调用方身份、Peer 生命周期、消息来源与防伪造规则仍有消费者，因此保持 active，删除已退役 RBAC 接口说明并指向本节的移除决策。[Remote 双向流笔记](../../../.agents/notes/implemented/architecture/2026-09-19-remote-duplex-stream.md) 同步改为当前 owner-only 准入说明。没有删除 substantive 决策 triplet，也没有修改既有冻结档案。
 
 提交阶段发现 pre-commit 与 pre-merge-commit 仍调用已删除的 `scripts/verify-translation-pairing.ts`。经用户确认，移除这两处失效 hook；归档、staged lint、空白、provider metadata、vendor guard 与 pre-push typecheck 保留。
 

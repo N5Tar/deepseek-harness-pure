@@ -111,10 +111,9 @@ Desktop 的固定快捷键 `Cmd`/`Ctrl` + `+`（或 `=`）和 `Cmd`/`Ctrl` + `-`
 以下页面覆盖布局展示转换器、token 消费方与样式规则。
 
 - [ui-layout](../ui-layout/README.zh.md)——应用解析后主题快照的展示转换器。
-- [ui-sidebar](../ui-sidebar/README.zh.md)——滚动条重新绑定约定的消费方。
-- [ui-conversation](../ui-conversation/README.zh.md)——为 composer 席位消费 `--dsh-scrollbar-width` 的消费方。
+- ui-sidebar——滚动条重新绑定约定的消费方。
+- ui-conversation——为 composer 席位消费 `--dsh-scrollbar-width` 的消费方。
 - Web 样式——Web 客户端组件的权威样式规则。
-- [已认证浏览器 Host 偏好](../../../.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.zh.md)——持久化策略决策。
 
 -----
 

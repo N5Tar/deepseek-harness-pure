@@ -77,7 +77,7 @@ Variables are referenced from section or context text as `{{name}}` and resolved
 ctx.systemPrompt.variable('response_language', () => 'English')
 ```
 
-Custom persona templates must not depend on a built-in `{{cwd}}` variable: the loop does not register it, so unresolved references fail prompt assembly before any model request. Remove the `Your working directory is {{cwd}}.` clause from home, profile, or invocation `personaSuffix` settings and preset `suffix` fields, preserving unrelated text. Omit or clear an otherwise empty suffix. The [working-directory service](../../session/working-directory/README.md) supplies the required current-directory context.
+Custom persona templates must not depend on a built-in `{{cwd}}` variable: the loop does not register it, so unresolved references fail prompt assembly before any model request. Remove the `Your working directory is {{cwd}}.` clause from home, profile, or invocation `personaSuffix` settings and preset `suffix` fields, preserving unrelated text. Omit or clear an otherwise empty suffix. The working-directory service supplies the required current-directory context.
 
 ### Contribute tool schemas
 
@@ -126,8 +126,6 @@ The package-level contract is enough for most consumers; read these when you nee
 
 - System-prompt subsystem — the exact cross-package types and generated service API.
 - [tools package](../tools/README.md) — the tool registry whose schemas flow into assembly.
-- [Prompt variables Agent Note](../../../.agents/notes/implemented/architecture/2026-07-05-prompt-variables-and-tool-guidance-ownership.md) — who owns which prompt facts.
-- [First-party prompt order Agent Note](../../../.agents/notes/archived/architecture/2026-08-25-sparse-first-party-prompt-section-orders.md) — the sparse named order allocation.
 - [Core group map](../README.md) — how the core packages compose.
 
 -----
@@ -153,7 +151,7 @@ Identity is a fixed per-request cost when enabled. Persona prefixes, suffixes, a
 
 #### KV Cache effect
 
-Prefix-stable while identity, persona, variables, section text, and order render identically: an unchanged rendering leaves the system nodes untouched, including at a new request series on a capable route; only an incapable route, or a series start whose effective text differs, consolidates retained in-history prompts. Without `systemPromptUpdate`, non-empty prompt text is consolidated at the first system node through logged per-node replacements, so a head rewrite loses prefix reuse from its first changed token; when the prepared call declares `systemPromptUpdate: 'in-history'`, the agent loop appends a non-empty changed prompt after the cached history inside a continuing request series, so the prefix through that history stays reusable ([decision rule](../agent-loop/README.md#understand-the-implementation)). With the same model, persona prefix, tools, and preceding instructions, different source paths, local Web URLs, or persona suffix values leave the reusable first-party prefix unchanged. Persona prefix changes can alter the early prefix. Any change may invalidate reuse from the first changed token; provider cache sharing and measured hit rates are not guaranteed.
+Prefix-stable while identity, persona, variables, section text, and order render identically: an unchanged rendering leaves the system nodes untouched, including at a new request series on a capable route; only an incapable route, or a series start whose effective text differs, consolidates retained in-history prompts. Without `systemPromptUpdate`, non-empty prompt text is consolidated at the first system node through logged per-node replacements, so a head rewrite loses prefix reuse from its first changed token; when the prepared call declares `systemPromptUpdate: 'in-history'`, the agent loop appends a non-empty changed prompt after the cached history inside a continuing request series, so the prefix through that history stays reusable (decision rule). With the same model, persona prefix, tools, and preceding instructions, different source paths, local Web URLs, or persona suffix values leave the reusable first-party prefix unchanged. Persona prefix changes can alter the early prefix. Any change may invalidate reuse from the first changed token; provider cache sharing and measured hit rates are not guaranteed.
 
 ### Tool schemas
 

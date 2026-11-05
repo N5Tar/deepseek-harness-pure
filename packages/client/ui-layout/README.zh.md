@@ -73,9 +73,9 @@ root 注册通过注入的可观察源提供横屏折叠状态，由渲染器负
 
 当布局面不够用时阅读以下页面。它们从框架进入它所渲染的栏与它所呈现的主题。
 
-- [ui-sidebar](../ui-sidebar/README.zh.md)——占据 `sidebar` 栏及其座位。
-- [ui-conversation](../ui-conversation/README.zh.md)——占据 `main` 中的 `conversation` key。
-- [ui-sidebar-right](../ui-sidebar-right/README.zh.md)——以每会话一个停靠面占据 `rightbar` 栏。
+- ui-sidebar——占据 `sidebar` 栏及其座位。
+- ui-conversation——占据 `main` 中的 `conversation` key。
+- ui-sidebar-right——以每会话一个停靠面占据 `rightbar` 栏。
 - [ui-theme](../ui-theme/README.zh.md)——呈现器消费其解析快照的主题 seam。
 - Web 客户端架构——浏览器插件行如何加载并注册槽位。
 

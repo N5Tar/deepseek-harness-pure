@@ -100,7 +100,6 @@ Start with the subsystem reference for the shared vocabulary, then the seam cont
 
 - Process sandbox subsystem — modes, per-call policy, and enforcement semantics.
 - [Sandbox seam package](../sandbox/README.md) — the confinement contract every enforcing capability implements.
-- [historical Cross-family file sandbox decision](../../../.agents/notes/archived/feature/2026-07-14-cross-family-fs-sandbox.md) — why one shared policy home exists.
 
 -----
 
@@ -152,11 +151,10 @@ The stable system prompt remains byte-identical across mode changes. A changed f
 
 These limits define the policy surface this package provides. They are current package constraints, not a general sandbox comparison or a task backlog.
 
-- **Deployment-scoped extra grants** — additional directories come from configuration; they are not per-session permission settings. Backend support is defined by [sandbox-local](../sandbox-local/README.md).
+- **Deployment-scoped extra grants** — additional directories come from configuration; they are not per-session permission settings. Backend support is defined by sandbox-local.
 - **File-effect modes only** — `SandboxMode` governs file effects; network and process policy are outside its vocabulary, so no knob here restricts them.
 - **Temporary areas are deliberately summarized** — enforcing backends grant different platform temporary areas, which are selected after policy resolution and therefore cannot be enumerated truthfully in the current context.
 
-Policy-context replacements must be counter-tested on denied-then-escalatable tasks to verify that the model still attempts the initial tool call. The [historical five-of-twelve zero-tool-call measurement](../../../.agents/notes/archived/feature/2026-07-06-sandbox.md) records the failure this check prevents.
 
 <a id="dev-note"></a>
 ### Dev Note

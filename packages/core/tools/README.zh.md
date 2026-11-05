@@ -81,7 +81,7 @@ ctx.tools.register(defineTool({
 - name: '@deepseek-ai/dsh-tool-executor-native'
 ```
 
-Agent 步骤的并发上限使用 [agent-loop 配置](../agent-loop/README.zh.md)。执行器设置参见[原生](../tool-executor-native/README.zh.md)或 [PTC](../tool-executor-ptc/README.zh.md) 包。自定义提供者只需实现 `describe(definitions)` 和 `execute(batch)`，共享流水线为可选项。注册表分别为提示词描述和每次 `ctx.tools.execute()` 批次选择当前作用域的执行器。已接纳批次仍由所选提供者结算，即使该提供者已卸载；根据提供者的卸载策略，结果可能包含取消错误。注册替代提供者之前，新批次会被拒绝。
+Agent 步骤的并发上限使用 agent-loop 配置。执行器设置参见原生或 PTC 包。自定义提供者只需实现 `describe(definitions)` 和 `execute(batch)`，共享流水线为可选项。注册表分别为提示词描述和每次 `ctx.tools.execute()` 批次选择当前作用域的执行器。已接纳批次仍由所选提供者结算，即使该提供者已卸载；根据提供者的卸载策略，结果可能包含取消错误。注册替代提供者之前，新批次会被拒绝。
 
 ### 按 agent 限制工具
 
@@ -95,7 +95,6 @@ Agent 步骤的并发上限使用 [agent-loop 配置](../agent-loop/README.zh.md
 
 ### Host 展示描述
 
-工具可以为 Host 本地消费方保留纯函数 `presentCall()` 与 `presentResult()` 方法。内置 Web Client 不消费这些值，而是通过 `tool.call.toolview` 选择 renderer，并从原始调用参数、结果内容、失败状态与持久 metadata 派生 card props。[Client 派生展示决策](../../../.agents/notes/implemented/architecture/2026-08-23-client-derived-tool-presentation.zh.md)负责该 transport 拆分。
 
 -----
 
@@ -129,7 +128,7 @@ Agent 步骤的并发上限使用 [agent-loop 配置](../agent-loop/README.zh.md
 
 ### PTC mode
 
-[PTC 执行器](../tool-executor-ptc/README.zh.md) 负责程序传输、SDK 生成、嵌套分发和图片上下文。
+PTC 执行器 负责程序传输、SDK 生成、嵌套分发和图片上下文。
 
 <a id="extension-points"></a>
 ### 扩展点
@@ -149,8 +148,7 @@ Agent 步骤的并发上限使用 [agent-loop 配置](../agent-loop/README.zh.md
 - 生成工具目录——模型收到的已交付工具 schema。
 - 工具执行流水线——可视化流水线。
 - 添加工具实操手册——分步骤的工具编写指南。
-- [工具测试工具包](../../test-support/tool-testkit/README.zh.md)——测试和基准测试使用的工具定义与执行 fixture。
-- [协作式取消 Agent Note](../../../.agents/notes/implemented/architecture/2026-07-19-cooperative-tool-cancellation.zh.md)——完整取消约定。
+- 工具测试工具包——测试和基准测试使用的工具定义与执行 fixture。
 - [core 分组地图](../README.zh.md)——core 各包如何组合。
 
 -----
@@ -194,7 +192,6 @@ Agent 步骤的并发上限使用 [agent-loop 配置](../agent-loop/README.zh.md
 这些限制说明注册表何时需要特别留意。它们是当前包约束，不是任务积压。
 
 - **并发策略不是事件门禁**：`executionMode()` 直接读取已解析的工具定义；插件只能在自身拥有的定义上声明分类器。
-- **`tools/pre-execute` 有意不允许改写 `exec.arguments`**：否则日志记录与呈现的参数会与实际运行内容失去同步；改写设计记录在[拟议的 Agent Note](../../../.agents/notes/proposed/feature/2026-06-30-pre-tool-input-rewrite.zh.md)中。
 - **调用方定义的 subagent 与工作流结构化输出仍要求对象根**：这是消费方层面的守卫；共享 schema 词汇与工具输出支持任意 JSON 根。
 - **定义中的 `timeoutMs` 仅作声明之用**：注册表绝不会强制执行截止时间；要强制执行，必须使用 `@deepseek-ai/dsh-tool-call-timeout-policy` 包装层。
 

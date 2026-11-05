@@ -34,7 +34,7 @@ Host 在分发前校验私有消息字段。关闭等待 profile 释放后再确
 <a id="verification"></a>
 ## 验证
 
-无需密钥的[已构建 Host 测试](../desktop/tests/shell-host.e2e.ts)使用私有临时 home 和已移除的产品 CLI 链接检查就绪、真实服务缺席、设置持久化、正常重启和致命配置错误诊断。测试要求已构建产物，不打开 Electron 或联系模型。[隔离测试](tests/dependency-isolation.spec.ts)拒绝产品依赖及过时的源码入口。
+无需密钥的已构建 Host 测试使用私有临时 home 和已移除的产品 CLI 链接检查就绪、真实服务缺席、设置持久化、正常重启和致命配置错误诊断。测试要求已构建产物，不打开 Electron 或联系模型。[隔离测试](tests/dependency-isolation.spec.ts)拒绝产品依赖及过时的源码入口。
 
 <a id="dev-note"></a>
 ## 开发备注

@@ -33,7 +33,7 @@ kind: "package-reference"
 
 ### 隔离命令
 
-挂载服务、后端与受限执行器；随附的组合由[基础组合包（base bundle）](../../bundle/base/cordis.patch.yml)定义。
+挂载服务、后端与受限执行器；随附的组合由基础组合包（base bundle）定义。
 
 ```yaml
 - id: sandbox
@@ -112,9 +112,8 @@ kind: "package-reference"
 先从子系统参考文档了解穷尽式约定，再看实现它的后端、消费方与策略来源。
 
 - 进程沙箱子系统——完整词汇、逐调用策略与分类方言。
-- [历史子进程沙箱决策](../../../.agents/notes/archived/feature/2026-07-06-sandbox.md)——能力边界、升权设计与延期阶段。
-- [本地沙箱后端](../sandbox-local/README.zh.md)——`ctx.sandbox` 背后的各平台 runner。
-- [Bash 沙箱执行器](../../shell/bash-sandbox/README.zh.md)——受限的 bash 消费方。
+- 本地沙箱后端——`ctx.sandbox` 背后的各平台 runner。
+- Bash 沙箱执行器——受限的 bash 消费方。
 - [沙箱策略包](../sandbox-policy/README.zh.md)——逐调用模式与工作区根目录的来源。
 
 -----
@@ -126,7 +125,7 @@ kind: "package-reference"
 
 #### 模型看到什么
 
-通过 [`dsh-bash-sandbox`](../../shell/bash-sandbox/README.zh.md) 和 [`dsh-tool-bash`](../../shell/tool-bash/README.zh.md)，请求的受限模式没有可用后端时会产生错误码 `SANDBOX_UNAVAILABLE` 及下方精确错误；执行期 runner 失败会追加 ` Runner failure: <detail>`。
+通过 `dsh-bash-sandbox` 和 `dsh-tool-bash`，请求的受限模式没有可用后端时会产生错误码 `SANDBOX_UNAVAILABLE` 及下方精确错误；执行期 runner 失败会追加 ` Runner failure: <detail>`。
 
 ##### 精确错误
 

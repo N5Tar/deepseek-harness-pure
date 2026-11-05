@@ -1,74 +1,45 @@
-# DeepSeek Harness
+# DeepSeek Harness Kernel
 
 English | [中文](README.zh.md)
 
-DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
+A desktop base assembled from the Cordis all-plugin runtime. One Cordis root starts a single page; every capability beyond that page arrives as a Loader-mounted plugin.
 
-It is built on an **everything-is-a-plugin** architecture and powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512).
+## What runs
 
-Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
+- `apps/kernel` boots the runtime: one HTTP page, a settings document, a plugin manifest, and a client module table.
+- `apps/desktop` runs that kernel in an Electron process and renders its page.
+- `apps/desktop-host` and `apps/cli` provide packaging and command-line entry points.
 
-## Developer preview
-
-DeepSeek Harness is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
-
-Review the [safety notice](SAFETY.md) before running the project.
-
-## Run
-
-### Run from `npm`
-
-Install `Node.js`, then run:
+## Run from source
 
 ```sh
-npx @deepseek-ai/dsh web
-```
-
-The command starts the Web UI at `http://127.0.0.1:3080` by default and opens it in the default browser for a local launch. An SSH launch only prints the host URL because the SSH client or editor owns the local forwarded address. Pass `--no-open` to run the server without opening a browser. See Web UI guide.
-
-### Run from source
-
-To run from a repository checkout:
-
-```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
 pnpm install
 pnpm run build
-pnpm dsh web
+DSH_HOME=/tmp/dsh-home node --import tsx/esm apps/kernel/src/main.ts
 ```
 
-`pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
+The kernel prints the loopback URL it bound. Use `DSH_KERNEL_PORT` to pin the port.
 
-## Community and support
+To launch the desktop shell, build first and start Electron against `apps/desktop`.
 
-- Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
-- Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
-- Join <a href="https://discord.gg/4MrtZUhpxg">DeepSeek Harness Discord community</a>.
+## Extend
 
-## Contributing
+Plugins are declared in `<DSH_HOME>/kernel/plugins.json`:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+```json
+{ "plugins": [{ "name": "./plugins/health.ts" }] }
+```
 
-## Development
+Client modules are plain `*.js` files in the kernel's `assets/ui` directory; each registers itself on `window.__DSH_KERNEL_UI__` and the page mounts it.
 
-Start with the development guide and architecture documentation.
+## Repository
 
-`pnpm run dev:web` builds, serves, and rebuilds client bundles on source edits in one terminal, and `make help` lists the matching Make targets for Web and Desktop; the guide's application commands section owns the full table.
+- `packages/` — the Cordis base packages and the transport contract types they depend on.
+- `vendor/` — pinned copies of Cordis and its official plugins.
+- `native/` — the native add-on source the desktop build uses.
+- `docs/` — the experiment plan and execution status.
 
 For agents, follow [AGENTS.md](AGENTS.md).
-
-## Citation
-
-```bibtex
-@misc{deepseek-harness2026,
-  title={DeepSeek Harness: Everything is a Plugin},
-  author={DeepSeek-AI},
-  year={2026},
-  publisher={GitHub},
-  howpublished={\url{https://github.com/deepseek-ai/deepseek-harness}},
-}
-```
 
 ## License
 

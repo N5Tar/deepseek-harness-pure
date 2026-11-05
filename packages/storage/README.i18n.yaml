@@ -3,23 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/storage/README.md
 /:
-  en: 919996d8e0d75b41
-  zh: 326639b9a528917d
-/packages-storage:
-  en: 7fb10039cf470970
-  zh: 1ceec1df26a8b61b
-/packages-storage/summary:
-  en: 589f00d7bbaa296f
-  zh: 9fce30d02e7b5f1b
-/packages-storage/table-of-contents:
-  en: 1eb35b015a6c423f
-  zh: a8a3dceee2c9e943
-/packages-storage/packages:
-  en: 770491561a697bed
-  zh: ac61f655b921e690
-/packages-storage/related-documentation:
-  en: b7300f09b12dc383
-  zh: abae37e079b7f5bc
-/packages-storage/dev-note:
-  en: 4ac0fbe6dc61795e
-  zh: d92bf6b0a5ddaea4
+  en: dfd624077152aca1
+  zh: d8ce653556ae04ba
+/storage:
+  en: d0463915899d4a5c
+  zh: 6c20a8dbacb9022b
+/storage/summary:
+  en: 9c7358fd92974057
+  zh: c52566c7f5605614
+/storage/packages:
+  en: 233875d5df11f82a
+  zh: 67ea9f116ae0d62c

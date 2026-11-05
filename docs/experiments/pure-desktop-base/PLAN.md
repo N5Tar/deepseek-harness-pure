@@ -71,12 +71,12 @@ These locations come from the preceding read-only investigation and must be rech
 | [Client startup audit](../../../packages/client/web/src/boot-client.ts) and [Host startup audit](../../../packages/boot/app-boot/src/index.ts) | Distinguish absent, explicitly disabled, and present-but-inactive entries; reject unexplained failures |
 | [Module scanning](../../../packages/client/modules/src/index.ts) | Inspect Host state, Client graph, Client fiber, Slot, and DOM separately |
 | [Connection](../../../packages/client/connection/src/index.ts) | Preserve communication authentication when removing account business |
-| [Remote assembly](../../../packages/api/remotes/src/client/index.ts) | Client proxies do not establish running Host services; keep only necessary base interfaces |
+| Remote assembly | Client proxies do not establish running Host services; keep only necessary base interfaces |
 | [Theme plugin](../../../packages/client/ui-theme/src/client/index.ts) and [theme presentation](../../../packages/client/ui-layout/src/client/theme-presenter.ts) | Assign settings, theme state, and DOM presentation owners without the official layout dependency |
-| [Desktop startup](../../../apps/desktop/src/main.ts) and [welcome backend](../../../apps/desktop/src/welcome-backend.ts) | Remove model and account queries as prerequisites for entering the main window |
+| [Desktop startup](../../../apps/desktop/src/main.ts) and welcome backend | Remove model and account queries as prerequisites for entering the main window |
 | [Desktop Host](../../../apps/desktop-host/src/index.ts) | Check exit, update, and other host business dependencies, not just window creation |
-| [Development launcher](../../../apps/desktop/scripts/dev.ts) | Isolate Harness home, Electron userData, and debug ports together |
-| [Profile management](../../../apps/desktop/src/project-manager.ts) and [recovery implementation](../../../packages/boot/app-boot/src/profile-sanitize.ts) | Default and recovery compositions target the pure base; test configuration backups and installed-file retention |
+| Development launcher | Isolate Harness home, Electron userData, and debug ports together |
+| Profile management and [recovery implementation](../../../packages/boot/app-boot/src/profile-sanitize.ts) | Default and recovery compositions target the pure base; test configuration backups and installed-file retention |
 | [Native menus](../../../apps/desktop/src/preload-menu.ts) | Verify window-control clearance, menu mounting conditions, and drag regions in the new Root |
 
 Consult architecture for composition principles, defensive patterns for lifecycle and safety review, and testing policy for test selection. This plan does not duplicate their complete rules.

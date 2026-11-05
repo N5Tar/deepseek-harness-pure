@@ -92,7 +92,7 @@ Read these pages when you need the values these primitives brand or the type con
 
 - Core subsystem — where the shared `SessionId` brand and the type rules are documented.
 - LSP subsystem — `LspProviderId`, a branded provider id built on this primitive.
-- [Jobs package](../../jobs/jobs/README.md) — the `JobId` brand owned by the jobs capability.
+- Jobs package — the `JobId` brand owned by the jobs capability.
 
 -----
 

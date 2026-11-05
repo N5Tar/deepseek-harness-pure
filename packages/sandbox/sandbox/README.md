@@ -33,7 +33,7 @@ Choose this package when a composition confines subprocesses on the host: it is 
 
 ### Confining a command
 
-Mount the service with a backend and a confined executor; the [base bundle](../../bundle/base/cordis.patch.yml) owns the shipped composition.
+Mount the service with a backend and a confined executor; the base bundle owns the shipped composition.
 
 ```yaml
 - id: sandbox
@@ -112,9 +112,8 @@ The ladder is a closed table — `read-only` may escalate to `workspace-write` o
 Start with the subsystem reference for the exhaustive contract, then the backends, consumers, and policy source that realize it.
 
 - Process sandbox subsystem — the complete vocabulary, per-call policy, and classification dialects.
-- [The historical subprocess sandbox decision](../../../.agents/notes/archived/feature/2026-07-06-sandbox.md) — capability boundary, escalation design, and deferred phases.
-- [Local sandbox backends](../sandbox-local/README.md) — the per-platform runners behind `ctx.sandbox`.
-- [Bash sandbox executor](../../shell/bash-sandbox/README.md) — the confined bash consumer.
+- Local sandbox backends — the per-platform runners behind `ctx.sandbox`.
+- Bash sandbox executor — the confined bash consumer.
 - [Sandbox policy package](../sandbox-policy/README.md) — where the per-call mode and workspace root come from.
 
 -----
@@ -126,7 +125,7 @@ Start with the subsystem reference for the exhaustive contract, then the backend
 
 #### What the model sees
 
-Through [`dsh-bash-sandbox`](../../shell/bash-sandbox/README.md) and [`dsh-tool-bash`](../../shell/tool-bash/README.md), a requested confined mode with no usable backend produces code `SANDBOX_UNAVAILABLE` and the exact error below; an execution-time runner failure appends ` Runner failure: <detail>`.
+Through `dsh-bash-sandbox` and `dsh-tool-bash`, a requested confined mode with no usable backend produces code `SANDBOX_UNAVAILABLE` and the exact error below; an execution-time runner failure appends ` Runner failure: <detail>`.
 
 ##### Exact error
 

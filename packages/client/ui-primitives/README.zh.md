@@ -115,7 +115,7 @@ kind: "package-library"
 
 明确的 `./`、`../`、斜杠或反斜杠开头的路径（包括 UNC），以及 `C:/work/file.ts` 这样的 Windows 盘符路径优先于 URL 解析。其余目标若能被绝对 URL 解析器接受，就保留为 URL：`index.ts:24`、`Makefile:12` 和 `localhost:3000` 均为链接，不补协议，也不预先检查能否打开。文件引用使用 `./index.ts:24`。其他目标视为路径。正文链接禁止 `javascript:`、`vbscript:`、`data:` 和 `blob:`；其余可解析的协议保留原生导航。HTTP(S) 链接保留委托导航和修饰键点击行为。不添加点击后的失败提示。
 
-`MarkdownText` 渲染不可信的 GFM 与 TeX 公式、阻止不安全的链接与图片，并可把已解析的文件提及转换为显式控件。复制位于同一个 `MarkdownText` 文档内且包含已渲染公式的选区时，每个完整公式会以 TeX 源码同时写入剪贴板的纯文本和 HTML 格式，行内公式用 `$…$` 包裹，展示公式用 `$$…$$` 包裹。删除线需要 `~~`；单个 `~`（如 `10~20`）保持字面文本。裸 URL 在非 ASCII 标点或符号（如 `。`、`，`）前结束，紧随其后的中文正文不会并入链接。外层 `MarkdownDelegateProvider` 会接收普通点击产生的已净化 HTTP(S) URL；带修饰键的点击和 Provider 外的链接保留原生外部 anchor 行为。`omitHtml` 不渲染原始 HTML，而不是将其显示为原样文本，用于为 HTML 渲染器编写的文档。当 owner 传入 `pathImages` 词表时，本地媒体路径的图片目标只在落定渲染阶段重写为可展示 URL（与 file mentions 相同的流式门）；不传词表时本地目标保持惰性 alt 文本。重写后的图片支持 HTTP(S)、data、blob 及桌面端 `dsh-app://app/api/file`、`dsh-app://app/api/plugin-market/detail-file` 与 `dsh-app://app/api/plugin-manager/detail-file` 路由；正文直接书写的桌面端 URL 仍保持惰性。加载或解码失败后，图片替换为作者的 alt 文本；alt 为空时显示原始目标路径；`fileImages` 还提供本地化的失败提示前缀。图片源变化后可重新加载。每个挂载的图片会为解析得到的 Host `api/file` 地址追加 `load` 查询参数，因为浏览器在同一文档内会无视 `no-store` 复用相同 URL 的图片；因此覆盖后的文件在新渲染的图片中会加载当前内容，每次重新挂载都会重新请求该文件；Host 文件路由会把该请求重定向到当前文件版本的可缓存地址。回复流式输出时，它冻结已完成的块、按已完成行推进顶层未闭合 fence，并从保存的 Shiki grammar state 为该 fence 增量高亮。已完成的 token 行进入固定大小的 React 分组，后续分片只 reconcile 正在增长的分组；最终全量解析解决跨文档语法时，未变化的 fence 会保留该 DOM。`TerminalBlock`、`ReadBlock`、`DiffBlock`、`SearchBlock` 与 `WebBlock` 把对应的工具结果意图渲染为带复制控件、溢出处理及适用时 ANSI 处理的卡片。`JsonTree` 与 `JsonBlock` 以只读方式检查 JSON 值；`UserTextRun` 渲染不做解析的文本，`ReferenceChip` 渲染业务已解析的标签。显式传入 `onActivate` 后，胶囊成为可由键盘操作的按钮；重复指针点击和已有文本选区不触发激活，键盘激活仍然可用。标签继承所属容器的换行规则。识别和 JSON 变换由 [ui-conversation](../ui-conversation/README.zh.md#sent-user-text) 负责。
+`MarkdownText` 渲染不可信的 GFM 与 TeX 公式、阻止不安全的链接与图片，并可把已解析的文件提及转换为显式控件。复制位于同一个 `MarkdownText` 文档内且包含已渲染公式的选区时，每个完整公式会以 TeX 源码同时写入剪贴板的纯文本和 HTML 格式，行内公式用 `$…$` 包裹，展示公式用 `$$…$$` 包裹。删除线需要 `~~`；单个 `~`（如 `10~20`）保持字面文本。裸 URL 在非 ASCII 标点或符号（如 `。`、`，`）前结束，紧随其后的中文正文不会并入链接。外层 `MarkdownDelegateProvider` 会接收普通点击产生的已净化 HTTP(S) URL；带修饰键的点击和 Provider 外的链接保留原生外部 anchor 行为。`omitHtml` 不渲染原始 HTML，而不是将其显示为原样文本，用于为 HTML 渲染器编写的文档。当 owner 传入 `pathImages` 词表时，本地媒体路径的图片目标只在落定渲染阶段重写为可展示 URL（与 file mentions 相同的流式门）；不传词表时本地目标保持惰性 alt 文本。重写后的图片支持 HTTP(S)、data、blob 及桌面端 `dsh-app://app/api/file`、`dsh-app://app/api/plugin-market/detail-file` 与 `dsh-app://app/api/plugin-manager/detail-file` 路由；正文直接书写的桌面端 URL 仍保持惰性。加载或解码失败后，图片替换为作者的 alt 文本；alt 为空时显示原始目标路径；`fileImages` 还提供本地化的失败提示前缀。图片源变化后可重新加载。每个挂载的图片会为解析得到的 Host `api/file` 地址追加 `load` 查询参数，因为浏览器在同一文档内会无视 `no-store` 复用相同 URL 的图片；因此覆盖后的文件在新渲染的图片中会加载当前内容，每次重新挂载都会重新请求该文件；Host 文件路由会把该请求重定向到当前文件版本的可缓存地址。回复流式输出时，它冻结已完成的块、按已完成行推进顶层未闭合 fence，并从保存的 Shiki grammar state 为该 fence 增量高亮。已完成的 token 行进入固定大小的 React 分组，后续分片只 reconcile 正在增长的分组；最终全量解析解决跨文档语法时，未变化的 fence 会保留该 DOM。`TerminalBlock`、`ReadBlock`、`DiffBlock`、`SearchBlock` 与 `WebBlock` 把对应的工具结果意图渲染为带复制控件、溢出处理及适用时 ANSI 处理的卡片。`JsonTree` 与 `JsonBlock` 以只读方式检查 JSON 值；`UserTextRun` 渲染不做解析的文本，`ReferenceChip` 渲染业务已解析的标签。显式传入 `onActivate` 后，胶囊成为可由键盘操作的按钮；重复指针点击和已有文本选区不触发激活，键盘激活仍然可用。标签继承所属容器的换行规则。识别和 JSON 变换由 ui-conversation 负责。
 
 `MarkdownText` 默认为 `variant="body"`。次级内容使用 `variant="compact"`：其 13px 字号与 20px 行高跟随内容字号设置，各级标题保持同一字号并使用 600 字重，段落与列表采用更紧凑的间距。正文、链接和代码均保持 tertiary 颜色，以点状下划线区分链接。代码标题栏随代码块滚动。表格和公式仍然启用，使用周围文字的字号，并在可用宽度内横向滚动。两个变体共享解析器与流式缓存。 `textInteractionSource` 将已有根元素标记为文本选区交互的来源。
 
@@ -127,7 +127,7 @@ kind: "package-library"
 
 `ImageLightbox` 是共享原图浮层，支持焦点恢复与 Esc 关闭。与 `Modal` 相同，其遮罩不覆盖 Windows 顶栏，关闭按钮位于顶栏下方 20px。包内缩略图渲染器由调用方提供加载及失败文案。`HoverCard.inline` 使文件链接保持在文本流内，并使用共享菜单材质、键盘可见焦点，并在锚点上方或下方定位而不遮挡锚点。即使焦点位于其他位置，Esc 也会关闭已打开的缩略图；后续 Esc 按键继续传给 owner。`MarkdownDelegateProvider.fileImages` 提供已解码路径解析器与完整图片文案：消息落定后的图片链接支持悬停预览，独立图片支持点击放大。仅包含图片的链接保留单一导航目标。解析器仅恢复完整、未转义、独立成段且带明确图片扩展名的含裸空格本地图片引用；代码与有歧义的目标保持原文。 透明悬停区域连接锚点与弹层之间的视觉空隙，鼠标经过时不会激活下方内容。
 
-`DraggableImage` 接收显式的 `fileDrag: FileDragActions`，受管理的 Markdown 图片通过 `MarkdownDelegateProvider.fileImages.fileDrag` 接收同一组回调。[文件拖放插件](../ui-file-drag/README.zh.md) 负责准备、传递与本地化失败提示；图片原语负责手势和取消。带资源引用的图片仅在主指针按下时准备，其他来源也可在悬停时准备。在图片内松开保留准备供下一次手势使用；指针移开释放未使用的准备，平移模式跳过准备。Markdown 导出名取已解码路径的文件名。在准备完成前起拖会静默取消本次手势；实际准备失败才显示重试提示。受管理的 Web 拖放携带应用内令牌和指向插件所持 Blob URL 的 `DownloadURL`，不设置 `text/plain`。
+`DraggableImage` 接收显式的 `fileDrag: FileDragActions`，受管理的 Markdown 图片通过 `MarkdownDelegateProvider.fileImages.fileDrag` 接收同一组回调。文件拖放插件 负责准备、传递与本地化失败提示；图片原语负责手势和取消。带资源引用的图片仅在主指针按下时准备，其他来源也可在悬停时准备。在图片内松开保留准备供下一次手势使用；指针移开释放未使用的准备，平移模式跳过准备。Markdown 导出名取已解码路径的文件名。在准备完成前起拖会静默取消本次手势；实际准备失败才显示重试提示。受管理的 Web 拖放携带应用内令牌和指向插件所持 Blob URL 的 `DownloadURL`，不设置 `text/plain`。
 
 ### 本地化文案
 
@@ -198,8 +198,8 @@ kind: "package-library"
 以下页面说明这些原子组件在客户端技术栈与设计系统中的位置。
 
 - [ui-renderer](../ui-renderer/README.zh.md)——挂载组装后应用并绑定 slot 数据的 React 渲染器。
-- [ui-tool](../ui-tool/README.zh.md)——拼装这些输出卡片的工具调用展示层。
-- [ui-conversation](../ui-conversation/README.zh.md)——渲染 Markdown 回复与工具卡片的聊天界面。
+- ui-tool——拼装这些输出卡片的工具调用展示层。
+- ui-conversation——渲染 Markdown 回复与工具卡片的聊天界面。
 - [ui-theme](../ui-theme/README.zh.md)——这些原子组件样式所依赖的 `--dsw-*` token 体系。
 - Web 样式——Web 客户端组件的权威样式规则。
 
@@ -238,7 +238,6 @@ kind: "package-library"
 - **`Pill` 与 `Input` 没有设计来源**：两个原子组件均自行定义；与其相似的侧边栏搜索字段和视图标签条由消费方组合，不是这些原子组件。
 - **产品图标依赖 ui-theme 的 sprite**：每个图标只引用自己的 symbol，因此没有 ui-theme 时，或在 iframe 等另一个文档中，图标不渲染任何内容。
 - **`StateDot` 没有 `Active` 变体**：支持的状态为 done、warning、ongoing、error 和 idle。
-- **面向用户的文案必须由渲染点提供**：这些原子组件是 zero-Cordis 的，拿不到 `ctx.locale`；各功能必须通过原子组件的带类型 prop 提供完整本地化 label（见[决策](../../../.agents/notes/implemented/architecture/2026-08-23-locale-owned-client-ui-copy.zh.md)）。
 - **`TerminalBlock` 不是终端模拟器**：它渲染已结束或仍在运行的命令输出，而不是交互式会话：SGR 颜色、回车、退格、行内擦除、制表位与字符宽度会被遵循；绝对光标定位、清屏与备用屏幕序列会被剥离。
 
 <a id="dev-note"></a>

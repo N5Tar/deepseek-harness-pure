@@ -1,44 +1,18 @@
 ---
-description: "This group declares Agent capabilities through ordinary Cordis configuration and manages selection and runtime revisions. The Host shares the Agent loop; each Agent sees the tools, prompts and skills of its selected revision."
+description: "The preset packages of the Cordis desktop base."
 kind: "package-group"
 ---
 
-# packages/preset
+# Presets
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-This group declares Agent capabilities through ordinary Cordis configuration and manages selection and runtime revisions. The Host shares the Agent loop; each Agent sees the tools, prompts and skills of its selected revision.
+This group holds the preset packages the base keeps. Each entry links to the package README that owns its behavior, lifecycle, and failure contracts.
 
-## Table of Contents
-
-- [Packages](#packages)
-- [Related documentation](#related-documentation)
-- [Dev Note](#dev-note)
-
-<a id="packages"></a>
 ## Packages
 
-| Package | Role | ctx key |
-|---|---|---|
-| [agent-preset-registry](agent-preset-registry/README.md) | Selection, revision retention and profile editing | `ctx.agentPresets` |
-| [agent-preset](agent-preset/README.md) | Declarative child plugins and metadata | — |
-| [persona](persona/README.md) | Composable Agent persona | — |
-
-<a id="related-documentation"></a>
-## Related documentation
-
-- Scope
-- Cordis
-- [Agent preset](../../.agents/notes/implemented/architecture/2026-09-18-declarative-agent-presets.md)
-
-<a id="dev-note"></a>
-## Dev Note
-
-<details>
-<summary>Working context for maintainers — click to expand</summary>
-
-None.
-
-</details>
+| Package | Owns |
+| --- | --- |
+| [agent-preset-registry](./agent-preset-registry/README.md) | Declarative Agent preset registry and profile-backed editing |

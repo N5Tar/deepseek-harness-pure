@@ -71,12 +71,12 @@
 | [Client 启动审计](../../../packages/client/web/src/boot-client.ts)与 [Host 启动审计](../../../packages/boot/app-boot/src/index.ts) | 区分条目缺席、显式禁用和存在但未激活；不接受未解释的失败 |
 | [模块扫描](../../../packages/client/modules/src/index.ts) | 分别检查 Host 状态、Client graph、Client fiber、Slot 和 DOM |
 | [Connection](../../../packages/client/connection/src/index.ts) | 裁剪账户业务时保留通信所需认证 |
-| [Remote assembly](../../../packages/api/remotes/src/client/index.ts) | 客户端代理存在不代表 Host 服务运行；基础 assembly 仅保留必要接口 |
+| Remote assembly | 客户端代理存在不代表 Host 服务运行；基础 assembly 仅保留必要接口 |
 | [主题插件](../../../packages/client/ui-theme/src/client/index.ts)与 [主题呈现](../../../packages/client/ui-layout/src/client/theme-presenter.ts) | 明确设置、主题状态与 DOM 呈现所有者，解除对官方 layout 的依赖 |
-| [桌面启动](../../../apps/desktop/src/main.ts)与 [欢迎后端](../../../apps/desktop/src/welcome-backend.ts) | 取消模型和账户查询作为进入主窗口的前提 |
+| [桌面启动](../../../apps/desktop/src/main.ts)与 欢迎后端 | 取消模型和账户查询作为进入主窗口的前提 |
 | [Desktop Host](../../../apps/desktop-host/src/index.ts) | 检查退出、更新及其他宿主逻辑的业务依赖，而不只检查窗口打开 |
-| [开发启动器](../../../apps/desktop/scripts/dev.ts) | 同时隔离 Harness home、Electron userData 和调试端口 |
-| [Profile 管理](../../../apps/desktop/src/project-manager.ts)与 [恢复实现](../../../packages/boot/app-boot/src/profile-sanitize.ts) | 默认组合与恢复组合都应指向纯净底座；配置备份和安装文件保留行为需实测 |
+| 开发启动器 | 同时隔离 Harness home、Electron userData 和调试端口 |
+| Profile 管理与 [恢复实现](../../../packages/boot/app-boot/src/profile-sanitize.ts) | 默认组合与恢复组合都应指向纯净底座；配置备份和安装文件保留行为需实测 |
 | [原生菜单](../../../apps/desktop/src/preload-menu.ts) | 验证新 Root 的窗口控制区、菜单挂载条件和拖拽区域 |
 
 架构与组合原则参考架构文档，生命周期与安全审查参考防御性模式，测试选择参考测试策略。本计划不复制这些文档的完整规则。

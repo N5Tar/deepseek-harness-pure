@@ -15,11 +15,11 @@
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /deepseek-ai-dsh-agent/use-this-package:
-  en: 7d1ae2375bd4fbfc
-  zh: b6b4b2e943174cb2
+  en: bbff250eba0f1b89
+  zh: 0a618f05cc88ee2b
 /deepseek-ai-dsh-agent/use-this-package/create-or-resume-an-agent:
-  en: a62e2d3dd8c32597
-  zh: 646f48ab401d5941
+  en: 1ad4f7a7133f0f08
+  zh: b56793c0118310a1
 /deepseek-ai-dsh-agent/use-this-package/select-a-model:
   en: 85b0ff72a187110f
   zh: 3f61c1568d27b8bc
@@ -30,8 +30,8 @@
   en: 2594a1e02adea801
   zh: cae8860369728efb
 /deepseek-ai-dsh-agent/use-this-package/intercept-or-observe-work-in-flight:
-  en: 371511fb13093dd2
-  zh: 4be81d246cf299b2
+  en: 58432db944e002c2
+  zh: 95b707e1be102514
 /deepseek-ai-dsh-agent/understand-the-implementation:
   en: ce7e776e9d516bdb
   zh: 59d2751743db7795
@@ -54,14 +54,14 @@
   en: df92e97cedd0d02e
   zh: f6040c145bffd933
 /deepseek-ai-dsh-agent/understand-the-implementation/initiator-scope:
-  en: 3ca29c07144b36db
-  zh: 93580213b3de2004
+  en: 4c14318e768b7a34
+  zh: d9ac533d7bb3212f
 /deepseek-ai-dsh-agent/understand-the-implementation/ownership-invariants:
-  en: e48eae6c7de88cf8
-  zh: 1f5b37bdb0e53788
+  en: 1f263808ecae1ec2
+  zh: 20421713fe411fee
 /deepseek-ai-dsh-agent/further-exploration:
-  en: 4ef57cfafa344581
-  zh: 73575876bfdc7a18
+  en: d69768fb61f5d890
+  zh: 4dbba418dfe64706
 /deepseek-ai-dsh-agent/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90

@@ -33,7 +33,6 @@ kind: "package-reference"
 
 功能适配器使用 `ctx.configForms.get(entryId)` 获取该 Host 条目所有编辑器共享的已接受值和写入队列。快照包含解析后的 `value`、继承 `base`、原始 `user`、修订号和可写性。`set` 与 `unset` 提交单个操作，`mutate` 提交一个原子操作列表。暂存编辑器传入编辑前读取的修订号；冲突时保留草稿。清除操作移除覆盖并恢复继承。
 
-配置表单对每个已认证浏览器都通过 Host settings 服务持久化；该策略由[已认证浏览器 Host 偏好笔记](../../../.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.zh.md)拥有。写入是否被接受由 `settings.describe.writable` 决定。
 
 ### 跟随被服务的命名空间
 
@@ -83,12 +82,12 @@ kind: "package-reference"
 
 以下页面覆盖设置界面家族及其背后的持久化 seam。
 
-- [ui-settings-general](../ui-settings-general/README.zh.md)——设置外壳：触发控件、导航、「通用」分区、引导投影。
-- [ui-settings-plugins](../ui-settings-plugins/README.zh.md)——围绕清单标签页的「内置插件」分区壳。
-- [ui-settings-shell](../ui-settings-shell/README.zh.md)、[ui-settings-agent-loop](../ui-settings-agent-loop/README.zh.md)、[ui-settings-subagent](../ui-settings-subagent/README.zh.md)、[ui-settings-web-search](../ui-settings-web-search/README.zh.md)——插件页上的官方配置页，各自通过 `whileServed` 跟随其命名空间。
-- [ui-settings-models](../ui-settings-models/README.zh.md)——建立在本底座之上的 Models 页面与 DeepSeek 引导。
+- ui-settings-general——设置外壳：触发控件、导航、「通用」分区、引导投影。
+- ui-settings-plugins——围绕清单标签页的「内置插件」分区壳。
+- ui-settings-shell、ui-settings-agent-loop、ui-settings-subagent、ui-settings-web-search——插件页上的官方配置页，各自通过 `whileServed` 跟随其命名空间。
+- ui-settings-models——建立在本底座之上的 Models 页面与 DeepSeek 引导。
 - [settings](../../settings/README.zh.md)——持久化用户设置 seam 及其文件提供方。
-- [ui-sidebar](../ui-sidebar/README.zh.md)——底部席位承载设置触发控件的侧边栏外壳。
+- ui-sidebar——底部席位承载设置触发控件的侧边栏外壳。
 
 -----
 

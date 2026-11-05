@@ -73,9 +73,9 @@ One registration declares the frame slots and binds `ctx.layout` methods `select
 
 Read these pages when the layout surface is not enough. They move from the frame to the columns it renders and the theme it presents.
 
-- [ui-sidebar](../ui-sidebar/README.md) — occupies the `sidebar` column and its seats.
-- [ui-conversation](../ui-conversation/README.md) — occupies the `main` key `conversation`.
-- [ui-sidebar-right](../ui-sidebar-right/README.md) — occupies the `rightbar` column with one docking surface per session.
+- ui-sidebar — occupies the `sidebar` column and its seats.
+- ui-conversation — occupies the `main` key `conversation`.
+- ui-sidebar-right — occupies the `rightbar` column with one docking surface per session.
 - [ui-theme](../ui-theme/README.md) — the theme seam whose resolved snapshots the presenter consumes.
 - Web client architecture — how browser plugin rows load and register slots.
 

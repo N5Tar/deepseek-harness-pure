@@ -208,7 +208,6 @@ test('keeps Task Issues limited to summary and deliverables', () => {
 
 test('keeps the pull request template aligned with the dsh-pr-description skill', () => {
   const source = readFileSync(new URL('../pull_request_template.md', import.meta.url), 'utf8')
-  const skillPath = '.agents/skills/dsh-pr-description/SKILL.md'
   const skill = readFileSync(new URL(`../../${skillPath}`, import.meta.url), 'utf8')
   assert.ok(source.startsWith(`<!-- 本 PR 正文按 ${skillPath} 填写。 -->\n`), 'the template points to the skill')
   assert.deepEqual(source.match(/^## .+$/gm), [

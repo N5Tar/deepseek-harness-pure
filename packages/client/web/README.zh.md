@@ -31,7 +31,7 @@ kind: "package-library"
 
 外壳基础样式会在支持的浏览器中为普通内容自动添加中西文间距。语义化代码以及终端、diff、读取和搜索输出容器会保留源码中的原始间距和列对齐；不支持 `text-autospace` 的浏览器会忽略这两项声明。
 
-Web 和 Desktop 的数学公式渲染要求支持 WOFF2。[Web 构建](../../../apps/web/katex-fonts.ts)以 WOFF2 保留全部 KaTeX 字体样式，并排除 WOFF/TTF 后备格式；任一字体样式缺少 WOFF2 都会使构建失败。字体的字形、字重、样式和布局规则保持不变。
+Web 和 Desktop 的数学公式渲染要求支持 WOFF2。Web 构建以 WOFF2 保留全部 KaTeX 字体样式，并排除 WOFF/TTF 后备格式；任一字体样式缺少 WOFF2 都会使构建失败。字体的字形、字重、样式和布局规则保持不变。
 
 ### 启动过程是怎样的
 
@@ -72,7 +72,6 @@ Web 构建只产出依赖 Host 的 `index.html`，没有 Worker preview 入口�
 
 ### 两阶段启动
 
-`run()` 调用 Host 安装的 `window.__ModuleLoader__.create({ boot, staticModules, ...seams })`；facade 接纳 parser 已加载的 bootstrap 批次后返回构造好的模块系统与已解析 manifest（元数据清单）。模块阶段通过一个共享的 application 批次 URL 预取 `immediately` 层级。插件阶段挂载 Loader、把 `loader.internal` 赋为 `modules`、统一创建全部图 entry、等待完全停稳，然后按与 [Host 启动严格性](../../../.agents/notes/implemented/architecture/2026-09-09-consumer-owned-startup-strictness.zh.md)相同的策略审计激活：导入失败、因缺失服务而 pending，或落入其他非 active 状态的 entry 视为未激活。未激活 entry 在 [`src/boot-client.ts`](src/boot-client.ts) 的全局必需名单（模块系统、渲染器、布局与无 Session 的底座外壳）中时，审计抛出一个聚合错误，点名每个未激活 entry 并标出必需项；否则写一条控制台警告，应用照常挂载。图中不存在的必需名称不产生影响。必需 entry 所等待的 entry 失败时，必需 entry 保持 pending，因此同样会拒绝启动。Loader 未能创建的 entry（模块导入失败或未导出插件）没有 fiber，按导入失败报告，与 Host 审计报告 `failed to import` 相同；原始错误在控制台日志中。
 
 ### 启动页机制
 

@@ -33,7 +33,6 @@ Feature plugins use this package to store and edit their preferences without re-
 
 Feature adapters use `ctx.configForms.get(entryId)` to obtain accepted values and a write queue shared by every editor of that Host entry. Snapshots contain resolved `value`, inherited `base`, raw `user`, revision, and writability. `set` and `unset` submit one operation; `mutate` submits one atomic operation list. Staged editors pass the revision read before editing; conflicts preserve their drafts. Unsetting removes the override and restores inheritance.
 
-A configuration form persists through the Host settings service for every authenticated browser; the [authenticated-browser Host preferences note](../../../.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.md) owns that policy. `settings.describe.writable` is the authority on whether a write is accepted.
 
 ### Following served namespaces
 
@@ -83,12 +82,12 @@ The provider owns one controller per Host entry, including its subscription and 
 
 These pages cover the settings surface family and the durable seam behind it.
 
-- [ui-settings-general](../ui-settings-general/README.md) — the settings shell: trigger chrome, navigation, General section, onboarding projection.
-- [ui-settings-plugins](../ui-settings-plugins/README.md) — the Built-in plugins section shell around the inventory tab.
-- [ui-settings-shell](../ui-settings-shell/README.md), [ui-settings-agent-loop](../ui-settings-agent-loop/README.md), [ui-settings-subagent](../ui-settings-subagent/README.md), [ui-settings-web-search](../ui-settings-web-search/README.md) — the official configuration pages on the Plugins page, each following its namespaces through `whileServed`.
-- [ui-settings-models](../ui-settings-models/README.md) — the Models page and DeepSeek onboarding over this base.
+- ui-settings-general — the settings shell: trigger chrome, navigation, General section, onboarding projection.
+- ui-settings-plugins — the Built-in plugins section shell around the inventory tab.
+- ui-settings-shell, ui-settings-agent-loop, ui-settings-subagent, ui-settings-web-search — the official configuration pages on the Plugins page, each following its namespaces through `whileServed`.
+- ui-settings-models — the Models page and DeepSeek onboarding over this base.
 - [settings](../../settings/README.md) — the durable user-settings seam and its file provider.
-- [ui-sidebar](../ui-sidebar/README.md) — the sidebar shell whose bottom seat hosts the settings trigger.
+- ui-sidebar — the sidebar shell whose bottom seat hosts the settings trigger.
 
 -----
 

@@ -78,7 +78,6 @@ const todo = projections.todo()
 
 Each reader captures the exact Session and delegates to the original handle's `stateOf(session)`, preserving readiness requirements, null and undefined values, state references, and synchronous failures. Creating a reader does not read state, prepare the Session, perform storage I/O, or create a state cache. Readers own no registration or disposal. The original handle keeps its disposal responsibility; a reader keeps reading the original unit after deregistration or version replacement. One handle can create readers for several Sessions independently. Registration and Session preparation remain the owner's responsibility; client snapshots remain separate.
 
-A domain that owns projected state declares `sessionProjections` as a Cordis service dependency and keeps its handle private. Consumers inject that domain service and use its methods, such as `ctx.agents.turnBoundaryOf(session)`, without importing definitions or retaining projection readers. Optional contributors may register under `ctx.inject(['sessionProjections'], …)`. Carriers use `ctx.get('sessionProjections')` and omit their block or frames when the registry is absent.
 
 <a id="deprecated-plugin-compatibility"></a>
 ### Deprecated plugin compatibility
@@ -97,7 +96,7 @@ Definitions install synchronously, and handle delivery remains asynchronous. Reg
 
 ### Persisted checkpoints
 
-Every unit's state is checkpointed — client-visible and host-only alike — through `checkpoint(session)`, and the sibling [session-projection-cache](../session-projection-cache/README.md) persists those checkpoints so cold reads skip full log loads. Checkpoint watermarks use `SessionSeqCursor` (`-1` for an empty log), while replay starts use `SessionLogOffset`; `restoreFloor` and `restore` implement the read recipe without conflating an existing event with a log gap. `restore` folds only live units, so its refreshed rows omit released units, and a write-back of them drops their stored rows.
+Every unit's state is checkpointed — client-visible and host-only alike — through `checkpoint(session)`, and the sibling session-projection-cache persists those checkpoints so cold reads skip full log loads. Checkpoint watermarks use `SessionSeqCursor` (`-1` for an empty log), while replay starts use `SessionLogOffset`; `restoreFloor` and `restore` implement the read recipe without conflating an existing event with a log gap. `restore` folds only live units, so its refreshed rows omit released units, and a write-back of them drops their stored rows.
 
 ### Session summaries
 
@@ -143,9 +142,8 @@ Read these pages when the package-level contract is not enough. They move from t
 
 - Session projections subsystem — the projection unit contract, drive semantics, and generated service API.
 - Session persistence subsystem — the event log projections fold over.
-- [Session projection cache](../session-projection-cache/README.md) — the persisted checkpoints that make cold reads skip full log loads.
+- Session projection cache — the persisted checkpoints that make cold reads skip full log loads.
 - [Session package map](../README.md) — adjacent persistence, title, and telemetry packages.
-- [Session-projection RFC](../../../.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.md) — the design rationale for projections and the command log.
 
 -----
 

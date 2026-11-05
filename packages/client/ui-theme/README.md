@@ -111,10 +111,9 @@ The service provides itself immediately with the schema defaults, then loads the
 These pages cover the layout presenter, the token consumers, and the styling rules.
 
 - [ui-layout](../ui-layout/README.md) — the presenter that applies the resolved theme snapshot.
-- [ui-sidebar](../ui-sidebar/README.md) — a consumer of the scrollbar rebinding contract.
-- [ui-conversation](../ui-conversation/README.md) — a consumer of `--dsh-scrollbar-width` for the composer seat.
+- ui-sidebar — a consumer of the scrollbar rebinding contract.
+- ui-conversation — a consumer of `--dsh-scrollbar-width` for the composer seat.
 - Web styling — the authoritative styling rules for web client components.
-- [Authenticated-browser Host preferences](../../../.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.md) — the persistence policy decision.
 
 -----
 
