@@ -284,3 +284,11 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 因此解耦工作可收敛为：删除上述四个提供方（都在 41 包删除清单内）→ 从 `AppFrameProps` 与 `AppFrame` 解构里去掉对应 5 个 prop → 重写 `app-frame.client.spec.tsx` 夹具（该夹具目前直接构造会话/工作区快照并提供这些钩子）→ 调整 `document-title` 行为测试。四个提供方一旦移除，标题投影与依赖它们的 2 个行为测试自然消失。
 
 `build:artifacts` 已证明只改包依赖可编译；剩下的成本集中在测试夹具重写（约 76 项）。
+
+### 第 08 项整组删除实测（第 8 轮，已回退）
+
+解耦 `ui-layout` 之后重试整组删除：删 49 个客户端包 + `web-app` 包、移除 `web` 模板后，自动修剪 21 个 tsconfig 的失效工程引用，类型错误从 119 降到 61（全部是根聚合 tsconfig 的失效引用），再用正则清理残留引用后暴露出 313 个错误，主体是 `apps/web/tests` 与 `benchmarks` 对已删 UI、fixture 的导入，以及 `api/remotes` 客户端导出与 `cordis-client-runner` 生成目录。
+
+结论：这条路径机械可行，但必须在一个持续多轮、允许中间态编译红的过程中完成，波及 `apps/web` 测试与夹具、`benchmarks`、`api/remotes`、生成目录，工作量约等于一次独立的大重构。每次试探都必须回退以保持主干可构建，本模块已连续第 4 轮停留在同一决策点。
+
+因此需要明确选择：**(A)** 先做第 10–12 项让这些 UI 与其钩子自然消失，再执行 08；**(B)** 授权一次多轮、允许红灯的 08 整组清理。
