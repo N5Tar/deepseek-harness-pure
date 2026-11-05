@@ -24,6 +24,7 @@ import type { DesktopRelease } from './release.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
 import { initProfile, readProfileManifest, removeLinkProjections, sanitizeProfile } from '@deepseek-ai/dsh-app-boot'
 import { PROFILE_TEMPLATES, type ProfileTemplate } from '@deepseek-ai/dsh-official-bundles'
+import { ensureDesktopTheme } from './theme-default.ts'
 
 const PROJECT_NAME = '@deepseek-ai/dsh-desktop-runtime'
 const DSH_PACKAGE = '@deepseek-ai/dsh'
@@ -109,6 +110,7 @@ export class DesktopProjectManager {
       // Validation only: an unreadable or mismatched runtime descriptor stops preparation before the Host starts.
       readDesktopRuntime(this.runtime.dsh)
       createPluginProfile(this.paths.profile)
+      ensureDesktopTheme(this.paths.home)
       migrateProfileSettings(this.paths.profile)
       removeLinkProjections(this.paths.profile)
     })

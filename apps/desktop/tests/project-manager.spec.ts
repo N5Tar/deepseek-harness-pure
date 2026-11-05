@@ -61,6 +61,28 @@ describe('desktop external plugin profile', () => {
     expect(existsSync(patch)).toBe(true)
   })
 
+  it('records the dark default appearance in a new home and keeps a later choice', async () => {
+    const { manager } = setup()
+    await manager.applyRelease()
+    const theme = join(manager.paths.home, '.ff_theme')
+    expect(readFileSync(theme, 'utf8')).toBe('dark\n')
+    writeFileSync(theme, 'light\n')
+    await manager.applyRelease()
+    expect(readFileSync(theme, 'utf8')).toBe('light\n')
+  })
+
+  it('leaves an incompatible home without a default appearance', async () => {
+    const { manager } = setup()
+    await manager.applyRelease()
+    rmSync(join(manager.paths.home, '.ff_theme'))
+    const manifestPath = join(manager.paths.profile, 'package.json')
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
+    manifest.dsh.profile.bundles = ['@deepseek-ai/dsh-web-app']
+    writeFileSync(manifestPath, JSON.stringify(manifest))
+    await expect(manager.applyRelease()).rejects.toBeInstanceOf(DesktopProfileCompatibilityError)
+    expect(existsSync(join(manager.paths.home, '.ff_theme'))).toBe(false)
+  })
+
   it.each([
     ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'],
     ['@deepseek-ai/dsh-web-app'],

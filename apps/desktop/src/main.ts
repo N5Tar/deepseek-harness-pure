@@ -16,6 +16,7 @@ import { resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
 import { claimDesktopSingleInstance } from './single-instance.ts'
 import { DesktopCommandManager } from './command-management.ts'
 import { desktopClientVersion } from './client-metadata.ts'
+import { readDesktopTheme, writeDesktopTheme } from './theme-default.ts'
 import { serveWebDocument, authenticateWebHost, forwardWebRequest, removeLegacyHostCookies } from './web-document.ts'
 import { DesktopFatalRecovery } from './fatal-recovery.ts'
 import { pruneCrashReports, RendererConsoleTail, writeCrashReport, type CrashReportSource } from './crash-report.ts'
@@ -232,6 +233,8 @@ async function main(): Promise<void> {
   void pruneCrashReports(app.getPath('logs'))
   const resources = runtimeResources()
   const paths = resolveDesktopPaths()
+  // The recorded appearance paints the first frame, before Host settings reach the renderer.
+  nativeTheme.themeSource = readDesktopTheme(paths.home) ?? 'system'
   const development = !app.isPackaged
   const manager = new DesktopProjectManager(paths, resources)
   const loginShellRead = new AbortController()
@@ -373,7 +376,9 @@ async function main(): Promise<void> {
   ipcMain.on(DESKTOP_IPC.nativeThemeSet, (event, source: unknown) => {
     if (mainWindow === undefined || event.sender !== mainWindow.webContents
       || event.senderFrame !== mainWindow.webContents.mainFrame || !event.senderFrame.url.startsWith(applicationUrl)) return
-    if (source === 'light' || source === 'dark' || source === 'system') nativeTheme.themeSource = source
+    if (source !== 'light' && source !== 'dark' && source !== 'system') return
+    nativeTheme.themeSource = source
+    writeDesktopTheme(paths.home, source)
   })
   ipcMain.handle(DESKTOP_IPC.localeBootstrap, (event) => {
     assertApplicationSender(event)

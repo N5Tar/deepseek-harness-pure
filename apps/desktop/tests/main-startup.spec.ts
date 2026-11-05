@@ -1,5 +1,5 @@
 /** Native carrier assembly with owned windows, authenticated transport, and quiescent teardown. */
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { BrowserWindowConstructorOptions, MenuItemConstructorOptions, MessageBoxOptions } from 'electron'
@@ -105,6 +105,7 @@ const h = await vi.hoisted(async () => {
     ({ environment: { ...base, TEST_LOGIN_SHELL: 'yes' }, failures: [] })
   const loginShell = vi.fn(readLoginShell)
   return {
+    home: '',
     app, menu, popup, protocol, nativeTheme, session, shortcuts, background, handlers, windows, hosts, FakeWindow, FakeHost,
     powerMonitor, ipcOn: vi.fn(),
     shell: { openExternal: vi.fn(async () => {}), showItemInFolder: vi.fn() },
@@ -146,7 +147,7 @@ vi.mock('../src/project-manager.ts', () => ({ DesktopProjectManager: class {
   readonly applyRelease = h.applyRelease
   readonly disableAllPlugins = h.disablePlugins
 } }))
-vi.mock('../src/paths.ts', () => ({ resolveDesktopPaths: () => ({ profile: 'test-profile' }) }))
+vi.mock('../src/paths.ts', () => ({ resolveDesktopPaths: () => ({ home: h.home, profile: 'test-profile' }) }))
 vi.mock('../src/login-shell-environment.ts', async original => ({
   ...await original<typeof import('../src/login-shell-environment.ts')>(), readDesktopLoginShellEnvironment: h.loginShell,
 }))
@@ -175,6 +176,7 @@ beforeEach(() => {
   const root = mkdtempSync(join(tmpdir(), 'desktop-main-base-'))
   onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
   h.app.getPath.mockImplementation(name => join(root, name))
+  h.home = join(root, 'home')
   vi.stubGlobal('process', { ...process, platform: 'win32', arch: 'x64', resourcesPath: 'test-resources' })
   vi.stubEnv('DSH_DESKTOP_DSH_DIR', 'test-runtime')
   vi.stubEnv('DSH_DESKTOP_PNPM_ENTRY', 'test-pnpm')
@@ -303,8 +305,23 @@ describe('desktop application carrier', () => {
     expect(h.nativeTheme.themeSource).toBe('system')
     eventListener(DESKTOP_IPC.nativeThemeSet)(sender, 'dark')
     expect(h.nativeTheme.themeSource).toBe('dark')
+    expect(readFileSync(join(h.home, '.ff_theme'), 'utf8')).toBe('dark\n')
     eventListener(DESKTOP_IPC.localeChanged)(sender, 'zh')
     expect(readFileSync(join(h.app.getPath('userData'), 'desktop', 'locale-cache'), 'utf8')).toContain('zh')
+  })
+
+  it('paints the appearance recorded in the Harness home before the renderer publishes one', async () => {
+    mkdirSync(h.home, { recursive: true })
+    writeFileSync(join(h.home, '.ff_theme'), 'light\n')
+    await ready()
+    expect(h.nativeTheme.themeSource).toBe('light')
+  })
+
+  it('falls back to the system appearance when the recorded appearance is unusable', async () => {
+    mkdirSync(h.home, { recursive: true })
+    writeFileSync(join(h.home, '.ff_theme'), 'sepia\n')
+    await ready()
+    expect(h.nativeTheme.themeSource).toBe('system')
   })
 
   it('serves only the application document and proxies APIs after Host readiness', async () => {

@@ -32,6 +32,8 @@ The [Electron main process](src/main.ts) starts the [private Desktop Host](../de
 
 The application loads packaged Web assets at `dsh-app://app/`. The loading document waits for authenticated Host readiness and boot injections, then starts the client without navigating to another document. The window becomes visible after Host startup. Settings persist through the shell Host; the native directory picker and keyboard integration remain available.
 
+The shell records the appearance the owned renderer last applied in `.ff_theme` at the Harness home root and applies it before the first frame, so a launch paints the confirmed palette instead of the system one. A Harness home without that file is recorded as `dark`; an invalid or unreadable record falls back to `system` and reports the failure without blocking startup. The file only seeds native appearance and never overrides a stored choice: the appearance setting remains authoritative, and the owned renderer rewrites the record whenever an accepted change applies a new one.
+
 The application menu retains About, command registration on macOS and Windows, DevTools, and Quit. Development also offers Reload Page and Restart App and Host. Windows exposes native Application and Edit popup menus through the owned application window. There are no account, onboarding, update-check, or update-installation actions in this startup path.
 
 <a id="authentication-and-process-ownership"></a>
