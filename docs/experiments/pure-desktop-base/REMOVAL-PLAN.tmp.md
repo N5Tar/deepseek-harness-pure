@@ -327,3 +327,16 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 即：再处理「`api/remotes` 的客户端子出口 + 实验性 client-ui 包」两类，即可通过 `build:artifacts` 与 `build:check`。本轮因预算耗尽已回退，主干保持可构建（HEAD `65545a95d7`）。
 
 下一轮只需处理这两类 + 重新生成目录/文档，即可提交这次合并退役。
+
+### 合并退役的完整级联图（第 3 轮实测）
+
+删 49 个客户端 UI 后继续修错误，逐层暴露出的剩余依赖层（全部指向已删 UI，必须一并处理）：
+
+- **测试支撑自身依赖 AI UI**：`packages/client/test-runtime`、`packages/client/ui-test-bench` 引用 `ui-conversation`/`ui-session`/`ui-tool`，而**保留包**（ui-theme、ui-settings、ui-shell、locale、ui-renderer、ui-layout）的测试又依赖这两个支撑包——删 UI 就必须同时重写测试支撑。
+- **外壳构建入口仍静态引入 AI UI**：`packages/client/web`（PLATFORM_MODULES 的种子）直接 import `ui-chat`、`ui-session`、`ui-sidebar`、`ui-tool`。
+- **其它牵连包**：`session-query/session-log-export`、`session/message-quotes`、`extensions/ui-cordis`、`extensions/cordis-client-runner`、`experimental/session-inspector`、`experimental/personalized-recommendations`、`experimental/cua`、`host/open-in-app`、`host/directory-picker-auto`、`apps/cli` 的 UI 依赖。
+- **BFF 装配**：`api/remotes/src/client/index.ts` 汇总了全部 AI Remote 子出口，需裁到仅剩 settings 控制器。
+
+即：合并退役 ≈ 删 60+ 包 + 重写 `client/web` 的模块种子 + 重写测试支撑 + 裁 BFF 装配 + 清理 `apps/web`。这是数小时的连续工作，无法在“每轮结束必须绿”的约束下完成；本轮已再次回退，主干保持可构建（HEAD `17041d2815`）。
+
+**简化方案（建议）**：纯桌面底座不需要 `apps/web` 这个 Vite 应用。可直接删除 `apps/web` 与 `client/web` 的产品模块种子，只保留 `shell-base` 所需的底座 UI，再删 AI UI 包——覆盖面积大幅缩小，且与“纯桌面”目标一致。
