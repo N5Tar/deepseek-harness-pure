@@ -14,7 +14,7 @@
 
 组合包名称先从 dsh 安装目录解析，再从 profile 目录解析。因此，内置组合包（`@deepseek-ai/dsh-base`、`@deepseek-ai/dsh-web-app`、`@deepseek-ai/dsh-headless`、`@deepseek-ai/dsh-sdk-app`、`@deepseek-ai/dsh-sdk-minimal`、`@deepseek-ai/dsh-acp-app`）始终来自当前运行的 `dsh` 所属的安装；树外组合包来自 profile 中由 pnpm 管理的 `node_modules`。挂载配置行前，launcher 会按此顺序遍历安装与所选 bundle，并将生成的不可变 runtime resolution 安装到 Node 的解析器中。启动不会创建共享或 profile 自有的 fallback 链接。profile 已安装包保留原生优先级；profile 初始化和包管理器写入与运行时解析相互独立。
 
-`web`、`headless`、`sdk`、`sdk-minimal` 和 `acp` profile 首次使用时会从随附模板自动初始化（`web`：base + web-app，实时应用 patch；`headless`：base + headless，只在启动时应用 patch；`sdk`：base + sdk-app，只在启动时应用 patch；`sdk-minimal`：独立组合包，只在启动时应用 patch；`acp`：base + acp-app，只在启动时应用 patch）。其他缺失的 profile 会显式报错，并提示运行 `dsh plugin --profile <name> add <package>`。
+`web`、`headless`、`sdk` 和 `sdk-minimal` profile 首次使用时会从随附模板自动初始化（`web`：base + web-app，实时应用 patch；`headless`：base + headless，只在启动时应用 patch；`sdk`：base + sdk-app，只在启动时应用 patch；`sdk-minimal`：独立组合包，只在启动时应用 patch）。其他缺失的 profile 会显式报错，并提示运行 `dsh plugin --profile <name> add <package>`。
 
 `dsh --profile <name> --from-default-profile <template>` 会在启动前，用上述五个随附模板之一的全新副本替换自定义目标。目标名称不能是任何大小写形式的随附 profile 名称。launcher 先在目标旁边的暂存目录中组装新 profile 并移动到目标位置，再删除原有的目标目录，包括其中已安装的依赖和用户 patch。移动失败时会恢复原有目录。如果恢复也失败，或进程在两次重命名之间停止，原有目录会保留在 `$DSH_HOME/profiles/.<name>.staging-*/previous`，供手动恢复。多个进程并发替换同一目标时，至少有一个会成功，且目标中只保留一份完整副本。该副本把模板当前的组合包列表写进一份依赖为空、用户 patch 为空的新 manifest。它不会读取 `<template>` 指定的本地同名 profile，不会复制其依赖或 patch，也不会持久化继承字段；模板列表之后的变化不会改写新 profile。复制列表中指名的内置组合包仍从当前 dsh 安装目录解析。替换成功不会增加 launcher 输出。
 
@@ -41,7 +41,6 @@ dsh rescue
 | `headless` | 任务文本，作为位置参数 |
 | `sdk` | 无选项；stdio 携带 JSON-RPC 协议 |
 | `sdk-minimal` | 无选项；stdio 携带相同的 JSON-RPC 协议 |
-| `acp` | 无选项；stdio 携带 ACP（Agent Client Protocol） |
 
 一次性任务（`dsh --profile headless "run the tests"`）通过核心注册表创建一个全新的持久化 Agent（智能体），提交任务、等待完全停稳并对会话执行 flush，再从其持久化事件区间中推导最后一个非空 assistant 文本与最终 `turn/end` 原因。它在 `dsh: reasoning:` 标题下将非空的提供方推理（reasoning）增量流式写入 stderr，只在 stdout 打印最终文本，并在原因为 `completed` 时以 0 退出，否则以 1 退出；没有推理内容的成功响应会保持 stderr 为空。没有任务的调用是该应用的用法错误。随附 headless profile 不挂载浏览器 Connection、HTTP 服务器、Web 运行时或浏览器客户端，也不会打开监听端口。
 

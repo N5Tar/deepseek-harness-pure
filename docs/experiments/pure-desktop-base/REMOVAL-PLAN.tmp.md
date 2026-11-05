@@ -45,7 +45,7 @@ UI 远程类型与测试依赖可能交叉，每个分支开始前核实。遇�
 
 | 编号 | 分支 | 工作范围 | 验收条件 | 状态 |
 |---|---|---|---|---|
-| 07 | `pure/product-entrypoints` | 退役原 AI profile、bundle、CLI 业务入口、SDK / ACP 应用和专属启动测试 | 不再存在原 AI 应用启动路径；通用 profile 启动和底座装配可用 | 待开始 |
+| 07 | `master`（按用户指示不新建分支） | 退役 ACP profile、bundle、CLI 入口与专属启动测试；SDK/headless 按依赖证据延后 | 不再存在 ACP 应用启动路径；通用 `dsh <name>` profile 启动与 shell 底座装配可用 | 已完成（本地） |
 | 08 | `pure/ai-interface` | 删除聊天、Session、模型设置、轨迹、工具卡片等 AI UI 及专属 BFF | 底座 UI 与设置 API 保持可用；无悬空远程声明、模块表或页面装配 | 待开始 |
 | 09 | `pure/account-telemetry` | 删除 DeepSeek 账号、登录、产品遥测、反馈及独占配置 | 无产品登录或上报路径；本地连接鉴权保留并通过验证 | 待开始 |
 | 10 | `pure/agent-orchestration` | 删除 subagent、team、workflow、goal、plan、todo、schedule 等业务 | 保留侧无依赖；关联 UI、工具注册、测试与构建入口清理完整 | 待开始 |
@@ -222,3 +222,15 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 真实产物验收：built Desktop Host 与 shell-base composition e2e 2/2 通过，覆盖无产品 CLI 链接启动、真实业务服务缺席、认证 settings RPC、持久化、正常重启和无效配置诊断。另用本地 Electron 与现有 Playwright，在新建临时 home/project/userData 下实际打开单窗口，检查无 Welcome/Platform 桥、无更新菜单、中文及深色主题设置，关闭后再次冷启动确认持久化；两次正常退出，进程检查未发现遗留的测试 Electron/Host。首次验收脚本误把浅色 radio 当成深色导致等待超时，改按 `value=dark` 选择后通过；不是产品故障。
 
 变更源码完整规则 lint 0 warnings / 0 errors（主进程及其测试单独覆盖，其余变更文件按 2 threads 覆盖）；双语 README 与配对记录同步，`git diff --check` 通过。未运行仓库全量 lint/coverage，未在 Windows/Linux 启动真实窗口，未验证签名发行包或安装升级。执行中没有修改已安装应用、旧用户目录或凭证，没有推送远端。
+
+## 第 07 项执行记录
+
+按依赖证据收窄了原计划范围。07 只退役 ACP 应用入口：删除 `packages/bundle/acp-app`（含 patch、locale、tests、README 双语对），从 `PROFILE_TEMPLATES` 移除 `acp` 模板，从 `plugin-manager` 呈现清单移除该 bundle，删除 `apps/cli/tests/profiles/acp` 全套启动测试与 `built-bin` 中 ACP 帮助/会话用例，删除 `apps/cli` 对该 bundle 的依赖、根 `tsconfig` 的路径与工程引用，并清理 `apps/cli`、`apps/cli/reference`、`packages/bundle` 三组双语 README 中的 ACP 说明。
+
+快照按共享消费者保留：`snapshots/acp/cancel-tool-calls/session.v3.jsonl` 与 `session.v4.jsonl` 仍被 `apps/web/tests/bash-abort-row.e2e.ts` 及其 snapshot.yml 引用，`snapshots/acp/escalation-approved/cordis.yml` 仍被 `packages/subagent/subagent-acp/tests/subagent-acp.e2e.ts` 引用；其余 ACP 场景与 `acp.snapshot.ts` 适配器随其唯一消费者删除，语料清单同步收窄。
+
+`packages/acp/acp` 库与 `packages/subagent/subagent-acp` 保留：前者仍是 ACP 协议实现，后者由后续编排模块退役；`packages/sdk/*` 与 Python SDK 保留。
+
+延后项及证据：`sdk`、`sdk-minimal` 模板与 bundle 保留——`packages/sdk/client/src/launch.ts` 默认启动 `sdk` profile，Python SDK 运行时与 `python/sdk` 场景直接使用 `sdk`/`sdk-minimal`，删除会打断保留侧；随 SDK 退役模块处理。`headless` 保留——`snapshots/session/*` 约 150 个 `snapshot.yml` 与 `headless.snapshot.ts` 绑定该 profile，随第 12 项会话运行时退役。`web`/`base` 与 `web-app` 保留，随第 08 项 AI 界面退役。`boot.ts` 的 `requiredStartupEntryIds` 中 `acp` 未删除：`web-failure-matrix.expected.e2e.ts` 用它作 required-entry 故障注入，prune 属于 12/15。
+
+本地验证：`DSH_GATE_CONCURRENCY=2 pnpm run build` 首轮 9/10（host aggregate 报 `built-bin.e2e.ts` 一处未使用导入），删除该导入后 `DSH_GATE_CONCURRENCY=1 pnpm run build:check` 2/2 通过。定向单 worker 测试 230 项通过：official-bundles、`apps/cli/tests/args.spec.ts`、`profile-hmr.spec.ts`、workspace constraints。变更 TypeScript 文件 lint 0 warnings / 0 errors；`gen-plugin-packages`、`gen-tsconfig-paths` 重新生成并一致；三组双语 README 与配对记录刷新；`verify-md-links` 未新增 ACP 断链（其余断链为早前文档树退役遗留）。未运行全仓 lint/coverage，未推送。

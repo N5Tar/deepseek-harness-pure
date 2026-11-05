@@ -22,7 +22,6 @@ describe('Official on-demand catalog', () => {
 describe('Shipped profile templates', () => {
   it('keeps the minimal SDK and desktop shell independent of base', () => {
     expect(PROFILE_TEMPLATES).toEqual({
-      acp: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-acp-app'] },
       web: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'] },
       headless: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-headless'] },
       sdk: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-app'] },

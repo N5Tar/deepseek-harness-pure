@@ -291,9 +291,6 @@ importers:
       '@deepseek-ai/cordis-plugin-timer':
         specifier: workspace:~
         version: link:../../vendor/timer
-      '@deepseek-ai/dsh-acp-app':
-        specifier: workspace:*
-        version: link:../../packages/bundle/acp-app
       '@deepseek-ai/dsh-agent-instructions':
         specifier: workspace:*
         version: link:../../packages/context/agent-instructions
@@ -2260,25 +2257,6 @@ importers:
       '@deepseek-ai/dsh-brand':
         specifier: workspace:*
         version: link:../../util/brand
-
-  packages/bundle/acp-app:
-    dependencies:
-      '@deepseek-ai/dsh-acp':
-        specifier: workspace:*
-        version: link:../../acp/acp
-      '@deepseek-ai/dsh-cmdline':
-        specifier: workspace:*
-        version: link:../../boot/cmdline
-      commander:
-        specifier: ^15.0.0
-        version: 15.0.0
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@deepseek-ai/cordis-plugin-include':
-        specifier: workspace:~
-        version: link:../../../vendor/include
 
   packages/bundle/base:
     dependencies:
