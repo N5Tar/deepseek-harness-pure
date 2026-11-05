@@ -406,7 +406,7 @@ describe('package payload constraints', () => {
     })).toEqual(['lib/index.js', 'lib/types/**/*.d.ts'])
   })
 
-  it.each(['team/agent-team', 'experimental/voice-input-bundle', 'experimental/auto-review', 'client/ui-agent-team', 'team/tool-agent-team'])(
+  it.each(['team/agent-team', 'experimental/voice-input-bundle', 'experimental/auto-review', 'team/tool-agent-team'])(
     'accepts the published locale files for %s and rejects their omission', (name) => {
       const dir = `packages/${name}`
       const manifest = JSON.parse(readFileSync(new URL(`../${dir}/package.json`, import.meta.url), 'utf8')) as WorkspaceManifest['manifest']
@@ -511,7 +511,7 @@ describe('package payload constraints', () => {
     ])
   })
 
-  it.each(['ui-chat', 'ui-settings-account'])(
+  it.each(['ui-chat'])(
     'accepts the published package assets for %s and rejects their omission', (name) => {
       const dir = `packages/client/${name}`
       const manifest = JSON.parse(readFileSync(new URL(`../${dir}/package.json`, import.meta.url), 'utf8')) as WorkspaceManifest['manifest']

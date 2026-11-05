@@ -39,7 +39,6 @@ it('boots default Web with the shipped Schedule rows, without experimental modul
     expect(roster.entries).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: '@deepseek-ai/dsh-agent-team', state: FiberState.ACTIVE }),
       expect.objectContaining({ name: '@deepseek-ai/dsh-tool-agent-team', state: FiberState.ACTIVE }),
-      expect.objectContaining({ name: '@deepseek-ai/dsh-client-ui-agent-team', state: FiberState.ACTIVE }),
       expect.objectContaining({ name: '@deepseek-ai/dsh-schedule', state: FiberState.ACTIVE }),
       expect.objectContaining({ name: '@deepseek-ai/dsh-client-ui-schedule', state: FiberState.ACTIVE }),
     ]))
