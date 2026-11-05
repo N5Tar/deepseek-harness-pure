@@ -314,3 +314,16 @@ Desktop 与 Desktop Host 不再解析 `DSH_DESKTOP_MODE` 或 `dshDesktopMode`。
 因此路线 A 并不比 08 更“安全”：它把同一批 AI 界面测试的改写提前，且删到第 10 项时仍要处理 UI 测试。两种路线最终都收敛为“一次性退役整个 AI 界面 + 其测试与投影”。
 
 已回退，主干保持可构建（HEAD `e432da63f9`）。建议改为：把 08/10/11/12 合并为一次「AI 表面退役」，在获得授权的多轮红灯窗口内完成，避免反复试探与回退。
+
+### 第 08 项（合并表面退役）第三轮实测：错误面已收敛到可枚举
+
+再次执行「删 49 个客户端 UI + `web-app` + `web` 模板 + `apps/web/tests`」，并用脚本按缺失路径修剪所有 tsconfig 引用后，类型错误从 313 收敛到个位数，依次暴露并逐个处理：
+
+1. `packages/context/harness-dev-context` 依赖 `dsh-web-app` 的 `ctx.webApp` —— 删除该注入与 Web URL 上下文章节即可。
+2. `packages/api/session-controller` 与 `packages/experimental/webworker-runtime` 依赖 `client-file-upload` 的 `ctx.fileUploads` —— 保留 `client-file-upload` 包（宿主 BFF 仍用）。
+3. `packages/api/workspace-files` 依赖 `client-resources` 的 `ctx.resources` —— 保留 `client-resources` 包。
+4. `packages/api/remotes/src/client/index.ts` 仍导出已删 UI 的 Remote 子入口（`product-analytics/remote`、`ui-trajectory/remote`、`ui-plugin-manager/remote`）；`packages/experimental/client-ui-*` 仍引用 `ui-chat/client`。
+
+即：再处理「`api/remotes` 的客户端子出口 + 实验性 client-ui 包」两类，即可通过 `build:artifacts` 与 `build:check`。本轮因预算耗尽已回退，主干保持可构建（HEAD `65545a95d7`）。
+
+下一轮只需处理这两类 + 重新生成目录/文档，即可提交这次合并退役。
