@@ -1,0 +1,19 @@
+{
+  "name": "@deepseek-ai/dsh-kernel",
+  "description": "Minimal Cordis kernel: one page, settings, and plugin loading without product services",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.20.6",
+    "vitest": "^4.1.11"
+  }
+}
